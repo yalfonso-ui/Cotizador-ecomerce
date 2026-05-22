@@ -15,7 +15,7 @@ defineProps({
   <div class="relative">
     <div class="h-1 bg-gray-200 rounded-full overflow-hidden">
       <div
-        class="h-full bg-[#00184C] rounded-full transition-all duration-500 ease-out"
+        class="h-full bg-primary-500 rounded-full transition-all duration-500 ease-out"
         :style="{ width: progress + '%' }"
       />
     </div>

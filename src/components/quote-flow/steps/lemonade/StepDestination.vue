@@ -37,7 +37,7 @@ const destinations = [
   { code: 'AE', name: 'Emiratos', flag: '🇦🇪', popular: false },
   { code: 'AU', name: 'Australia', flag: '🇦🇺', popular: false },
   { code: 'NZ', name: 'Nueva Zelanda', flag: '🇳🇿', popular: false },
-  { code: 'ZA', name: 'Sudáfrica', flag: '🇿🇦', popular: false },
+  { code: 'ZA', name: 'Sudáfica', flag: '🇿🇦', popular: false },
   { code: 'MA', name: 'Marruecos', flag: '🇲🇦', popular: false },
   { code: 'TR', name: 'Turquía', flag: '🇹🇷', popular: false },
   { code: 'OTHER', name: 'Otro', flag: '🌍', popular: false }
@@ -75,7 +75,7 @@ function selectDestination(dest) {
         v-model="searchQuery"
         type="text"
         placeholder="Buscar destino..."
-        class="w-full h-14 pl-12 pr-4 text-lg bg-white border-2 border-gray-200 rounded-xl focus:border-[#00184C] focus:outline-none focus:ring-4 focus:ring-[#00184C]/10 transition-all"
+        class="w-full h-14 pl-12 pr-4 text-lg bg-white border-2 border-gray-200 rounded-xl focus:border-secondary-300 focus:outline-none focus:ring-4 focus:ring-secondary-300/20 transition-all"
       />
     </div>
 
@@ -87,7 +87,7 @@ function selectDestination(dest) {
           v-for="dest in popularDestinations"
           :key="dest.code"
           @click="selectDestination(dest)"
-          class="flex items-center gap-3 p-4 rounded-xl border-2 border-gray-100 bg-white hover:border-[#00184C] hover:bg-[#00184C] hover:text-white group transition-all duration-200"
+          class="flex items-center gap-3 p-4 rounded-xl border-2 border-gray-100 bg-white hover:border-primary-500 hover:bg-primary-500 group transition-all duration-200"
         >
           <span class="text-2xl">{{ dest.flag }}</span>
           <span class="font-medium text-gray-700 group-hover:text-white">{{ dest.name }}</span>
@@ -100,7 +100,7 @@ function selectDestination(dest) {
           v-for="dest in otherDestinations"
           :key="dest.code"
           @click="selectDestination(dest)"
-          class="flex items-center gap-3 p-3 rounded-xl border-2 border-gray-100 bg-white hover:border-[#00184C] hover:bg-[#00184C] hover:text-white group transition-all duration-200"
+          class="flex items-center gap-3 p-3 rounded-xl border-2 border-gray-100 bg-white hover:border-primary-500 hover:bg-primary-500 group transition-all duration-200"
         >
           <span class="text-xl">{{ dest.flag }}</span>
           <span class="font-medium text-sm text-gray-700 group-hover:text-white">{{ dest.name }}</span>
@@ -116,7 +116,7 @@ function selectDestination(dest) {
           v-for="dest in filteredDestinations"
           :key="dest.code"
           @click="selectDestination(dest)"
-          class="flex items-center gap-3 p-4 rounded-xl border-2 border-gray-100 bg-white hover:border-[#00184C] hover:bg-[#00184C] hover:text-white group transition-all duration-200"
+          class="flex items-center gap-3 p-4 rounded-xl border-2 border-gray-100 bg-white hover:border-primary-500 hover:bg-primary-500 group transition-all duration-200"
         >
           <span class="text-2xl">{{ dest.flag }}</span>
           <span class="font-medium text-gray-700 group-hover:text-white">{{ dest.name }}</span>

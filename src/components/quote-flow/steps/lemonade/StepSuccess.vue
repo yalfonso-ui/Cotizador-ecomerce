@@ -14,14 +14,14 @@ defineProps({
     </div>
 
     <div>
-      <h2 class="text-2xl font-semibold text-[#00184C] mb-2">¡Listo!</h2>
+      <h2 class="text-2xl font-semibold text-primary-500 mb-2">¡Listo!</h2>
       <p class="text-gray-500">Tu asistencia de viaje está activa</p>
     </div>
 
     <!-- Policy Number -->
     <div v-if="policyNumber" class="bg-gray-50 rounded-xl p-4">
       <p class="text-sm text-gray-500 mb-1">Número de póliza</p>
-      <p class="text-xl font-mono font-bold text-[#00184C]">{{ policyNumber }}</p>
+      <p class="text-xl font-mono font-bold text-primary-500">{{ policyNumber }}</p>
     </div>
 
     <!-- Info -->
@@ -47,7 +47,7 @@ defineProps({
     <div class="space-y-3 pt-4">
       <a
         href="/"
-        class="block w-full h-14 bg-[#00184C] text-white font-semibold text-lg rounded-xl hover:bg-[#00133D] transition-all duration-200 flex items-center justify-center"
+        class="block w-full h-14 bg-primary-500 text-white font-semibold text-lg rounded-xl hover:bg-primary-600 transition-all duration-200 flex items-center justify-center"
       >
         Volver al inicio
       </a>

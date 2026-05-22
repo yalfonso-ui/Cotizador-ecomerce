@@ -42,13 +42,13 @@ function selectPlan(plan) {
         @click="selectPlan(plan)"
         class="relative p-6 rounded-2xl border-2 transition-all duration-200 text-center flex flex-col"
         :class="plan.popular
-          ? 'border-[#00184C] bg-[#00184C] text-white shadow-xl shadow-[#00184C]/20 scale-105'
-          : 'border-gray-200 bg-white hover:border-[#00184C] hover:bg-[#00184C] hover:text-white'"
+          ? 'border-primary-500 bg-primary-500 text-white shadow-xl shadow-primary/20 scale-105'
+          : 'border-gray-200 bg-white hover:border-primary-500 hover:bg-primary-500 hover:text-white'"
       >
         <!-- Popular Badge -->
         <span
           v-if="plan.popular"
-          class="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 bg-[#F9D35A] text-[#00184C] text-xs font-bold rounded-full"
+          class="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 bg-accent-300 text-primary-500 text-xs font-bold rounded-full"
         >
           Popular
         </span>
@@ -72,7 +72,7 @@ function selectPlan(plan) {
             :key="feature"
             class="flex items-center gap-2 text-sm"
           >
-            <svg class="w-4 h-4 shrink-0" :class="plan.popular ? 'text-[#F9D35A]' : 'text-[#00184C]'" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg class="w-4 h-4 shrink-0" :class="plan.popular ? 'text-accent-300' : 'text-primary-500'" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
             </svg>
             {{ feature }}

@@ -64,10 +64,10 @@ function handleSubmit() {
     <div v-if="quoteData?.selectedPlan" class="bg-gray-50 rounded-xl p-4 mb-6">
       <div class="flex justify-between items-center">
         <div>
-          <p class="font-semibold text-[#00184C]">Plan {{ quoteData.selectedPlan.name }}</p>
+          <p class="font-semibold text-primary-500">Plan {{ quoteData.selectedPlan.name }}</p>
           <p class="text-sm text-gray-500">Cobertura {{ quoteData.selectedPlan.coverage }}</p>
         </div>
-        <span class="text-2xl font-bold text-[#00184C]">${{ quoteData.selectedPlan.price }}</span>
+        <span class="text-2xl font-bold text-primary-500">${{ quoteData.selectedPlan.price }}</span>
       </div>
     </div>
 
@@ -79,7 +79,7 @@ function handleSubmit() {
           type="text"
           inputmode="numeric"
           placeholder="1234 5678 9012 3456"
-          class="w-full h-14 px-4 text-lg bg-white border-2 border-gray-200 rounded-xl focus:border-[#00184C] focus:outline-none focus:ring-4 focus:ring-[#00184C]/10 transition-all"
+          class="w-full h-14 px-4 text-lg bg-white border-2 border-gray-200 rounded-xl focus:border-secondary-300 focus:outline-none focus:ring-4 focus:ring-secondary-300/20 transition-all"
         />
       </div>
       <div>
@@ -88,7 +88,7 @@ function handleSubmit() {
           v-model="cardName"
           type="text"
           placeholder="Como aparece en la tarjeta"
-          class="w-full h-14 px-4 text-lg bg-white border-2 border-gray-200 rounded-xl focus:border-[#00184C] focus:outline-none focus:ring-4 focus:ring-[#00184C]/10 transition-all"
+          class="w-full h-14 px-4 text-lg bg-white border-2 border-gray-200 rounded-xl focus:border-secondary-300 focus:outline-none focus:ring-4 focus:ring-secondary-300/20 transition-all"
         />
       </div>
       <div class="flex gap-4">
@@ -100,7 +100,7 @@ function handleSubmit() {
             type="text"
             inputmode="numeric"
             placeholder="MM/YY"
-            class="w-full h-14 px-4 text-lg text-center bg-white border-2 border-gray-200 rounded-xl focus:border-[#00184C] focus:outline-none focus:ring-4 focus:ring-[#00184C]/10 transition-all"
+            class="w-full h-14 px-4 text-lg text-center bg-white border-2 border-gray-200 rounded-xl focus:border-secondary-300 focus:outline-none focus:ring-4 focus:ring-secondary-300/20 transition-all"
           />
         </div>
         <div class="flex-1">
@@ -111,7 +111,7 @@ function handleSubmit() {
             type="text"
             inputmode="numeric"
             placeholder="123"
-            class="w-full h-14 px-4 text-lg text-center bg-white border-2 border-gray-200 rounded-xl focus:border-[#00184C] focus:outline-none focus:ring-4 focus:ring-[#00184C]/10 transition-all"
+            class="w-full h-14 px-4 text-lg text-center bg-white border-2 border-gray-200 rounded-xl focus:border-secondary-300 focus:outline-none focus:ring-4 focus:ring-secondary-300/20 transition-all"
           />
         </div>
       </div>
@@ -120,7 +120,7 @@ function handleSubmit() {
     <button
       @click="handleSubmit"
       :disabled="!isValid"
-      class="w-full h-14 bg-[#F9D35A] text-[#00184C] font-bold text-lg rounded-xl hover:bg-[#FBE38A] disabled:bg-gray-200 disabled:text-gray-400 transition-all duration-200 shadow-lg shadow-[#F9D35A]/20"
+      class="w-full h-14 bg-accent-300 text-primary-500 font-bold text-lg rounded-xl hover:bg-accent-400 disabled:bg-gray-200 disabled:text-gray-400 transition-all duration-200 shadow-lg shadow-accent/20"
     >
       Pagar {{ formattedPrice }}
     </button>

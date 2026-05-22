@@ -140,16 +140,16 @@ const stepSubtitles = {
 </script>
 
 <template>
-  <div class="min-h-screen bg-slate-50 flex flex-col">
+  <div class="min-h-screen bg-gray-50 flex flex-col">
     <!-- Header -->
     <header class="bg-white border-b border-gray-100 px-4 py-4">
       <div class="max-w-2xl mx-auto">
         <div class="flex items-center justify-between mb-3">
           <div class="flex items-center gap-2">
-            <div class="w-8 h-8 rounded-lg bg-[#00184C] flex items-center justify-center">
+            <div class="w-8 h-8 rounded-lg bg-primary-500 flex items-center justify-center">
               <span class="text-white font-bold text-sm">CA</span>
             </div>
-            <span class="font-semibold text-[#00184C]">Continental Assist</span>
+            <span class="font-semibold text-primary-500">Continental Assist</span>
           </div>
           <span class="text-sm text-gray-400">{{ currentStepIndex + 1 }} / {{ totalSteps }}</span>
         </div>
@@ -162,7 +162,7 @@ const stepSubtitles = {
       <div class="w-full max-w-md">
         <!-- Step Title -->
         <div class="text-center mb-8">
-          <h1 class="text-2xl md:text-3xl font-semibold text-[#00184C] mb-2">
+          <h1 class="text-2xl md:text-3xl font-semibold text-primary-500 mb-2">
             {{ stepTitles[currentStep] }}
           </h1>
           <p class="text-gray-500 text-sm">{{ stepSubtitles[currentStep] }}</p>
@@ -199,7 +199,7 @@ const stepSubtitles = {
         <button
           v-if="currentStepIndex > 0 && currentStep !== 'success'"
           @click="prevStep"
-          class="text-gray-500 hover:text-[#00184C] text-sm font-medium flex items-center gap-1 transition-colors"
+          class="text-gray-500 hover:text-primary-500 text-sm font-medium flex items-center gap-1 transition-colors"
         >
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />

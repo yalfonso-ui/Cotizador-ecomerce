@@ -46,7 +46,7 @@ function handleContinue() {
           inputmode="numeric"
           maxlength="2"
           placeholder="DD"
-          class="w-full h-14 px-4 text-lg text-center bg-white border-2 border-gray-200 rounded-xl focus:border-[#00184C] focus:outline-none focus:ring-4 focus:ring-[#00184C]/10 transition-all"
+          class="w-full h-14 px-4 text-lg text-center bg-white border-2 border-gray-200 rounded-xl focus:border-secondary-300 focus:outline-none focus:ring-4 focus:ring-secondary-300/20 transition-all"
         />
       </div>
       <div class="flex-1">
@@ -58,7 +58,7 @@ function handleContinue() {
           inputmode="numeric"
           maxlength="2"
           placeholder="MM"
-          class="w-full h-14 px-4 text-lg text-center bg-white border-2 border-gray-200 rounded-xl focus:border-[#00184C] focus:outline-none focus:ring-4 focus:ring-[#00184C]/10 transition-all"
+          class="w-full h-14 px-4 text-lg text-center bg-white border-2 border-gray-200 rounded-xl focus:border-secondary-300 focus:outline-none focus:ring-4 focus:ring-secondary-300/20 transition-all"
         />
       </div>
       <div class="flex-1">
@@ -70,7 +70,7 @@ function handleContinue() {
           inputmode="numeric"
           maxlength="4"
           placeholder="AAAA"
-          class="w-full h-14 px-4 text-lg text-center bg-white border-2 border-gray-200 rounded-xl focus:border-[#00184C] focus:outline-none focus:ring-4 focus:ring-[#00184C]/10 transition-all"
+          class="w-full h-14 px-4 text-lg text-center bg-white border-2 border-gray-200 rounded-xl focus:border-secondary-300 focus:outline-none focus:ring-4 focus:ring-secondary-300/20 transition-all"
         />
       </div>
     </div>
@@ -78,7 +78,7 @@ function handleContinue() {
     <button
       @click="handleContinue"
       :disabled="!isValid"
-      class="w-full h-14 bg-[#00184C] text-white font-semibold text-lg rounded-xl hover:bg-[#00133D] disabled:bg-gray-200 disabled:text-gray-400 transition-all duration-200 shadow-lg shadow-[#00184C]/20"
+      class="w-full h-14 bg-accent-300 text-primary-500 font-semibold text-lg rounded-xl hover:bg-accent-400 disabled:bg-gray-200 disabled:text-gray-400 transition-all duration-200 shadow-lg shadow-accent/20"
     >
       Continuar
     </button>

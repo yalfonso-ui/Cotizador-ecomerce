@@ -38,7 +38,7 @@ function handleContinue() {
           v-model="name"
           type="text"
           placeholder="Ej: María García"
-          class="w-full h-14 px-4 text-lg bg-white border-2 border-gray-200 rounded-xl focus:border-[#00184C] focus:outline-none focus:ring-4 focus:ring-[#00184C]/10 transition-all"
+          class="w-full h-14 px-4 text-lg bg-white border-2 border-gray-200 rounded-xl focus:border-secondary-300 focus:outline-none focus:ring-4 focus:ring-secondary-300/20 transition-all"
         />
       </div>
       <div>
@@ -47,7 +47,7 @@ function handleContinue() {
           v-model="email"
           type="email"
           placeholder="Ej: maria@email.com"
-          class="w-full h-14 px-4 text-lg bg-white border-2 border-gray-200 rounded-xl focus:border-[#00184C] focus:outline-none focus:ring-4 focus:ring-[#00184C]/10 transition-all"
+          class="w-full h-14 px-4 text-lg bg-white border-2 border-gray-200 rounded-xl focus:border-secondary-300 focus:outline-none focus:ring-4 focus:ring-secondary-300/20 transition-all"
         />
       </div>
       <div>
@@ -56,7 +56,7 @@ function handleContinue() {
           v-model="phone"
           type="tel"
           placeholder="Ej: +52 55 1234 5678"
-          class="w-full h-14 px-4 text-lg bg-white border-2 border-gray-200 rounded-xl focus:border-[#00184C] focus:outline-none focus:ring-4 focus:ring-[#00184C]/10 transition-all"
+          class="w-full h-14 px-4 text-lg bg-white border-2 border-gray-200 rounded-xl focus:border-secondary-300 focus:outline-none focus:ring-4 focus:ring-secondary-300/20 transition-all"
         />
       </div>
     </div>
@@ -64,7 +64,7 @@ function handleContinue() {
     <button
       @click="handleContinue"
       :disabled="!isValid"
-      class="w-full h-14 bg-[#00184C] text-white font-semibold text-lg rounded-xl hover:bg-[#00133D] disabled:bg-gray-200 disabled:text-gray-400 transition-all duration-200 shadow-lg shadow-[#00184C]/20"
+      class="w-full h-14 bg-accent-300 text-primary-500 font-semibold text-lg rounded-xl hover:bg-accent-400 disabled:bg-gray-200 disabled:text-gray-400 transition-all duration-200 shadow-lg shadow-accent/20"
     >
       Continuar
     </button>

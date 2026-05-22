@@ -52,7 +52,7 @@ function selectCountry(country) {
         v-model="searchQuery"
         type="text"
         placeholder="Buscar país..."
-        class="w-full h-14 pl-12 pr-4 text-lg bg-white border-2 border-gray-200 rounded-xl focus:border-[#00184C] focus:outline-none focus:ring-4 focus:ring-[#00184C]/10 transition-all"
+        class="w-full h-14 pl-12 pr-4 text-lg bg-white border-2 border-gray-200 rounded-xl focus:border-secondary-300 focus:outline-none focus:ring-4 focus:ring-secondary-300/20 transition-all"
       />
     </div>
 
@@ -62,7 +62,7 @@ function selectCountry(country) {
         v-for="country in filteredCountries"
         :key="country.code"
         @click="selectCountry(country)"
-        class="flex items-center gap-3 p-4 rounded-xl border-2 border-gray-100 bg-white hover:border-[#00184C] hover:bg-[#00184C] hover:text-white group transition-all duration-200 text-left"
+        class="flex items-center gap-3 p-4 rounded-xl border-2 border-gray-100 bg-white hover:border-primary-500 hover:bg-primary-500 group transition-all duration-200 text-left"
       >
         <span class="text-2xl">{{ country.flag }}</span>
         <span class="font-medium text-gray-700 group-hover:text-white">{{ country.name }}</span>
