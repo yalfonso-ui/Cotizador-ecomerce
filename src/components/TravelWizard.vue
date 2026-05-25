@@ -11,6 +11,7 @@ import StepPlans from './steps/StepPlans.vue'
 import StepPersonal from './steps/StepPersonal.vue'
 import StepSummary from './steps/StepSummary.vue'
 import PaymentStep from './steps/PaymentStep.vue'
+import SuccessStep from './steps/SuccessStep.vue'
 
 const showLanding = ref(true)
 const showWizard = ref(false)
@@ -27,7 +28,7 @@ const formData = ref({
   personalData: { name: '', email: '', phone: '' }
 })
 
-const TOTAL_STEPS = 9
+const TOTAL_STEPS = 10
 const progress = computed(() => ((currentStep.value) / (TOTAL_STEPS - 1)) * 100)
 
 const stepTitles = [
@@ -39,7 +40,8 @@ const stepTitles = [
   { title: 'Elige tu plan de protección', subtitle: 'Compara los planes disponibles' },
   { title: 'Tus datos', subtitle: 'Completa tu información personal' },
   { title: 'Resumen de tu viaje', subtitle: 'Revisa y confirma tu información' },
-  { title: 'Completa tu pago', subtitle: 'Ingresa los datos de tu tarjeta' }
+  { title: 'Completa tu pago', subtitle: 'Ingresa los datos de tu tarjeta' },
+  { title: '¡Viaje confirmado!', subtitle: 'Tu seguro está activo' }
 ]
 
 const planPrices = {
@@ -137,15 +139,20 @@ watch(dateRange, (val) => {
       <div v-if="showWizard" class="min-h-screen flex flex-col">
         <header class="bg-white border-b border-gray-100 px-4 py-4">
           <div class="max-w-2xl mx-auto">
-            <div class="flex items-center justify-between mb-3">
-              <div class="flex items-center">
+            <div class="flex items-center justify-between mb-4">
+              <div class="flex items-center gap-3">
                 <img src="@/assets/images/uploads/Logotipo PNG.png" alt="Continental Assist Logo" class="h-10 w-auto" />
               </div>
-              <span class="text-sm text-gray-400">{{ currentStep + 1 }} / {{ TOTAL_STEPS }}</span>
+              <div class="flex items-center gap-3">
+                <span class="text-sm font-medium" :class="currentStep === 9 ? 'text-green-500' : 'text-[#00184C]'">
+                  {{ currentStep === 9 ? '¡Completado!' : `Paso ${currentStep + 1} de ${TOTAL_STEPS}` }}
+                </span>
+              </div>
             </div>
-            <div class="h-1 bg-gray-200 rounded-full overflow-hidden">
+            <!-- Progress bar más visible -->
+            <div class="h-2 bg-gray-200 rounded-full overflow-hidden shadow-inner">
               <div
-                class="h-full bg-[#00184C] rounded-full transition-all duration-500 ease-out"
+                class="h-full bg-gradient-to-r from-[#00184C] to-[#00D1FF] rounded-full transition-all duration-500 ease-out shadow-lg shadow-cyan-500/30"
                 :style="{ width: progress + '%' }"
               />
             </div>
@@ -156,7 +163,7 @@ watch(dateRange, (val) => {
           <div class="w-full max-w-2xl">
             <Transition :name="'slide-' + direction" mode="out-in">
               <div :key="currentStep" class="bg-white rounded-2xl shadow-lg p-6 md:p-8 border border-gray-100">
-                <div class="text-center mb-8">
+                <div v-if="currentStep !== 9" class="text-center mb-8">
                   <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-cyan-100 mb-4">
                     <span class="text-3xl">{{ ['🌎', '✈️', '📅', '👥', '🎂', '🛡️', '👤', '📋', '💳', '✅'][currentStep] }}</span>
                   </div>
@@ -165,16 +172,16 @@ watch(dateRange, (val) => {
                 </div>
 
 <div v-if="currentStep === 0">
-                  <StepOrigin :modelValue="formData.origin" @update="(v) => nextStep({ origin: v })" />
+                  <StepOrigin :modelValue="formData.origin" @next="nextStep" />
                 </div>
                 <div v-else-if="currentStep === 1">
-                  <StepDestination :modelValue="formData.destination" @update="(v) => nextStep({ destination: v })" />
+                  <StepDestination :modelValue="formData.destination" @next="nextStep" />
                 </div>
                 <div v-else-if="currentStep === 2">
                   <StepDates @next="nextStep" />
                 </div>
                 <div v-else-if="currentStep === 3">
-                  <StepTravelers :modelValue="formData.travelers" @update="(v) => nextStep({ travelers: v })" />
+                  <StepTravelers :modelValue="formData.travelers" @next="nextStep" />
                 </div>
                 <div v-else-if="currentStep === 4">
                   <StepBirthdate v-model="formData.birthdate" @next="nextStep" />
@@ -183,7 +190,7 @@ watch(dateRange, (val) => {
                   <StepPlans v-model="formData.selectedPlan" @next="nextStep" />
                 </div>
                 <div v-else-if="currentStep === 6">
-                  <StepPersonal v-model="formData.personalData" @next="nextStep" />
+                  <StepPersonal v-model="formData.personalData" :selectedPlan="formData.selectedPlan" @next="nextStep" />
                 </div>
                 <div v-else-if="currentStep === 7">
                   <StepSummary :data="formData" @go-to-step="goToStep" @pay="handlePay" :isFinal="false" />
@@ -192,11 +199,15 @@ watch(dateRange, (val) => {
                   <PaymentStep
                     :amount="getPlanPrice()"
                     :planName="getPlanName()"
-                    @success="handlePaymentSuccess"
+                    @payment-success="handlePaymentSuccess"
                   />
                 </div>
                 <div v-else-if="currentStep === 9">
-                  <StepSummary :data="formData" @go-to-step="goToStep" @pay="handlePay" :isFinal="true" />
+                  <SuccessStep 
+                    :data="formData" 
+                    :amount="getPlanPrice()"
+                    @restart-flow="restart"
+                  />
                 </div>
               </div>
             </Transition>

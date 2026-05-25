@@ -89,7 +89,7 @@ function handlePay() {
           <button
             v-if="!isFinal"
             @click="$emit('go-to-step', 0)"
-            class="opacity-0 group-hover:opacity-100 flex items-center gap-1 text-cyan-600 hover:text-cyan-700 text-sm font-medium transition-all duration-200 px-3 py-1.5 rounded-lg hover:bg-cyan-50"
+            class="flex items-center gap-1 text-[#00D1FF] hover:text-[#00184C] text-sm font-medium transition-all duration-200 px-3 py-1.5 rounded-lg hover:bg-cyan-50 active:bg-cyan-100"
           >
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
@@ -115,7 +115,7 @@ function handlePay() {
           <button
             v-if="!isFinal"
             @click="$emit('go-to-step', 2)"
-            class="opacity-0 group-hover:opacity-100 flex items-center gap-1 text-cyan-600 hover:text-cyan-700 text-sm font-medium transition-all duration-200 px-3 py-1.5 rounded-lg hover:bg-cyan-50"
+            class="flex items-center gap-1 text-[#00D1FF] hover:text-[#00184C] text-sm font-medium transition-all duration-200 px-3 py-1.5 rounded-lg hover:bg-cyan-50 active:bg-cyan-100"
           >
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
@@ -207,18 +207,14 @@ function handlePay() {
       v-if="data?.selectedPlan && !isFinal"
       @click="handlePay"
       :disabled="isProcessing"
-      class="w-full h-16 font-bold text-xl rounded-2xl transition-all duration-200 transform hover:scale-105 active:scale-95 flex items-center justify-center gap-3"
-      :class="isProcessing ? 'bg-gray-300 text-gray-500 cursor-wait' : 'bg-gradient-to-r from-yellow-400 to-yellow-500 hover:from-yellow-500 hover:to-yellow-600 text-gray-900 shadow-lg shadow-yellow-400/30'"
+      class="w-full bg-yellow-400 hover:bg-yellow-500 text-slate-900 font-bold py-3 px-4 rounded-xl transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
     >
-      <svg v-if="isProcessing" class="animate-spin w-6 h-6" fill="none" viewBox="0 0 24 24">
+      <svg v-if="isProcessing" class="animate-spin w-5 h-5" fill="none" viewBox="0 0 24 24">
         <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
         <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
       </svg>
       <span v-if="isProcessing">Preparando pago...</span>
       <span v-else>Pagar ${{ getPlanPrice() }} USD</span>
-      <svg v-if="!isProcessing" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6" />
-      </svg>
     </button>
 
     <div class="flex items-center justify-center gap-2 text-sm text-gray-500">

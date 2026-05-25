@@ -1,7 +1,7 @@
 <script setup>
 import { ref } from 'vue'
 
-const emit = defineEmits(['update'])
+const emit = defineEmits(['update', 'next'])
 
 const props = defineProps({
   modelValue: String
@@ -19,6 +19,9 @@ const options = [
 function select(option) {
   selectedId.value = option.id
   emit('update', option.id)
+  setTimeout(() => {
+    emit('next', { travelers: option.id })
+  }, 300)
 }
 </script>
 
@@ -31,8 +34,8 @@ function select(option) {
         @click="select(option)"
         class="relative p-6 rounded-2xl border-2 bg-white transition-all duration-200 text-center"
         :class="selectedId === option.id
-          ? 'border-cyan-500 ring-4 ring-cyan-500/20 bg-cyan-50/30 shadow-lg'
-          : 'border-gray-100 hover:border-cyan-500 hover:ring-4 hover:ring-cyan-500/20'"
+          ? 'border-cyan-500 ring-4 ring-cyan-500 bg-cyan-50 shadow-lg'
+          : 'border-gray-100 hover:border-cyan-500 hover:ring-4 hover:ring-cyan-500'"
       >
         <div v-if="selectedId === option.id" class="absolute -top-2 -right-2 w-7 h-7 rounded-full bg-cyan-500 flex items-center justify-center">
           <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -40,13 +43,13 @@ function select(option) {
           </svg>
         </div>
         <span class="text-5xl mb-3 block">{{ option.icon }}</span>
-        <h3 class="font-semibold text-lg mb-1" :class="selectedId === option.id ? 'text-cyan-700' : 'text-gray-800'">
+        <h3 class="font-semibold text-lg mb-1" :class="selectedId === option.id ? 'text-cyan-700' : 'text-slate-900'">
           {{ option.label }}
         </h3>
-        <p class="text-sm mb-3" :class="selectedId === option.id ? 'text-cyan-600/70' : 'text-gray-500'">
+        <p class="text-sm mb-3" :class="selectedId === option.id ? 'text-cyan-600' : 'text-gray-500'">
           {{ option.sublabel }}
         </p>
-        <span class="text-sm font-medium" :class="selectedId === option.id ? 'text-cyan-600' : 'text-[#00184C]'">
+        <span class="text-sm font-medium" :class="selectedId === option.id ? 'text-cyan-600' : 'text-slate-900'">
           {{ option.price }}
         </span>
       </button>

@@ -4,10 +4,11 @@ import { ref, computed } from 'vue'
 const props = defineProps({
   modelValue: String
 })
-const emit = defineEmits(['update'])
+const emit = defineEmits(['update', 'next'])
 
 const search = ref('')
 const selectedCode = ref(props.modelValue?.code || '')
+const selectedCountry = ref(props.modelValue || null)
 
 const countries = [
   { code: 'CO', name: 'Colombia', flag: '🇨🇴' },
@@ -32,7 +33,14 @@ const filtered = computed(() => {
 
 function select(country) {
   selectedCode.value = country.code
+  selectedCountry.value = country
   emit('update', country)
+}
+
+function handleContinue() {
+  if (selectedCountry.value) {
+    emit('next', { origin: selectedCountry.value })
+  }
 }
 </script>
 
@@ -73,5 +81,21 @@ function select(country) {
     <p v-if="filtered.length === 0" class="text-center text-gray-500 py-8">
       No encontramos "{{ search }}"
     </p>
+
+    <button
+      @click="handleContinue"
+      :disabled="!selectedCountry"
+      class="w-full bg-yellow-400 hover:bg-yellow-500 text-slate-900 font-bold py-3 px-4 rounded-xl transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+    >
+      <template v-if="selectedCountry">
+        <span>Continuar</span>
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6" />
+        </svg>
+      </template>
+      <template v-else>
+        <span>Selecciona un país</span>
+      </template>
+    </button>
   </div>
 </template>

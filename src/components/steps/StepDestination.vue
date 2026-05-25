@@ -4,10 +4,11 @@ import { ref, computed } from 'vue'
 const props = defineProps({
   modelValue: String
 })
-const emit = defineEmits(['update'])
+const emit = defineEmits(['update', 'next'])
 
 const search = ref('')
 const selectedCode = ref(props.modelValue?.code || '')
+const selectedDest = ref(props.modelValue || null)
 
 const destinations = [
   { code: 'US', name: 'Estados Unidos', flag: '🇺🇸', popular: true },
@@ -48,7 +49,14 @@ const filtered = computed(() => {
 
 function select(dest) {
   selectedCode.value = dest.code
+  selectedDest.value = dest
   emit('update', dest)
+}
+
+function handleContinue() {
+  if (selectedDest.value) {
+    emit('next', { destination: selectedDest.value })
+  }
 }
 </script>
 
@@ -138,5 +146,21 @@ function select(dest) {
         No encontramos "{{ search }}"
       </p>
     </div>
+
+    <button
+      @click="handleContinue"
+      :disabled="!selectedDest"
+      class="w-full bg-yellow-400 hover:bg-yellow-500 text-slate-900 font-bold py-3 px-4 rounded-xl transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+    >
+      <template v-if="selectedDest">
+        <span>Continuar</span>
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6" />
+        </svg>
+      </template>
+      <template v-else>
+        <span>Selecciona un destino</span>
+      </template>
+    </button>
   </div>
 </template>

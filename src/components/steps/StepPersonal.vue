@@ -3,6 +3,13 @@ import { ref, computed } from 'vue'
 
 const emit = defineEmits(['next'])
 
+const props = defineProps({
+  selectedPlan: {
+    type: Object,
+    default: null
+  }
+})
+
 const name = ref('')
 const email = ref('')
 const phone = ref('')
@@ -23,6 +30,9 @@ const nameTouched = ref(false)
 const emailTouched = ref(false)
 const phoneTouched = ref(false)
 
+const planNames = { essential: 'Essential', explorer: 'Explorer', premium: 'Premium' }
+const planPrices = { essential: 25, explorer: 40, premium: 65 }
+
 function handleNext() {
   nameTouched.value = true
   emailTouched.value = true
@@ -36,6 +46,23 @@ function handleNext() {
 
 <template>
   <div class="space-y-6">
+    <!-- Mini plan summary - genera confianza mostrando lo que eligió -->
+    <div v-if="selectedPlan" class="bg-gradient-to-r from-[#00184C] to-[#0B1A3D] rounded-xl p-4 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-lg bg-yellow-400/20 flex items-center justify-center">
+          <span class="text-lg">🛡️</span>
+        </div>
+        <div>
+          <p class="text-xs text-cyan-400 uppercase tracking-wide">Plan seleccionado</p>
+          <p class="text-white font-semibold">{{ planNames[selectedPlan] || selectedPlan }}</p>
+        </div>
+      </div>
+      <div class="text-right">
+        <p class="text-2xl font-bold text-yellow-400">${{ planPrices[selectedPlan] || '?' }}</p>
+        <p class="text-xs text-gray-400">USD</p>
+      </div>
+    </div>
+
     <div class="space-y-4">
       <div>
         <label class="block text-sm font-medium text-gray-600 mb-2">Nombre completo</label>
@@ -84,12 +111,20 @@ function handleNext() {
     <button
       @click="handleNext"
       :disabled="!isValid"
-      class="w-full h-14 font-semibold text-lg rounded-xl transition-all duration-200 shadow-lg"
+      class="w-full h-14 font-semibold text-lg rounded-xl transition-all duration-200 shadow-lg flex items-center justify-center gap-2"
       :class="isValid
-        ? 'bg-yellow-400 hover:bg-yellow-500 shadow-yellow-400/20 text-gray-900'
-        : 'bg-gray-200 text-gray-400 cursor-not-allowed hover:bg-gray-200'"
+        ? 'bg-yellow-400 hover:bg-yellow-500 shadow-yellow-400/30 text-gray-900'
+        : 'bg-gray-200 text-gray-400 cursor-not-allowed'"
     >
-      Continuar
+      <template v-if="isValid">
+        <span>Continuar al pago</span>
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6" />
+        </svg>
+      </template>
+      <template v-else>
+        <span>Completa tus datos</span>
+      </template>
     </button>
 
     <p v-if="!isValid && (nameTouched || emailTouched || phoneTouched)" class="text-center text-gray-400 text-sm">

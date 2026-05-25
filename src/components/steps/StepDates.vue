@@ -32,20 +32,17 @@ watch(dateRange, (val) => {
   if (val && val[0] && val[1]) {
     startTouched.value = true
     endTouched.value = true
+    setTimeout(() => {
+      const formatDate = (d) => d ? new Date(d).toISOString().split('T')[0] : null
+      emit('next', {
+        dates: {
+          start: formatDate(startDate.value),
+          end: formatDate(endDate.value)
+        }
+      })
+    }, 300)
   }
 })
-
-function handleNext() {
-  if (isValid.value) {
-    const formatDate = (d) => d ? new Date(d).toISOString().split('T')[0] : null
-    emit('next', {
-      dates: {
-        start: formatDate(startDate.value),
-        end: formatDate(endDate.value)
-      }
-    })
-  }
-}
 
 function getTripDuration() {
   if (!startDate.value || !endDate.value) return ''
@@ -63,7 +60,7 @@ function formatDisplayDate(date) {
 
 <template>
   <div class="space-y-6">
-    <div class="bg-slate-50 rounded-2xl p-6 border border-slate-100">
+    <div class="bg-white rounded-2xl p-6 border border-slate-100">
       <DatePicker
         v-model="dateRange"
         selectionMode="range"
@@ -88,16 +85,72 @@ function formatDisplayDate(date) {
       <p class="text-cyan-700 font-medium">{{ formatDisplayDate(endDate) }}</p>
       <p class="text-cyan-600 text-sm mt-1 font-medium">{{ getTripDuration() }}</p>
     </div>
-
-    <button
-      @click="handleNext"
-      :disabled="!isValid"
-      class="w-full h-14 font-semibold text-lg rounded-xl transition-all duration-200 shadow-lg"
-      :class="isValid
-        ? 'bg-yellow-400 hover:bg-yellow-500 shadow-yellow-400/20 text-gray-900'
-        : 'bg-gray-200 text-gray-400 cursor-not-allowed hover:bg-gray-200'"
-    >
-      Continuar
-    </button>
   </div>
 </template>
+
+<style scoped>
+:deep(.p-datepicker) {
+  --p-datepicker-range-start-background-color: #06b6d4;
+  --p-datepicker-range-end-background-color: #06b6d4;
+}
+
+:deep(.p-datepicker-range-start),
+:deep(.p-datepicker-range-end) {
+  background-color: #06b6d4 !important;
+  border-color: #06b6d4 !important;
+}
+
+:deep(.p-highlight) {
+  background-color: #06b6d4 !important;
+  border-color: #06b6d4 !important;
+}
+
+:deep(.p-datepicker-range) {
+  background-color: rgba(6, 182, 212, 0.2) !important;
+}
+
+:deep(.p-datepicker-day-pivot) {
+  background-color: #06b6d4 !important;
+  color: white !important;
+}
+
+:deep(.p-datepicker-today) {
+  border-color: #06b6d4 !important;
+}
+
+:deep(.p-datepicker-day-selected) {
+  background-color: #06b6d4 !important;
+  color: white !important;
+}
+
+:deep(.p-datepicker-day-in-range) {
+  background-color: rgba(6, 182, 212, 0.15) !important;
+  color: #0f172a !important;
+}
+
+:deep(.p-datepicker-day-in-selectable-range) {
+  color: #0f172a !important;
+}
+
+:deep(.p-datepicker-day-in-selectable-range:hover) {
+  background-color: rgba(6, 182, 212, 0.2) !important;
+}
+
+:deep(.p-button.p-datepicker-today-button) {
+  background-color: #06b6d4 !important;
+  border-color: #06b6d4 !important;
+  color: white !important;
+}
+
+:deep(.p-button.p-datepicker-today-button:hover) {
+  background-color: #0891b2 !important;
+}
+
+:deep(.p-datepicker-close-button) {
+  color: #0f172a !important;
+}
+
+:deep(.p-datepicker-close-button:hover) {
+  color: #06b6d4 !important;
+}
+</style>

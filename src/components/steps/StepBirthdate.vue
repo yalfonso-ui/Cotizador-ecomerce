@@ -131,12 +131,51 @@ function handleNext() {
       </div>
     </div>
 
+    <!-- Progress indicator -->
+    <div class="flex items-center justify-center gap-1 mb-4">
+      <div class="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold transition-all duration-300"
+        :class="day.value ? 'bg-cyan-500 text-white' : 'bg-gray-200 text-gray-400'">
+        <span v-if="!day.value">1</span>
+        <svg v-else class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+        </svg>
+      </div>
+      <div class="w-8 h-0.5" :class="month.value ? 'bg-cyan-500' : 'bg-gray-200'"></div>
+      <div class="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold transition-all duration-300"
+        :class="month.value ? 'bg-cyan-500 text-white' : 'bg-gray-200 text-gray-400'">
+        <span v-if="!month.value">2</span>
+        <svg v-else class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+        </svg>
+      </div>
+      <div class="w-8 h-0.5" :class="year.value ? 'bg-cyan-500' : 'bg-gray-200'"></div>
+      <div class="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold transition-all duration-300"
+        :class="year.value ? 'bg-cyan-500 text-white' : 'bg-gray-200 text-gray-400'">
+        <span v-if="!year.value">3</span>
+        <svg v-else class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+        </svg>
+      </div>
+    </div>
+
+    <!-- CTA Button - Ahora visible y con feedback -->
     <button
       @click="handleNext"
       :disabled="!isValid"
-      class="w-full h-14 bg-yellow-400 text-gray-900 font-semibold text-lg rounded-xl hover:bg-yellow-500 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-yellow-400 transition-all duration-200 shadow-lg shadow-yellow-400/20"
+      class="w-full h-14 font-semibold text-lg rounded-xl transition-all duration-200 shadow-lg flex items-center justify-center gap-2"
+      :class="isValid
+        ? 'bg-yellow-400 hover:bg-yellow-500 shadow-yellow-400/30 text-gray-900'
+        : 'bg-gray-200 text-gray-400 cursor-not-allowed'"
     >
-      Continuar
+      <template v-if="isValid">
+        <span>Continuar</span>
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6" />
+        </svg>
+      </template>
+      <template v-else>
+        <span>Ingresa tu fecha de nacimiento</span>
+      </template>
     </button>
   </div>
 </template>

@@ -1,7 +1,7 @@
 <script setup>
 import { ref, computed } from 'vue'
 
-const emit = defineEmits(['success', 'error'])
+const emit = defineEmits(['payment-success', 'error'])
 
 const props = defineProps({
   amount: {
@@ -20,20 +20,7 @@ const cardName = ref('')
 const expiryDate = ref('')
 const cvv = ref('')
 
-const cardNumberValid = computed(() => cardNumber.value.replace(/\s/g, '').length >= 16)
-const cardNameValid = computed(() => cardName.value.trim().length >= 3)
-const expiryValid = computed(() => {
-  const parts = expiryDate.value.split('/')
-  if (parts.length !== 2) return false
-  const month = parseInt(parts[0])
-  const year = parseInt('20' + parts[1])
-  if (month < 1 || month > 12) return false
-  if (year < new Date().getFullYear()) return false
-  return true
-})
-const cvvValid = computed(() => cvv.value.length >= 3)
-
-const isFormValid = computed(() => cardNumberValid.value && cardNameValid.value && expiryValid.value && cvvValid.value)
+const isFormValid = computed(() => cardNumber.value.length > 5 && cardName.value.length > 2 && expiryDate.value.length >= 4 && cvv.value.length >= 3)
 
 function formatCardNumber(e) {
   let value = e.target.value.replace(/\D/g, '')
@@ -52,12 +39,12 @@ function formatExpiry(e) {
 
 function handleSubmit() {
   if (!isFormValid.value) return
-  
+
   isProcessing.value = true
-  
+
   setTimeout(() => {
     isProcessing.value = false
-    emit('success', {
+    emit('payment-success', {
       cardLast4: cardNumber.value.replace(/\s/g, '').slice(-4),
       amount: props.amount
     })
@@ -67,19 +54,32 @@ function handleSubmit() {
 
 <template>
   <div class="space-y-6">
-    <div class="text-center mb-8">
-      <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-cyan-100 mb-4">
-        <span class="text-3xl">🔒</span>
+    <div class="bg-gradient-to-r from-[#00184C] to-[#0B1A3D] rounded-2xl p-5">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center gap-4">
+          <div class="w-12 h-12 rounded-xl bg-yellow-400/20 flex items-center justify-center">
+            <span class="text-2xl">🛡️</span>
+          </div>
+          <div>
+            <p class="text-xs text-cyan-400 uppercase tracking-wide mb-1">Plan elegido</p>
+            <p class="text-white font-bold text-lg">{{ planName || 'Explorer' }}</p>
+            <p class="text-gray-400 text-sm">
+              Cobertura 
+              {{ planName === 'Essential' ? '$15,000' : planName === 'Explorer' ? '$50,000' : planName === 'Premium' ? '$100,000' : '$50,000' }} USD
+            </p>
+          </div>
+        </div>
+        <div class="text-right">
+          <p class="text-3xl font-bold text-yellow-400">${{ amount || 40 }}</p>
+          <p class="text-gray-400 text-sm">USD</p>
+        </div>
       </div>
-      <h2 class="text-2xl font-semibold text-gray-900 mb-2">Completa tu pago</h2>
-      <p class="text-gray-500">Total a pagar: <span class="font-bold text-cyan-600">${{ amount }} USD</span></p>
-      <p v-if="planName" class="text-sm text-gray-400 mt-1">Plan {{ planName }}</p>
     </div>
 
-    <div class="bg-slate-50 rounded-2xl p-6 border border-slate-100">
+    <div class="bg-white rounded-2xl p-6 border border-gray-200">
       <div class="space-y-4">
         <div>
-          <label class="block text-sm font-medium text-gray-600 mb-2">Número de tarjeta</label>
+          <label class="block text-sm font-medium text-slate-900 mb-2">Número de tarjeta</label>
           <div class="relative">
             <div class="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400">
               <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -99,7 +99,7 @@ function handleSubmit() {
         </div>
 
         <div>
-          <label class="block text-sm font-medium text-gray-600 mb-2">Nombre en la tarjeta</label>
+          <label class="block text-sm font-medium text-slate-900 mb-2">Nombre en la tarjeta</label>
           <input
             v-model="cardName"
             type="text"
@@ -110,7 +110,7 @@ function handleSubmit() {
 
         <div class="grid grid-cols-2 gap-4">
           <div>
-            <label class="block text-sm font-medium text-gray-600 mb-2">Fecha de vencimiento</label>
+            <label class="block text-sm font-medium text-slate-900 mb-2">Fecha de vencimiento</label>
             <input
               v-model="expiryDate"
               @input="formatExpiry"
@@ -122,7 +122,7 @@ function handleSubmit() {
             />
           </div>
           <div>
-            <label class="block text-sm font-medium text-gray-600 mb-2">Código de seguridad</label>
+            <label class="block text-sm font-medium text-slate-900 mb-2">Código de seguridad</label>
             <div class="relative">
               <input
                 v-model="cvv"
@@ -144,8 +144,8 @@ function handleSubmit() {
     </div>
 
     <div class="flex items-center justify-center gap-2 text-sm text-gray-500 py-2">
-      <span class="text-lg">🔒</span>
-      <span>Tus datos están protegidos y encriptados de extremo a extremo</span>
+      <span>🔒</span>
+      <span>Pago 100% seguro. Datos encriptados de extremo a extremo.</span>
     </div>
 
     <div class="flex items-center justify-center gap-4 py-3">
@@ -157,26 +157,14 @@ function handleSubmit() {
     <button
       @click="handleSubmit"
       :disabled="!isFormValid || isProcessing"
-      class="w-full h-16 font-bold text-xl rounded-2xl transition-all duration-200 transform hover:scale-105 active:scale-95 flex items-center justify-center gap-3"
-      :class="isProcessing
-        ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-        : isFormValid
-          ? 'bg-gradient-to-r from-cyan-500 to-cyan-600 hover:from-cyan-600 hover:to-cyan-700 text-white shadow-lg shadow-cyan-500/30'
-          : 'bg-gray-200 text-gray-400 cursor-not-allowed'"
+      class="w-full bg-yellow-400 hover:bg-yellow-500 text-slate-900 font-bold py-3 px-4 rounded-xl transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
     >
-      <template v-if="isProcessing">
-        <svg class="animate-spin w-6 h-6" fill="none" viewBox="0 0 24 24">
-          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-        </svg>
-        Procesando...
-      </template>
-      <template v-else>
-        Confirmar Pago
-        <svg v-if="isFormValid" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6" />
-        </svg>
-      </template>
+      <svg v-if="isProcessing" class="animate-spin w-5 h-5" fill="none" viewBox="0 0 24 24">
+        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+      </svg>
+      <span v-if="isProcessing">Procesando pago...</span>
+      <span v-else>Confirmar Pago - ${{ amount || 40 }} USD</span>
     </button>
   </div>
 </template>
