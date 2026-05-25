@@ -1,0 +1,940 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Continental Assist - Seguro de Viaje</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/react-datepicker@4.16.0/dist/react-datepicker.min.css" />
+  <style>
+    body { font-family: 'Inter', sans-serif; }
+    .fade-enter { opacity: 0; }
+    .fade-enter-active { opacity: 1; transition: opacity 0.3s ease; }
+    .fade-exit { opacity: 1; }
+    .fade-exit-active { opacity: 0; transition: opacity 0.3s ease; }
+    .slide-left-enter { opacity: 0; transform: translateX(40px); }
+    .slide-left-enter-active { opacity: 1; transform: translateX(0); transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1); }
+    .slide-left-exit { opacity: 1; transform: translateX(0); }
+    .slide-left-exit-active { opacity: 0; transform: translateX(-40px); transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1); }
+    .slide-right-enter { opacity: 0; transform: translateX(-40px); }
+    .slide-right-enter-active { opacity: 1; transform: translateX(0); transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1); }
+    .slide-right-exit { opacity: 1; transform: translateX(0); }
+    .slide-right-exit-active { opacity: 0; transform: translateX(40px); transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1); }
+    .datepicker-custom .react-datepicker-wrapper { width: 100%; }
+    .datepicker-custom .react-datepicker__input-container input {
+      width: 100%;
+      height: 56px;
+      padding: 0 16px;
+      font-size: 18px;
+      border: 2px solid #e5e7eb;
+      border-radius: 12px;
+      outline: none;
+      transition: all 0.2s;
+    }
+    .datepicker-custom .react-datepicker__input-container input:focus {
+      border-color: #43D3FF;
+      box-shadow: 0 0 0 4px rgba(67, 211, 255, 0.2);
+    }
+  </style>
+</head>
+<body class="bg-slate-50 min-h-screen">
+  <div id="root"></div>
+
+  <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <script src="https://unpkg.com/react-datepicker@4.16.0/dist/react-datepicker.min.js"></script>
+
+  <script type="text/babel">
+    const { useState, useEffect, useRef } = React;
+    const DatePicker = window.DatePicker || window.ReactDatePicker;
+
+    // ============================================
+    // LANDING PAGE
+    // ============================================
+    function LandingPage({ onStart }) {
+      const [visible, setVisible] = useState(true);
+
+      const handleStart = () => {
+        setVisible(false);
+        setTimeout(() => {
+          onStart();
+        }, 300);
+      };
+
+      return (
+        <div className={`min-h-screen bg-[#00184C] relative overflow-hidden transition-opacity duration-300 ${visible ? 'opacity-100' : 'opacity-0'}`}>
+          {/* Background Image with Overlay */}
+          <div className="absolute inset-0 z-0">
+            <img 
+              src="https://images.unsplash.com/photo-1488085061387-422e29b40080?w=1920&h=1080&fit=crop" 
+              alt="Viajero" 
+              className="w-full h-full object-cover" 
+            />
+            <div className="absolute inset-0 bg-[#00184C]/70"></div>
+            <div className="absolute inset-0 bg-gradient-to-r from-[#00184C]/90 via-transparent to-transparent"></div>
+          </div>
+
+          {/* Content */}
+          <div className="relative z-10 min-h-screen flex items-center">
+            <div className="max-w-5xl mx-auto px-6 py-16 w-full">
+              <div className="max-w-2xl">
+                {/* Badge */}
+                <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm px-4 py-2 rounded-full mb-6">
+                  <span className="relative flex h-2 w-2">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-yellow-400 opacity-75"></span>
+                    <span className="relative inline-flex rounded-full h-2 w-2 bg-yellow-400"></span>
+                  </span>
+                  <span className="text-white/90 text-sm font-medium">Potenciado con IA</span>
+                </div>
+
+                {/* Title */}
+                <h1 className="text-4xl md:text-5xl lg:text-6xl font-semibold text-white mb-6 leading-tight">
+                  Viaja con <span className="text-yellow-400">confianza</span>,<br />
+                  vuelve con <span className="text-cyan-400">historias</span>
+                </h1>
+
+                {/* Subtitle */}
+                <p className="text-xl text-white/80 mb-4">
+                  <strong className="text-yellow-400">¿Sabías que una emergencia médica en EE.UU. puede costar más de $50,000?</strong>
+                </p>
+                <p className="text-lg text-white/70 mb-8">
+                  Protege tu aventura desde solo <strong className="text-yellow-400">$25 USD</strong> — menos que tu café diario.
+                </p>
+
+                {/* CTA Button */}
+                <button
+                  onClick={handleStart}
+                  className="inline-flex items-center gap-3 bg-yellow-400 text-[#00184C] font-bold px-8 py-4 rounded-xl hover:bg-yellow-500 transition-all duration-200 shadow-lg shadow-yellow-400/30 text-lg"
+                >
+                  <span className="text-xl">✨</span>
+                  ¡Comenzar ahora!
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                  </svg>
+                </button>
+
+                {/* Trust Indicators */}
+                <div className="flex flex-wrap gap-6 mt-12">
+                  <div className="flex items-center gap-2">
+                    <div className="w-10 h-10 rounded-full bg-white/10 backdrop-blur-sm flex items-center justify-center border border-white/20">
+                      <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                      </svg>
+                    </div>
+                    <span className="text-white/90 text-sm font-medium">Aseguradora</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-10 h-10 rounded-full bg-white/10 backdrop-blur-sm flex items-center justify-center border border-white/20">
+                      <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                    </div>
+                    <span className="text-white/90 text-sm font-medium">24/7</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-10 h-10 rounded-full bg-white/10 backdrop-blur-sm flex items-center justify-center border border-white/20">
+                      <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                      </svg>
+                    </div>
+                    <span className="text-white/90 text-sm font-medium">+500K</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-10 h-10 rounded-full bg-white/10 backdrop-blur-sm flex items-center justify-center border border-white/20">
+                      <svg className="w-5 h-5 text-yellow-400 fill-current" viewBox="0 0 24 24">
+                        <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+                      </svg>
+                    </div>
+                    <span className="text-white/90 text-sm font-medium">4.9/5</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Wave Bottom */}
+          <div className="absolute bottom-0 left-0 right-0 z-10">
+            <svg viewBox="0 0 1440 60" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full h-auto">
+              <path d="M0 60L60 56C120 52 240 44 360 40C480 36 600 36 720 40C840 44 960 52 1080 54C1200 56 1320 52 1380 50L1440 48V60H0Z" fill="#f8fafc"/>
+            </svg>
+          </div>
+        </div>
+      );
+    }
+
+    // ============================================
+    // STEP ORIGIN
+    // ============================================
+    function StepOrigin({ onNext }) {
+      const [search, setSearch] = useState('');
+
+      const countries = [
+        { code: 'CO', name: 'Colombia', flag: '🇨🇴' },
+        { code: 'MX', name: 'México', flag: '🇲🇽' },
+        { code: 'AR', name: 'Argentina', flag: '🇦🇷' },
+        { code: 'CL', name: 'Chile', flag: '🇨🇱' },
+        { code: 'PE', name: 'Perú', flag: '🇵🇪' },
+        { code: 'EC', name: 'Ecuador', flag: '🇪🇨' },
+        { code: 'US', name: 'Estados Unidos', flag: '🇺🇸' },
+        { code: 'ES', name: 'España', flag: '🇪🇸' },
+        { code: 'BR', name: 'Brasil', flag: '🇧🇷' },
+        { code: 'UY', name: 'Uruguay', flag: '🇺🇾' },
+        { code: 'VE', name: 'Venezuela', flag: '🇻🇪' },
+        { code: 'CA', name: 'Canadá', flag: '🇨🇦' },
+      ];
+
+      const filtered = search.trim()
+        ? countries.filter(c => c.name.toLowerCase().includes(search.toLowerCase()))
+        : countries;
+
+      const handleSelect = (code) => {
+        onNext({ origin: code });
+      };
+
+      return (
+        <div className="space-y-6">
+          <div className="text-center mb-8">
+            <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-cyan-100 mb-4">
+              <span className="text-3xl">🌎</span>
+            </div>
+            <h2 className="text-2xl font-semibold text-gray-900 mb-2">
+              ¿Desde dónde viajas?
+            </h2>
+            <p className="text-gray-500 text-sm">Selecciona tu país de origen</p>
+          </div>
+
+          <div className="relative">
+            <svg className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+            <input
+              type="text"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Buscar país..."
+              className="w-full h-14 pl-12 pr-4 text-lg bg-white border-2 border-gray-200 rounded-xl focus:border-cyan-400 focus:outline-none focus:ring-4 focus:ring-cyan-400/20 transition-all"
+            />
+          </div>
+
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+            {filtered.map((country) => (
+              <button
+                key={country.code}
+                onClick={() => handleSelect(country.code)}
+                className="flex items-center gap-3 p-4 rounded-xl border-2 border-gray-100 bg-white hover:border-[#00184C] hover:bg-[#00184C] group transition-all duration-200 text-left"
+              >
+                <span className="text-2xl">{country.flag}</span>
+                <span className="font-medium text-gray-700 group-hover:text-white">
+                  {country.name}
+                </span>
+              </button>
+            ))}
+          </div>
+
+          {filtered.length === 0 && (
+            <p className="text-center text-gray-500 py-8">
+              No encontramos "{search}"
+            </p>
+          )}
+        </div>
+      );
+    }
+
+    // ============================================
+    // STEP DESTINATION
+    // ============================================
+    function StepDestination({ onNext }) {
+      const [search, setSearch] = useState('');
+
+      const destinations = [
+        { code: 'US', name: 'Estados Unidos', flag: '🇺🇸', popular: true },
+        { code: 'ES', name: 'España', flag: '🇪🇸', popular: true },
+        { code: 'FR', name: 'Francia', flag: '🇫🇷', popular: true },
+        { code: 'IT', name: 'Italia', flag: '🇮🇹', popular: true },
+        { code: 'GB', name: 'Reino Unido', flag: '🇬🇧', popular: true },
+        { code: 'DE', name: 'Alemania', flag: '🇩🇪', popular: true },
+        { code: 'PT', name: 'Portugal', flag: '🇵🇹', popular: false },
+        { code: 'NL', name: 'Países Bajos', flag: '🇳🇱', popular: false },
+        { code: 'MX', name: 'México', flag: '🇲🇽', popular: true },
+        { code: 'BR', name: 'Brasil', flag: '🇧🇷', popular: true },
+        { code: 'CA', name: 'Canadá', flag: '🇨🇦', popular: true },
+        { code: 'JP', name: 'Japón', flag: '🇯🇵', popular: true },
+        { code: 'AR', name: 'Argentina', flag: '🇦🇷', popular: false },
+        { code: 'CL', name: 'Chile', flag: '🇨🇱', popular: false },
+        { code: 'CO', name: 'Colombia', flag: '🇨🇴', popular: false },
+        { code: 'PE', name: 'Perú', flag: '🇵🇪', popular: false },
+        { code: 'CH', name: 'Suiza', flag: '🇨🇭', popular: false },
+        { code: 'AU', name: 'Australia', flag: '🇦🇺', popular: false },
+      ];
+
+      const popular = destinations.filter(d => d.popular && (!search.trim() || d.name.toLowerCase().includes(search.toLowerCase())));
+      const others = destinations.filter(d => !d.popular && (!search.trim() || d.name.toLowerCase().includes(search.toLowerCase())));
+      const filtered = search.trim() ? destinations.filter(d => d.name.toLowerCase().includes(search.toLowerCase())) : [];
+
+      const handleSelect = (code) => {
+        onNext({ destination: code });
+      };
+
+      return (
+        <div className="space-y-6">
+          <div className="text-center mb-8">
+            <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-cyan-100 mb-4">
+              <span className="text-3xl">✈️</span>
+            </div>
+            <h2 className="text-2xl font-semibold text-gray-900 mb-2">
+              ¿A dónde viajas?
+            </h2>
+            <p className="text-gray-500 text-sm">Selecciona tu destino principal</p>
+          </div>
+
+          <div className="relative">
+            <svg className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+            <input
+              type="text"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Buscar destino..."
+              className="w-full h-14 pl-12 pr-4 text-lg bg-white border-2 border-gray-200 rounded-xl focus:border-cyan-400 focus:outline-none focus:ring-4 focus:ring-cyan-400/20 transition-all"
+            />
+          </div>
+
+          {!search.trim() ? (
+            <div className="space-y-6">
+              <div>
+                <p className="text-sm font-medium text-gray-500 mb-3">Populares</p>
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                  {popular.map((dest) => (
+                    <button
+                      key={dest.code}
+                      onClick={() => handleSelect(dest.code)}
+                      className="flex items-center gap-3 p-4 rounded-xl border-2 border-gray-100 bg-white hover:border-[#00184C] hover:bg-[#00184C] group transition-all duration-200"
+                    >
+                      <span className="text-2xl">{dest.flag}</span>
+                      <span className="font-medium text-gray-700 group-hover:text-white">
+                        {dest.name}
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div>
+                <p className="text-sm font-medium text-gray-500 mb-3">Todos los destinos</p>
+                <div className="grid grid-cols-2 gap-3 max-h-48 overflow-y-auto">
+                  {others.map((dest) => (
+                    <button
+                      key={dest.code}
+                      onClick={() => handleSelect(dest.code)}
+                      className="flex items-center gap-2 p-3 rounded-xl border-2 border-gray-100 bg-white hover:border-[#00184C] hover:bg-[#00184C] group transition-all duration-200"
+                    >
+                      <span className="text-xl">{dest.flag}</span>
+                      <span className="font-medium text-sm text-gray-700 group-hover:text-white">
+                        {dest.name}
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              <p className="text-sm font-medium text-gray-500">{filtered.length} resultados</p>
+              <div className="grid grid-cols-2 gap-3 max-h-80 overflow-y-auto">
+                {filtered.map((dest) => (
+                  <button
+                    key={dest.code}
+                    onClick={() => handleSelect(dest.code)}
+                    className="flex items-center gap-3 p-4 rounded-xl border-2 border-gray-100 bg-white hover:border-[#00184C] hover:bg-[#00184C] group transition-all duration-200"
+                  >
+                    <span className="text-2xl">{dest.flag}</span>
+                    <span className="font-medium text-gray-700 group-hover:text-white">
+                      {dest.name}
+                    </span>
+                  </button>
+                ))}
+              </div>
+              {filtered.length === 0 && (
+                <p className="text-center text-gray-500 py-8">
+                  No encontramos "{search}"
+                </p>
+              )}
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    // ============================================
+    // STEP DATES (with DateRangePicker)
+    // ============================================
+    function StepDates({ onNext }) {
+      const [dateRange, setDateRange] = useState([null, null]);
+      const [startDate, endDate] = dateRange;
+
+      const isValid = startDate && endDate;
+
+      const handleContinue = () => {
+        if (isValid) {
+          const formatDate = (date) => date.toLocaleDateString('es-ES', { year: 'numeric', month: '2-digit', day: '2-digit' });
+          onNext({ 
+            startDate: formatDate(startDate), 
+            endDate: formatDate(endDate) 
+          });
+        }
+      };
+
+      return (
+        <div className="space-y-8">
+          <div className="text-center mb-8">
+            <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-cyan-100 mb-4">
+              <span className="text-3xl">📅</span>
+            </div>
+            <h2 className="text-2xl font-semibold text-gray-900 mb-2">
+              ¿Cuándo es tu aventura?
+            </h2>
+            <p className="text-gray-500 text-sm">Selecciona las fechas de tu viaje</p>
+          </div>
+
+          <div className="datepicker-custom">
+            <DatePicker
+              selectsRange={true}
+              startDate={startDate}
+              endDate={endDate}
+              onChange={(update) => setDateRange(update)}
+              monthsShown={2}
+              showYearDropdown
+              scrollableYearDropdown
+              yearDropdownItemNumber={50}
+              minDate={new Date()}
+              placeholderText="Selecciona fechas"
+              className="w-full"
+              dateFormat="dd/MM/yyyy"
+              withPortal
+            />
+          </div>
+
+          <button
+            onClick={handleContinue}
+            disabled={!isValid}
+            className="w-full h-14 bg-yellow-400 text-gray-900 font-semibold text-lg rounded-xl hover:bg-yellow-500 disabled:bg-gray-200 disabled:text-gray-400 transition-all duration-200 shadow-lg shadow-yellow-400/20"
+          >
+            Continuar
+          </button>
+        </div>
+      );
+    }
+
+    // ============================================
+    // STEP TRAVELERS
+    // ============================================
+    function StepTravelers({ onNext }) {
+      const options = [
+        { id: 'solo', label: 'Solo', sublabel: '1 persona', icon: '🧑', price: 'Desde $25' },
+        { id: 'pareja', label: 'Pareja', sublabel: '2 personas', icon: '👫', price: 'Desde $40' },
+        { id: 'familia', label: 'Familia', sublabel: '3-5 personas', icon: '👨‍👩‍👧‍👦', price: 'Desde $55' },
+        { id: 'grupo', label: 'Grupo', sublabel: '6+ personas', icon: '👥', price: 'Desde $70' },
+      ];
+
+      const handleSelect = (id) => {
+        onNext({ travelers: id });
+      };
+
+      return (
+        <div className="space-y-6">
+          <div className="text-center mb-8">
+            <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-cyan-100 mb-4">
+              <span className="text-3xl">👥</span>
+            </div>
+            <h2 className="text-2xl font-semibold text-gray-900 mb-2">
+              ¿Quiénes van en este viaje?
+            </h2>
+            <p className="text-gray-500 text-sm">Cuéntanos quiénes viajan</p>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            {options.map((option) => (
+              <button
+                key={option.id}
+                onClick={() => handleSelect(option.id)}
+                className="relative p-6 rounded-2xl border-2 border-gray-100 bg-white hover:border-[#00184C] hover:bg-[#00184C] group transition-all duration-200 text-center"
+              >
+                <span className="text-5xl mb-3 block">{option.icon}</span>
+                <h3 className="font-semibold text-lg text-gray-800 group-hover:text-white mb-1">
+                  {option.label}
+                </h3>
+                <p className="text-sm text-gray-500 group-hover:text-white/80 mb-3">
+                  {option.sublabel}
+                </p>
+                <span className="text-sm font-medium text-[#00184C] group-hover:text-white/90">
+                  {option.price}
+                </span>
+              </button>
+            ))}
+          </div>
+        </div>
+      );
+    }
+
+    // ============================================
+    // STEP BIRTHDATE
+    // ============================================
+    function StepBirthdate({ onNext }) {
+      const [day, setDay] = useState('');
+      const [month, setMonth] = useState('');
+      const [year, setYear] = useState('');
+
+      const dayRef = useRef(null);
+      const monthRef = useRef(null);
+      const yearRef = useRef(null);
+
+      const isValid = () => {
+        const d = parseInt(day);
+        const m = parseInt(month);
+        const y = parseInt(year);
+        return d >= 1 && d <= 31 && m >= 1 && m <= 12 && y >= 1900 && y <= new Date().getFullYear() - 18;
+      };
+
+      useEffect(() => {
+        if (day.length === 2) monthRef.current?.focus();
+      }, [day]);
+
+      useEffect(() => {
+        if (month.length === 2) yearRef.current?.focus();
+      }, [month]);
+
+      const handleContinue = () => {
+        if (isValid()) {
+          onNext({ birthdate: { day, month, year } });
+        }
+      };
+
+      return (
+        <div className="space-y-8">
+          <div className="text-center mb-8">
+            <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-cyan-100 mb-4">
+              <span className="text-3xl">🎂</span>
+            </div>
+            <h2 className="text-2xl font-semibold text-gray-900 mb-2">
+              ¿Cuándo naciste?
+            </h2>
+            <p className="text-gray-500 text-sm">Necesitamos tu fecha de nacimiento</p>
+          </div>
+
+          <div className="flex gap-4">
+            <div className="flex-1">
+              <label className="block text-sm font-medium text-gray-600 mb-2">Día</label>
+              <input
+                ref={dayRef}
+                type="text"
+                inputMode="numeric"
+                maxLength={2}
+                value={day}
+                onChange={(e) => setDay(e.target.value.replace(/\D/g, '').slice(0, 2))}
+                placeholder="DD"
+                className="w-full h-14 px-4 text-lg text-center bg-white border-2 border-gray-200 rounded-xl focus:border-cyan-400 focus:outline-none focus:ring-4 focus:ring-cyan-400/20 transition-all"
+              />
+            </div>
+            <div className="flex-1">
+              <label className="block text-sm font-medium text-gray-600 mb-2">Mes</label>
+              <input
+                ref={monthRef}
+                type="text"
+                inputMode="numeric"
+                maxLength={2}
+                value={month}
+                onChange={(e) => setMonth(e.target.value.replace(/\D/g, '').slice(0, 2))}
+                placeholder="MM"
+                className="w-full h-14 px-4 text-lg text-center bg-white border-2 border-gray-200 rounded-xl focus:border-cyan-400 focus:outline-none focus:ring-4 focus:ring-cyan-400/20 transition-all"
+              />
+            </div>
+            <div className="flex-1">
+              <label className="block text-sm font-medium text-gray-600 mb-2">Año</label>
+              <input
+                ref={yearRef}
+                type="text"
+                inputMode="numeric"
+                maxLength={4}
+                value={year}
+                onChange={(e) => setYear(e.target.value.replace(/\D/g, '').slice(0, 4))}
+                placeholder="AAAA"
+                className="w-full h-14 px-4 text-lg text-center bg-white border-2 border-gray-200 rounded-xl focus:border-cyan-400 focus:outline-none focus:ring-4 focus:ring-cyan-400/20 transition-all"
+              />
+            </div>
+          </div>
+
+          <button
+            onClick={handleContinue}
+            disabled={!isValid()}
+            className="w-full h-14 bg-yellow-400 text-gray-900 font-semibold text-lg rounded-xl hover:bg-yellow-500 disabled:bg-gray-200 disabled:text-gray-400 transition-all duration-200 shadow-lg shadow-yellow-400/20"
+          >
+            Continuar
+          </button>
+        </div>
+      );
+    }
+
+    // ============================================
+    // STEP PLANS
+    // ============================================
+    function StepPlans({ onNext }) {
+      const [selectedPlan, setSelectedPlan] = useState(null);
+
+      const plans = [
+        {
+          id: 'essential',
+          name: 'Essential',
+          price: 25,
+          coverage: '$15,000 USD',
+          features: ['Emergencias médicas', 'Repatriación básica', 'Teleconsulta 24/7', 'COVID-19'],
+          popular: false,
+        },
+        {
+          id: 'explorer',
+          name: 'Explorer',
+          price: 40,
+          coverage: '$50,000 USD',
+          features: ['Todo de Essential', 'Cancelación de viaje', 'Equipaje protegido', 'COVID-19 incluido', 'Asistencia 24/7'],
+          popular: true,
+        },
+        {
+          id: 'premium',
+          name: 'Premium',
+          price: 65,
+          coverage: '$100,000 USD',
+          features: ['Todo de Explorer', 'Seguro de actividades', 'Mayores límites', 'Concierge personal', 'Cobertura familiar'],
+          popular: false,
+        },
+      ];
+
+      const handleSelect = (id) => {
+        setSelectedPlan(id);
+      };
+
+      const handleContinue = () => {
+        if (selectedPlan) {
+          onNext({ selectedPlan });
+        }
+      };
+
+      return (
+        <div className="space-y-6">
+          <div className="text-center mb-8">
+            <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-cyan-100 mb-4">
+              <span className="text-3xl">🛡️</span>
+            </div>
+            <h2 className="text-2xl font-semibold text-gray-900 mb-2">
+              Elige tu plan de protección
+            </h2>
+            <p className="text-gray-500 text-sm">Compara los planes disponibles</p>
+          </div>
+
+          <div className="grid md:grid-cols-3 gap-4">
+            {plans.map((plan) => (
+              <button
+                key={plan.id}
+                onClick={() => handleSelect(plan.id)}
+                className={`relative p-6 rounded-2xl border-2 transition-all duration-200 text-center flex flex-col ${
+                  selectedPlan === plan.id
+                    ? 'border-[#00184C] bg-[#00184C] text-white shadow-xl scale-105'
+                    : plan.popular
+                    ? 'border-[#00184C] bg-white shadow-lg'
+                    : 'border-gray-200 bg-white hover:border-[#00184C]'
+                }`}
+              >
+                {plan.popular && (
+                  <span className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 bg-yellow-400 text-gray-900 text-xs font-bold rounded-full">
+                    Popular
+                  </span>
+                )}
+
+                <h3 className="font-semibold text-lg mb-2">{plan.name}</h3>
+
+                <div className="mb-4">
+                  <span className="text-3xl font-bold">${plan.price}</span>
+                  <span className="text-sm opacity-70">USD</span>
+                </div>
+
+                <p className="text-sm opacity-70 mb-4">Cobertura {plan.coverage}</p>
+
+                <ul className="text-left space-y-2 flex-1">
+                  {plan.features.map((feature) => (
+                    <li key={feature} className="flex items-center gap-2 text-sm">
+                      <svg className={`w-4 h-4 shrink-0 ${selectedPlan === plan.id ? 'text-yellow-400' : 'text-cyan-400'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+                      </svg>
+                      {feature}
+                    </li>
+                  ))}
+                </ul>
+              </button>
+            ))}
+          </div>
+
+          <button
+            onClick={handleContinue}
+            disabled={!selectedPlan}
+            className="w-full h-14 bg-yellow-400 text-gray-900 font-semibold text-lg rounded-xl hover:bg-yellow-500 disabled:bg-gray-200 disabled:text-gray-400 transition-all duration-200 shadow-lg shadow-yellow-400/20"
+          >
+            Continuar
+          </button>
+        </div>
+      );
+    }
+
+    // ============================================
+    // STEP PERSONAL
+    // ============================================
+    function StepPersonal({ onNext }) {
+      const [name, setName] = useState('');
+      const [email, setEmail] = useState('');
+      const [phone, setPhone] = useState('');
+
+      const isValid = () => {
+        return name.trim().length >= 3 &&
+          email.includes('@') &&
+          phone.length >= 7;
+      };
+
+      const handleContinue = () => {
+        if (isValid()) {
+          onNext({ personalData: { name, email, phone } });
+        }
+      };
+
+      return (
+        <div className="space-y-6">
+          <div className="text-center mb-8">
+            <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-cyan-100 mb-4">
+              <span className="text-3xl">👤</span>
+            </div>
+            <h2 className="text-2xl font-semibold text-gray-900 mb-2">
+              Tus datos
+            </h2>
+            <p className="text-gray-500 text-sm">Completa tu información personal</p>
+          </div>
+
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-600 mb-2">Nombre completo</label>
+              <input
+                type="text"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder="Ej: María García"
+                className="w-full h-14 px-4 text-lg bg-white border-2 border-gray-200 rounded-xl focus:border-cyan-400 focus:outline-none focus:ring-4 focus:ring-cyan-400/20 transition-all"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-600 mb-2">Correo electrónico</label>
+              <input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="Ej: maria@email.com"
+                className="w-full h-14 px-4 text-lg bg-white border-2 border-gray-200 rounded-xl focus:border-cyan-400 focus:outline-none focus:ring-4 focus:ring-cyan-400/20 transition-all"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-600 mb-2">Teléfono</label>
+              <input
+                type="tel"
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+                placeholder="Ej: +52 55 1234 5678"
+                className="w-full h-14 px-4 text-lg bg-white border-2 border-gray-200 rounded-xl focus:border-cyan-400 focus:outline-none focus:ring-4 focus:ring-cyan-400/20 transition-all"
+              />
+            </div>
+          </div>
+
+          <button
+            onClick={handleContinue}
+            disabled={!isValid()}
+            className="w-full h-14 bg-yellow-400 text-gray-900 font-semibold text-lg rounded-xl hover:bg-yellow-500 disabled:bg-gray-200 disabled:text-gray-400 transition-all duration-200 shadow-lg shadow-yellow-400/20"
+          >
+            Continuar
+          </button>
+        </div>
+      );
+    }
+
+    // ============================================
+    // STEP SUCCESS
+    // ============================================
+    function StepSuccess({ data, onRestart }) {
+      const plan = [
+        { id: 'essential', name: 'Essential', price: 25 },
+        { id: 'explorer', name: 'Explorer', price: 40 },
+        { id: 'premium', name: 'Premium', price: 65 },
+      ].find(p => p.id === data.selectedPlan);
+
+      return (
+        <div className="text-center space-y-6 py-8">
+          <div className="w-24 h-24 mx-auto bg-green-100 rounded-full flex items-center justify-center">
+            <svg className="w-12 h-12 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+            </svg>
+          </div>
+
+          <div>
+            <h2 className="text-2xl font-semibold text-gray-900 mb-2">¡Listo!</h2>
+            <p className="text-gray-500">Tu asistencia de viaje está activa</p>
+          </div>
+
+          <div className="bg-gray-50 rounded-xl p-4 space-y-2">
+            <p className="text-sm font-medium text-gray-700">
+              {data.origin} → {data.destination}
+            </p>
+            <p className="text-sm text-gray-500">
+              {data.startDate} - {data.endDate}
+            </p>
+            <p className="text-sm text-gray-500">
+              {data.travelers} • {data.birthdate?.day}/{data.birthdate?.month}/{data.birthdate?.year}
+            </p>
+            {plan && (
+              <p className="text-sm font-semibold text-[#00184C]">
+                Plan {plan.name} - ${plan.price} USD
+              </p>
+            )}
+          </div>
+
+          <div className="space-y-3 pt-4">
+            <button
+              onClick={onRestart}
+              className="w-full h-14 bg-[#00184C] text-white font-semibold text-lg rounded-xl hover:bg-[#00133D] transition-all duration-200"
+            >
+              Volver al inicio
+            </button>
+          </div>
+        </div>
+      );
+    }
+
+    // ============================================
+    // TRAVEL WIZARD
+    // ============================================
+    function TravelWizard() {
+      const [showWizard, setShowWizard] = useState(false);
+      const [currentStep, setCurrentStep] = useState(0);
+      const [formData, setFormData] = useState({});
+      const [direction, setDirection] = useState('left');
+      const [transitioning, setTransitioning] = useState(false);
+
+      const TOTAL_STEPS = 8;
+      const progress = ((currentStep) / (TOTAL_STEPS - 1)) * 100;
+
+      const steps = ['Origen', 'Destino', 'Fechas', 'Viajeros', 'Nacimiento', 'Planes', 'Datos', '¡Listo!'];
+
+      const handleStart = () => {
+        setShowWizard(true);
+      };
+
+      const handleNext = (newData) => {
+        setFormData(prev => ({ ...prev, ...newData }));
+        setDirection('left');
+        setTransitioning(true);
+        setTimeout(() => {
+          setCurrentStep(prev => Math.min(prev + 1, TOTAL_STEPS - 1));
+          setTransitioning(false);
+        }, 350);
+      };
+
+      const handlePrev = () => {
+        if (currentStep > 0) {
+          setDirection('right');
+          setTransitioning(true);
+          setTimeout(() => {
+            setCurrentStep(prev => Math.max(prev - 1, 0));
+            setTransitioning(false);
+          }, 350);
+        }
+      };
+
+      const handleRestart = () => {
+        setShowWizard(false);
+        setCurrentStep(0);
+        setFormData({});
+      };
+
+      const renderStep = () => {
+        switch (currentStep) {
+          case 0: return <StepOrigin onNext={handleNext} />;
+          case 1: return <StepDestination onNext={handleNext} />;
+          case 2: return <StepDates onNext={handleNext} />;
+          case 3: return <StepTravelers onNext={handleNext} />;
+          case 4: return <StepBirthdate onNext={handleNext} />;
+          case 5: return <StepPlans onNext={handleNext} />;
+          case 6: return <StepPersonal onNext={handleNext} />;
+          case 7: return <StepSuccess data={formData} onRestart={handleRestart} />;
+          default: return null;
+        }
+      };
+
+      if (!showWizard) {
+        return <LandingPage onStart={handleStart} />;
+      }
+
+      return (
+        <div className="min-h-screen bg-slate-50 flex flex-col">
+          {/* Header */}
+          <header className="bg-white border-b border-gray-100 px-4 py-4">
+            <div className="max-w-3xl mx-auto">
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 rounded-lg bg-[#00184C] flex items-center justify-center">
+                    <span className="text-white font-bold text-sm">CA</span>
+                  </div>
+                  <span className="font-semibold text-[#00184C]">Continental Assist</span>
+                </div>
+                <span className="text-sm text-gray-400">
+                  {currentStep + 1} / {TOTAL_STEPS}
+                </span>
+              </div>
+              <div className="h-1 bg-gray-200 rounded-full overflow-hidden">
+                <div
+                  className="h-full bg-[#00184C] rounded-full transition-all duration-500 ease-out"
+                  style={{ width: `${progress}%` }}
+                />
+              </div>
+            </div>
+          </header>
+
+          {/* Main Content */}
+          <main className="flex-1 flex items-center justify-center px-4 py-8">
+            <div className="w-full max-w-3xl">
+              <div className={`bg-white rounded-2xl shadow-lg p-6 md:p-8 lg:p-10 border border-gray-100 transition-all duration-350 ${transitioning ? (direction === 'left' ? '-translate-x-8 opacity-0' : 'translate-x-8 opacity-0') : 'translate-x-0 opacity-100'}`}>
+                {renderStep()}
+              </div>
+            </div>
+          </main>
+
+          {/* Footer */}
+          {currentStep > 0 && currentStep < TOTAL_STEPS - 1 && (
+            <footer className="bg-white border-t border-gray-100 px-4 py-4">
+              <div className="max-w-3xl mx-auto flex justify-center">
+                <button
+                  onClick={handlePrev}
+                  className="text-gray-500 hover:text-[#00184C] text-sm font-medium flex items-center gap-1 transition-colors"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7" />
+                  </svg>
+                  Atrás
+                </button>
+              </div>
+            </footer>
+          )}
+        </div>
+      );
+    }
+
+    // ============================================
+    // MOUNT
+    // ============================================
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(<TravelWizard />);
+  </script>
+</body>
+</html>

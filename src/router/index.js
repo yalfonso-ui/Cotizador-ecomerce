@@ -1,6 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import HomeView from '@/views/HomeView.vue'
-import QuoteFlowWizard from '@/components/quote-flow/QuoteFlowWizard.vue'
+import TravelWizard from '@/components/TravelWizard.vue'
 
 const router = createRouter({
   history: createWebHistory(),
@@ -8,12 +8,12 @@ const router = createRouter({
     {
       path: '/',
       name: 'home',
-      component: HomeView
+      component: TravelWizard
     },
     {
       path: '/cotizacion',
       name: 'quote',
-      component: QuoteFlowWizard
+      component: TravelWizard
     }
   ]
 })
