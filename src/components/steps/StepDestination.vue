@@ -2,33 +2,33 @@
 import { ref, computed } from 'vue'
 
 const props = defineProps({
-  modelValue: String
+  modelValue: Array
 })
 const emit = defineEmits(['update', 'next'])
 
 const search = ref('')
-const selectedCode = ref(props.modelValue?.code || '')
-const selectedDest = ref(props.modelValue || null)
+
+const selectedDestinations = ref(props.modelValue || [])
 
 const destinations = [
-  { code: 'US', name: 'Estados Unidos', flag: '🇺🇸', popular: true },
-  { code: 'ES', name: 'España', flag: '🇪🇸', popular: true },
-  { code: 'FR', name: 'Francia', flag: '🇫🇷', popular: true },
-  { code: 'IT', name: 'Italia', flag: '🇮🇹', popular: true },
-  { code: 'GB', name: 'Reino Unido', flag: '🇬🇧', popular: true },
-  { code: 'DE', name: 'Alemania', flag: '🇩🇪', popular: true },
-  { code: 'PT', name: 'Portugal', flag: '🇵🇹', popular: false },
-  { code: 'NL', name: 'Países Bajos', flag: '🇳🇱', popular: false },
-  { code: 'MX', name: 'México', flag: '🇲🇽', popular: true },
-  { code: 'BR', name: 'Brasil', flag: '🇧🇷', popular: true },
-  { code: 'CA', name: 'Canadá', flag: '🇨🇦', popular: true },
-  { code: 'JP', name: 'Japón', flag: '🇯🇵', popular: true },
-  { code: 'AR', name: 'Argentina', flag: '🇦🇷', popular: false },
-  { code: 'CL', name: 'Chile', flag: '🇨🇱', popular: false },
-  { code: 'CO', name: 'Colombia', flag: '🇨🇴', popular: false },
-  { code: 'PE', name: 'Perú', flag: '🇵🇪', popular: false },
-  { code: 'CH', name: 'Suiza', flag: '🇨🇭', popular: false },
-  { code: 'AU', name: 'Australia', flag: '🇦🇺', popular: false },
+  { code: 'US', name: 'Estados Unidos', flag: 'us', popular: true },
+  { code: 'ES', name: 'España', flag: 'es', popular: true },
+  { code: 'FR', name: 'Francia', flag: 'fr',  popular: true },
+  { code: 'IT', name: 'Italia', flag: 'it', popular: true },
+  { code: 'GB', name: 'Reino Unido', flag: 'gb', popular: true },
+  { code: 'DE', name: 'Alemania', flag: 'de', popular: true },
+  { code: 'PT', name: 'Portugal', flag: 'pt', popular: false },
+  { code: 'NL', name: 'Países Bajos', flag: 'nl', popular: false },
+  { code: 'MX', name: 'México', flag: 'mx', popular: true },
+  { code: 'BR', name: 'Brasil', flag: 'br', popular: true },
+  { code: 'CA', name: 'Canadá', flag: 'ca', popular: true },
+  { code: 'JP', name: 'Japón', flag: 'jp', popular: true },
+  { code: 'AR', name: 'Argentina', flag: 'ar', popular: false },
+  { code: 'CL', name: 'Chile', flag: 'cl', popular: false },
+  { code: 'CO', name: 'Colombia', flag: 'co', popular: false },
+  { code: 'PE', name: 'Perú', flag: 'pe', popular: false },
+  { code: 'CH', name: 'Suiza', flag: 'ch', popular: false },
+  { code: 'AU', name: 'Australia', flag: 'au', popular: false },
 ]
 
 const popular = computed(() => {
@@ -47,15 +47,22 @@ const filtered = computed(() => {
   return destinations.filter(d => d.name.toLowerCase().includes(q))
 })
 
-function select(dest) {
-  selectedCode.value = dest.code
-  selectedDest.value = dest
-  emit('update', dest)
+function isSelected(dest) {
+  return selectedDestinations.value.some(d => d.code === dest.code)
+}
+
+function toggle(dest) {
+  if (isSelected(dest)) {
+    selectedDestinations.value = selectedDestinations.value.filter(d => d.code !== dest.code)
+  } else {
+    selectedDestinations.value = [...selectedDestinations.value, dest]
+  }
+  emit('update', selectedDestinations.value)
 }
 
 function handleContinue() {
-  if (selectedDest.value) {
-    emit('next', { destination: selectedDest.value })
+  if (selectedDestinations.value.length > 0) {
+    emit('next', { destination: selectedDestinations.value })
   }
 }
 </script>
@@ -81,19 +88,19 @@ function handleContinue() {
           <button
             v-for="dest in popular"
             :key="dest.code"
-            @click="select(dest)"
+            @click="toggle(dest)"
             class="relative flex items-center gap-3 p-4 rounded-xl border-2 bg-white transition-all duration-200"
-            :class="selectedCode === dest.code
+            :class="isSelected(dest)
               ? 'border-cyan-500 ring-4 ring-cyan-500/20 bg-cyan-50/30 shadow-lg'
               : 'border-gray-100 hover:border-cyan-500 hover:ring-4 hover:ring-cyan-500/20'"
           >
-            <div v-if="selectedCode === dest.code" class="absolute -top-2 -right-2 w-6 h-6 rounded-full bg-cyan-500 flex items-center justify-center">
+            <div v-if="isSelected(dest)" class="absolute -top-2 -right-2 w-6 h-6 rounded-full bg-cyan-500 flex items-center justify-center">
               <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7" />
               </svg>
             </div>
-            <span class="text-2xl">{{ dest.flag }}</span>
-            <span class="font-medium" :class="selectedCode === dest.code ? 'text-cyan-700' : 'text-gray-700'">{{ dest.name }}</span>
+            <img :src="`https://flagcdn.com/w40/${dest.flag}.png`" :alt="dest.name" class="w-8 h-8 rounded-full object-cover ring-2 ring-white shadow-md" />
+            <span class="font-medium" :class="isSelected(dest) ? 'text-cyan-700' : 'text-gray-700'">{{ dest.name }}</span>
           </button>
         </div>
       </div>
@@ -103,19 +110,19 @@ function handleContinue() {
           <button
             v-for="dest in others"
             :key="dest.code"
-            @click="select(dest)"
+            @click="toggle(dest)"
             class="relative flex items-center gap-2 p-3 rounded-xl border-2 bg-white transition-all duration-200"
-            :class="selectedCode === dest.code
+            :class="isSelected(dest)
               ? 'border-cyan-500 ring-4 ring-cyan-500/20 bg-cyan-50/30 shadow-lg'
               : 'border-gray-100 hover:border-cyan-500 hover:ring-4 hover:ring-cyan-500/20'"
           >
-            <div v-if="selectedCode === dest.code" class="absolute -top-2 -right-2 w-5 h-5 rounded-full bg-cyan-500 flex items-center justify-center">
+            <div v-if="isSelected(dest)" class="absolute -top-2 -right-2 w-5 h-5 rounded-full bg-cyan-500 flex items-center justify-center">
               <svg class="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7" />
               </svg>
             </div>
-            <span class="text-xl">{{ dest.flag }}</span>
-            <span class="font-medium text-sm" :class="selectedCode === dest.code ? 'text-cyan-700' : 'text-gray-700'">{{ dest.name }}</span>
+            <img :src="`https://flagcdn.com/w40/${dest.flag}.png`" :alt="dest.name" class="w-8 h-8 rounded-full object-cover ring-2 ring-white shadow-md" />
+            <span class="font-medium text-sm" :class="isSelected(dest) ? 'text-cyan-700' : 'text-gray-700'">{{ dest.name }}</span>
           </button>
         </div>
       </div>
@@ -127,19 +134,19 @@ function handleContinue() {
         <button
           v-for="dest in filtered"
           :key="dest.code"
-          @click="select(dest)"
+          @click="toggle(dest)"
           class="relative flex items-center gap-3 p-4 rounded-xl border-2 bg-white transition-all duration-200"
-          :class="selectedCode === dest.code
+          :class="isSelected(dest)
             ? 'border-cyan-500 ring-4 ring-cyan-500/20 bg-cyan-50/30 shadow-lg'
             : 'border-gray-100 hover:border-cyan-500 hover:ring-4 hover:ring-cyan-500/20'"
         >
-          <div v-if="selectedCode === dest.code" class="absolute -top-2 -right-2 w-6 h-6 rounded-full bg-cyan-500 flex items-center justify-center">
+          <div v-if="isSelected(dest)" class="absolute -top-2 -right-2 w-6 h-6 rounded-full bg-cyan-500 flex items-center justify-center">
             <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7" />
             </svg>
           </div>
-          <span class="text-2xl">{{ dest.flag }}</span>
-          <span class="font-medium" :class="selectedCode === dest.code ? 'text-cyan-700' : 'text-gray-700'">{{ dest.name }}</span>
+            <img :src="`https://flagcdn.com/w40/${dest.flag}.png`" :alt="dest.name" class="w-8 h-8 rounded-full object-cover ring-2 ring-white shadow-md" />
+          <span class="font-medium" :class="isSelected(dest) ? 'text-cyan-700' : 'text-gray-700'">{{ dest.name }}</span>
         </button>
       </div>
       <p v-if="filtered.length === 0" class="text-center text-gray-500 py-8">
@@ -149,17 +156,17 @@ function handleContinue() {
 
     <button
       @click="handleContinue"
-      :disabled="!selectedDest"
+      :disabled="selectedDestinations.length === 0"
       class="w-full bg-yellow-400 hover:bg-yellow-500 text-slate-900 font-bold py-3 px-4 rounded-xl transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
     >
-      <template v-if="selectedDest">
-        <span>Continuar</span>
+      <template v-if="selectedDestinations.length > 0">
+        <span>Continuar ({{ selectedDestinations.length }} seleccionado{{ selectedDestinations.length > 1 ? 's' : '' }})</span>
         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6" />
         </svg>
       </template>
       <template v-else>
-        <span>Selecciona un destino</span>
+        <span>Selecciona al menos un destino</span>
       </template>
     </button>
   </div>

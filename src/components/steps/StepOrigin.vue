@@ -1,5 +1,6 @@
 <script setup>
 import { ref, computed } from 'vue'
+import StepButton from '@/components/quote-flow/ui/StepButton.vue'
 
 const props = defineProps({
   modelValue: String
@@ -11,18 +12,12 @@ const selectedCode = ref(props.modelValue?.code || '')
 const selectedCountry = ref(props.modelValue || null)
 
 const countries = [
-  { code: 'CO', name: 'Colombia', flag: '🇨🇴' },
-  { code: 'MX', name: 'México', flag: '🇲🇽' },
-  { code: 'AR', name: 'Argentina', flag: '🇦🇷' },
-  { code: 'CL', name: 'Chile', flag: '🇨🇱' },
-  { code: 'PE', name: 'Perú', flag: '🇵🇪' },
-  { code: 'EC', name: 'Ecuador', flag: '🇪🇨' },
-  { code: 'US', name: 'Estados Unidos', flag: '🇺🇸' },
-  { code: 'ES', name: 'España', flag: '🇪🇸' },
-  { code: 'BR', name: 'Brasil', flag: '🇧🇷' },
-  { code: 'UY', name: 'Uruguay', flag: '🇺🇾' },
-  { code: 'VE', name: 'Venezuela', flag: '🇻🇪' },
-  { code: 'CA', name: 'Canadá', flag: '🇨🇦' },
+  { code: 'CO', name: 'Colombia', flag: 'co' },
+  { code: 'MX', name: 'México', flag: 'mx' },
+  { code: 'AR', name: 'Argentina', flag: 'ar' },
+  { code: 'CL', name: 'Chile', flag: 'cl' },
+  { code: 'PE', name: 'Perú', flag: 'pe' },
+  { code: 'EC', name: 'Ecuador', flag: 'ec' },
 ]
 
 const filtered = computed(() => {
@@ -65,16 +60,16 @@ function handleContinue() {
         @click="select(country)"
         class="relative flex items-center gap-3 p-4 rounded-xl border-2 bg-white transition-all duration-200 text-left"
         :class="selectedCode === country.code
-          ? 'border-cyan-500 ring-4 ring-cyan-500/20 bg-cyan-50/30 shadow-lg'
-          : 'border-gray-100 hover:border-cyan-500 hover:ring-4 hover:ring-cyan-500/20'"
+          ? 'border-cyan-500 ring-2 ring-cyan-500/20 bg-cyan-50 shadow-md'
+          : 'border-gray-100 hover:border-cyan-500 hover:bg-slate-50'"
       >
-        <div v-if="selectedCode === country.code" class="absolute -top-2 -right-2 w-6 h-6 rounded-full bg-cyan-500 flex items-center justify-center">
+        <div v-if="selectedCode === country.code" class="absolute -top-2 -right-2 w-6 h-6 rounded-full bg-cyan-500 flex items-center justify-center shadow-sm">
           <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7" />
           </svg>
         </div>
-        <span class="text-2xl">{{ country.flag }}</span>
-        <span class="font-medium" :class="selectedCode === country.code ? 'text-cyan-700' : 'text-gray-700'">{{ country.name }}</span>
+        <img :src="`https://flagcdn.com/w40/${country.flag}.png`" :alt="country.name" class="w-8 h-8 rounded-full object-cover ring-2 ring-white shadow-md" />
+        <span class="font-medium text-slate-800">{{ country.name }}</span>
       </button>
     </div>
 
@@ -82,10 +77,10 @@ function handleContinue() {
       No encontramos "{{ search }}"
     </p>
 
-    <button
+    <StepButton
       @click="handleContinue"
       :disabled="!selectedCountry"
-      class="w-full bg-yellow-400 hover:bg-yellow-500 text-slate-900 font-bold py-3 px-4 rounded-xl transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+      variant="accent"
     >
       <template v-if="selectedCountry">
         <span>Continuar</span>
@@ -96,6 +91,6 @@ function handleContinue() {
       <template v-else>
         <span>Selecciona un país</span>
       </template>
-    </button>
+    </StepButton>
   </div>
 </template>

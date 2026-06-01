@@ -7,14 +7,13 @@
  */
 
 /* ============================================================
- * 1. FONT FAMILIES (Google Fonts)
+ * 1. FONT FAMILIES (Local fonts)
  * ============================================================
- * Galano Grotesca → https://fonts.google.com/specimen/Galano+Grotesca
- * Freestyle Script → https://fonts.google.com/specimen/Freestyle+Script
- * Inter → https://fonts.google.com/specimen/Inter
+ * Galano Grotesque → src/assets/font/
+ * Freestyle Script → src/assets/font/
  * JetBrains Mono → https://fonts.google.com/specimen/JetBrains+Mono
  * ============================================================ */
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap');
 
 /* Galano Grotesca y Freestyle Script se cargan desde CDN */
 /* @import url('https://fonts.googleapis.com/css2?family=Galano+Grotesca:wght@300;400;500;600;700&family=Freestyle+Script&display=swap'); */
@@ -89,9 +88,9 @@
   /* ============================================================
    * 4. TIPOGRAFÍA
    * ============================================================ */
-  --font-heading: 'Galano Grotesca', Montserrat, sans-serif;
+  --font-heading: 'Galano Grotesque', 'Inter', sans-serif;
   --font-accent: 'Freestyle Script', Brush Script MT, cursive;
-  --font-body:    'Inter', system-ui, sans-serif;
+  --font-body:    'Galano Grotesque', 'Inter', sans-serif;
   --font-mono:    'JetBrains Mono', monospace;
 
   /* Escala (px → rem) */
@@ -460,9 +459,12 @@
   box-shadow: 0 0 0 3px var(--color-primary-200);
 }
 
-.btn:disabled {
-  opacity: 0.5;
+.btn:disabled,
+.btn.btn-disabled {
+  background: var(--color-gray-100);
+  color: var(--color-gray-600);
   cursor: not-allowed;
+  border-radius: 9999px;
 }
 
 .btn-primary {

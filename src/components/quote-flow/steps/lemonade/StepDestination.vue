@@ -1,5 +1,10 @@
 <script setup>
 import { ref, computed } from 'vue'
+import StepButton from '@/components/quote-flow/ui/StepButton.vue'
+
+const props = defineProps({
+  selected: Object
+})
 
 const emit = defineEmits(['select-destination', 'update', 'next'])
 
@@ -66,7 +71,6 @@ function selectDestination(dest) {
 
 <template>
   <div class="space-y-6">
-    <!-- Search -->
     <div class="relative">
       <svg class="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
@@ -79,7 +83,6 @@ function selectDestination(dest) {
       />
     </div>
 
-    <!-- Popular (when not searching) -->
     <div v-if="!searchQuery.trim()" class="space-y-4">
       <p class="text-sm font-medium text-gray-500">Populares</p>
       <div class="grid grid-cols-2 md:grid-cols-3 gap-3">
@@ -87,10 +90,13 @@ function selectDestination(dest) {
           v-for="dest in popularDestinations"
           :key="dest.code"
           @click="selectDestination(dest)"
-          class="flex items-center gap-3 p-4 rounded-xl border-2 border-gray-100 bg-white hover:border-primary-500 hover:bg-primary-500 group transition-all duration-200"
+          class="flex items-center gap-3 p-4 rounded-xl border-2 bg-white transition-all duration-200 text-left"
+          :class="selected?.code === dest.code
+            ? 'ring-2 ring-cyan-500 bg-cyan-50 border-transparent'
+            : 'border-gray-100 hover:border-cyan-500 hover:bg-slate-50'"
         >
-          <span class="text-2xl">{{ dest.flag }}</span>
-          <span class="font-medium text-gray-700 group-hover:text-white">{{ dest.name }}</span>
+          <span class="text-2xl font-bold text-slate-800">{{ dest.flag }}</span>
+          <span class="text-sm text-slate-500">{{ dest.name }}</span>
         </button>
       </div>
 
@@ -100,15 +106,17 @@ function selectDestination(dest) {
           v-for="dest in otherDestinations"
           :key="dest.code"
           @click="selectDestination(dest)"
-          class="flex items-center gap-3 p-3 rounded-xl border-2 border-gray-100 bg-white hover:border-primary-500 hover:bg-primary-500 group transition-all duration-200"
+          class="flex items-center gap-3 p-3 rounded-xl border-2 bg-white transition-all duration-200 text-left"
+          :class="selected?.code === dest.code
+            ? 'ring-2 ring-cyan-500 bg-cyan-50 border-transparent'
+            : 'border-gray-100 hover:border-cyan-500 hover:bg-slate-50'"
         >
-          <span class="text-xl">{{ dest.flag }}</span>
-          <span class="font-medium text-sm text-gray-700 group-hover:text-white">{{ dest.name }}</span>
+          <span class="text-xl font-bold text-slate-800">{{ dest.flag }}</span>
+          <span class="text-sm text-slate-500">{{ dest.name }}</span>
         </button>
       </div>
     </div>
 
-    <!-- Search Results -->
     <div v-else class="space-y-4">
       <p class="text-sm font-medium text-gray-500">{{ filteredDestinations.length }} resultados</p>
       <div class="grid grid-cols-2 gap-3 max-h-80 overflow-y-auto">
@@ -116,15 +124,26 @@ function selectDestination(dest) {
           v-for="dest in filteredDestinations"
           :key="dest.code"
           @click="selectDestination(dest)"
-          class="flex items-center gap-3 p-4 rounded-xl border-2 border-gray-100 bg-white hover:border-primary-500 hover:bg-primary-500 group transition-all duration-200"
+          class="flex items-center gap-3 p-4 rounded-xl border-2 bg-white transition-all duration-200 text-left"
+          :class="selected?.code === dest.code
+            ? 'ring-2 ring-cyan-500 bg-cyan-50 border-transparent'
+            : 'border-gray-100 hover:border-cyan-500 hover:bg-slate-50'"
         >
-          <span class="text-2xl">{{ dest.flag }}</span>
-          <span class="font-medium text-gray-700 group-hover:text-white">{{ dest.name }}</span>
+          <span class="text-2xl font-bold text-slate-800">{{ dest.flag }}</span>
+          <span class="text-sm text-slate-500">{{ dest.name }}</span>
         </button>
       </div>
       <p v-if="filteredDestinations.length === 0" class="text-center text-gray-500 py-8">
         No encontramos "{{ searchQuery }}"
       </p>
     </div>
+
+    <StepButton
+      @click="selectDestination(selected)"
+      :disabled="!selected"
+      variant="accent"
+    >
+      <span>Continuar</span>
+    </StepButton>
   </div>
 </template>

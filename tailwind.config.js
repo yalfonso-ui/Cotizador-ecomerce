@@ -37,8 +37,8 @@ export default {
         },
       },
       fontFamily: {
-        heading: ['Galano Grotesca', 'Montserrat', 'sans-serif'],
-        body: ['Inter', 'system-ui', 'sans-serif'],
+        heading: ['Galano Grotesque', 'Inter', 'sans-serif'],
+        body: ['Galano Grotesque', 'Inter', 'sans-serif'],
         accent: ['Freestyle Script', 'cursive'],
       },
       spacing: {

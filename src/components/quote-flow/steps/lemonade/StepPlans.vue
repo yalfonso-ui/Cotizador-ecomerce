@@ -1,5 +1,10 @@
 <script setup>
+import { ref } from 'vue'
+import StepButton from '@/components/quote-flow/ui/StepButton.vue'
+
 const emit = defineEmits(['select-plan', 'next'])
+
+const selectedPlan = ref(null)
 
 const plans = [
   {
@@ -29,6 +34,7 @@ const plans = [
 ]
 
 function selectPlan(plan) {
+  selectedPlan.value = plan
   emit('select-plan', plan)
 }
 </script>
@@ -40,45 +46,47 @@ function selectPlan(plan) {
         v-for="plan in plans"
         :key="plan.id"
         @click="selectPlan(plan)"
-        class="relative p-6 rounded-2xl border-2 transition-all duration-200 text-center flex flex-col"
-        :class="plan.popular
-          ? 'border-primary-500 bg-primary-500 text-white shadow-xl shadow-primary/20 scale-105'
-          : 'border-gray-200 bg-white hover:border-primary-500 hover:bg-primary-500 hover:text-white'"
+        class="relative p-6 rounded-2xl border-2 transition-all duration-200 text-center flex flex-col items-center"
+        :class="selectedPlan?.id === plan.id
+          ? 'border-[#0B1A3D] bg-blue-50/50 shadow-md'
+          : 'border-slate-200 bg-white hover:border-cyan-500'"
       >
-        <!-- Popular Badge -->
         <span
           v-if="plan.popular"
-          class="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 bg-accent-300 text-primary-500 text-xs font-bold rounded-full"
+          class="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 bg-accent-300 text-primary-500 text-xs font-bold rounded-full shadow-sm"
         >
           Popular
         </span>
 
-        <!-- Plan Name -->
-        <h3 class="font-semibold text-lg mb-2">{{ plan.name }}</h3>
+        <h3 class="font-semibold text-lg mb-2 text-slate-800">{{ plan.name }}</h3>
 
-        <!-- Price -->
         <div class="mb-4">
-          <span class="text-3xl font-bold">${{ plan.price }}</span>
-          <span class="text-sm opacity-80">USD</span>
+          <span class="text-4xl font-bold text-slate-900">${{ plan.price }}</span>
+          <span class="text-sm text-slate-500">USD</span>
         </div>
 
-        <!-- Coverage -->
-        <p class="text-sm opacity-70 mb-4">Cobertura {{ plan.coverage }}</p>
+        <p class="text-sm text-slate-500 mb-4">Cobertura {{ plan.coverage }}</p>
 
-        <!-- Features -->
-        <ul class="text-left space-y-2 flex-1">
+        <ul class="text-left space-y-2 flex-1 w-full">
           <li
             v-for="feature in plan.features"
             :key="feature"
             class="flex items-center gap-2 text-sm"
           >
-            <svg class="w-4 h-4 shrink-0" :class="plan.popular ? 'text-accent-300' : 'text-primary-500'" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg class="w-4 h-4 shrink-0 text-cyan-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
             </svg>
-            {{ feature }}
+            <span class="text-slate-700">{{ feature }}</span>
           </li>
         </ul>
       </button>
     </div>
+
+    <StepButton
+      @click="() => { if(selectedPlan) emit('next') }"
+      :disabled="!selectedPlan"
+      variant="accent"
+      text="Continuar"
+    />
   </div>
 </template>

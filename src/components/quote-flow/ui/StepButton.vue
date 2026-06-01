@@ -1,5 +1,7 @@
 <script setup>
-defineProps({
+import { computed } from 'vue'
+
+const props = defineProps({
   disabled: {
     type: Boolean,
     default: false
@@ -11,15 +13,19 @@ defineProps({
   },
   text: {
     type: String,
-    required: true
+    default: ''
   },
   loading: {
     type: Boolean,
     default: false
+  },
+  type: {
+    type: String,
+    default: 'button'
   }
 })
 
-defineEmits(['click'])
+const emit = defineEmits(['click'])
 
 const variantClasses = {
   primary: 'bg-[#00184C] text-white hover:bg-[#00133D] shadow-md hover:shadow-lg',
@@ -29,15 +35,22 @@ const variantClasses = {
   ghost: 'text-[#00184C] hover:bg-gray-100'
 }
 
-const disabledClasses = 'bg-gray-200 text-gray-400 cursor-not-allowed hover:shadow-none hover:bg-gray-200 hover:text-gray-400'
+const disabledClasses = 'bg-slate-100 text-slate-600 cursor-not-allowed rounded-full'
+
+const baseClasses = computed(() => `w-full py-4 px-6 font-semibold text-lg transition-all duration-200 flex items-center justify-center gap-2 focus:outline-none focus:ring-4 focus:ring-[#43D3FF]/30`)
+
+const buttonClasses = computed(() => {
+  const roundedClass = props.disabled ? 'rounded-full' : 'rounded-xl'
+  return [baseClasses.value, roundedClass, props.disabled ? disabledClasses : variantClasses[props.variant]]
+})
 </script>
 
 <template>
   <button
-    @click="$emit('click')"
+    :type="type"
+    @click="emit('click')"
     :disabled="disabled || loading"
-    class="w-full py-4 px-6 rounded-xl font-semibold text-lg transition-all duration-200 flex items-center justify-center gap-2 focus:outline-none focus:ring-4 focus:ring-[#43D3FF]/30 disabled:cursor-not-allowed"
-    :class="[disabled ? disabledClasses : variantClasses[variant]]"
+    :class="buttonClasses"
   >
     <svg
       v-if="loading"
@@ -50,6 +63,7 @@ const disabledClasses = 'bg-gray-200 text-gray-400 cursor-not-allowed hover:shad
       <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
     </svg>
     <span v-if="loading">Procesando...</span>
-    <span v-else>{{ text }}</span>
+    <slot v-else-if="text">{{ text }}</slot>
+    <slot v-else />
   </button>
 </template>

@@ -114,6 +114,30 @@ function handlePaymentSubmit() {
   nextStep()
 }
 
+function handleRestart() {
+  quoteData.value = {
+    origin: null,
+    destination: null,
+    dates: { start: '', end: '' },
+    travelers: null,
+    birthdate: { day: '', month: '', year: '' },
+    selectedPlan: null,
+    personalData: {
+      name: '',
+      email: '',
+      phone: ''
+    },
+    paymentData: {
+      cardNumber: '',
+      cardName: '',
+      expiry: '',
+      cvv: ''
+    },
+    policyNumber: null
+  }
+  currentStepIndex.value = 0
+}
+
 const stepTitles = {
   origin: '¿Desde dónde viajas?',
   destination: '¿A dónde viajas?',
@@ -186,6 +210,7 @@ const stepSubtitles = {
                 @select-travelers="handleSelectTravelers"
                 @select-plan="handleSelectPlan"
                 @submit-payment="handlePaymentSubmit"
+                @restart="handleRestart"
               />
             </div>
           </Transition>

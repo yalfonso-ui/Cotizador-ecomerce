@@ -57,6 +57,16 @@ function handlePay() {
     emit('pay')
   }, 1000)
 }
+
+function handleSaveQuote() {
+  const toast = document.createElement('div')
+  toast.className = 'fixed bottom-24 left-1/2 -translate-x-1/2 bg-green-600 text-white px-6 py-3 rounded-xl shadow-lg z-50 text-sm font-medium animate-fade-in'
+  toast.textContent = '¡Cotización enviada a tu correo!'
+  document.body.appendChild(toast)
+  setTimeout(() => {
+    toast.remove()
+  }, 3000)
+}
 </script>
 
 <template>
@@ -215,6 +225,14 @@ function handlePay() {
       </svg>
       <span v-if="isProcessing">Preparando pago...</span>
       <span v-else>Pagar ${{ getPlanPrice() }} USD</span>
+    </button>
+
+    <button
+      v-if="data?.selectedPlan && !isFinal"
+      @click="handleSaveQuote"
+      class="w-full text-sm font-medium text-cyan-600 hover:text-cyan-700 underline mt-4 text-center cursor-pointer block"
+    >
+      📩 Enviarme esta cotización por correo para más tarde
     </button>
 
     <div class="flex items-center justify-center gap-2 text-sm text-gray-500">
