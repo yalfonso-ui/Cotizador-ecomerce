@@ -7,6 +7,36 @@ const props = defineProps({
   data: { type: Object, default: () => ({}) }
 })
 
+const travelersLabels = { solo: '1 viajero', pareja: '2 viajeros', familia: '4 viajeros', grupo: '6+ viajeros' }
+const planNames = { essential: 'Essential', explorer: 'Explorer', premium: 'Premium' }
+const planPrices = { essential: 25, explorer: 40, premium: 65 }
+const planCoverages = { essential: '10,000', explorer: '25,000', premium: '50,000' }
+
+function getPlanPrice() {
+  return planPrices[props.data?.selectedPlan] || 0
+}
+
+function getPlanName() {
+  return planNames[props.data?.selectedPlan] || 'Sin plan'
+}
+
+function formatDestination(dest) {
+  if (Array.isArray(dest)) return dest.map(d => d?.name || d).join(', ')
+  if (typeof dest === 'object' && dest?.name) return dest.name
+  return dest || 'No especificado'
+}
+
+function formatDate(date) {
+  if (!date) return '—'
+  try {
+    const d = new Date(date)
+    if (isNaN(d.getTime())) return '—'
+    return d.toLocaleDateString('es-MX', { day: 'numeric', month: 'short', year: 'numeric' })
+  } catch {
+    return '—'
+  }
+}
+
 const isProcessing = ref(false)
 
 const cardNumber = ref('')
@@ -14,43 +44,17 @@ const cardName = ref('')
 const expiryDate = ref('')
 const cvv = ref('')
 
-const planNames = { essential: 'Essential', explorer: 'Explorer', premium: 'Premium' }
-const planPrices = { essential: 25, explorer: 40, premium: 65 }
-const planCoverages = { essential: '$15,000', explorer: '$50,000', premium: '$100,000' }
+const cardNumberTouched = ref(false)
+const cardNameTouched = ref(false)
+const expiryTouched = ref(false)
+const cvvTouched = ref(false)
 
-const travelersLabels = {
-  solo: '1 persona', pareja: '2 personas', familia: '3-5 personas', grupo: '6+ personas'
-}
+const cardNumberValid = computed(() => cardNumber.value.replace(/\s/g, '').length >= 13)
+const cardNameValid = computed(() => cardName.value.length > 2)
+const expiryValid = computed(() => expiryDate.value.length >= 4)
+const cvvValid = computed(() => cvv.value.length >= 3)
 
-function formatDate(date) {
-  if (!date) return 'No seleccionada'
-  try {
-    return new Date(date).toLocaleDateString('es-ES', { year: 'numeric', month: 'long', day: 'numeric' })
-  } catch { return 'Fecha inválida' }
-}
-
-function getPlanPrice() {
-  const plan = props.data?.selectedPlan
-  return plan ? (planPrices[plan] || 0) : 0
-}
-
-function getPlanName() {
-  return props.data?.selectedPlan ? (planNames[props.data.selectedPlan] || '') : ''
-}
-
-function formatDestination(dest) {
-  if (!dest) return 'No seleccionado'
-  if (Array.isArray(dest)) return dest.map(d => d.name || d).join(', ')
-  if (typeof dest === 'object' && dest.name) return dest.name
-  return String(dest)
-}
-
-const isFormValid = computed(() => {
-  return cardNumber.value.replace(/\s/g, '').length >= 13 &&
-    cardName.value.length > 2 &&
-    expiryDate.value.length >= 4 &&
-    cvv.value.length >= 3
-})
+const isFormValid = computed(() => cardNumberValid.value && cardNameValid.value && expiryValid.value && cvvValid.value)
 
 function formatCardNumber(e) {
   let value = e.target.value.replace(/\D/g, '')
@@ -87,84 +91,97 @@ function handleSubmit() {
 
 <template>
   <div class="space-y-6">
-    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 divide-y divide-gray-100">
-      <div class="p-5 flex items-center gap-4">
-        <div class="w-12 h-12 rounded-full bg-cyan-100 flex items-center justify-center shrink-0">
-          <span class="text-xl">🌎</span>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+      <div class="bg-white rounded-2xl shadow-sm border border-gray-100 divide-y divide-gray-100">
+        <div class="p-5 flex items-center gap-4">
+          <div class="w-12 h-12 rounded-full bg-cyan-100 flex items-center justify-center shrink-0">
+            <span class="text-xl">🌎</span>
+          </div>
+          <div class="flex-1 min-w-0">
+            <p class="text-xs text-gray-500 uppercase tracking-wide mb-1">Ruta</p>
+            <p class="font-semibold text-gray-800 text-sm truncate">
+              {{ data?.origin?.name || data?.origin || 'Origen' }}
+              <span class="text-gray-400 mx-1">→</span>
+              {{ formatDestination(data?.destination) }}
+            </p>
+          </div>
+          <button @click="$emit('go-to-step', 0)" class="text-xs text-cyan-600 hover:text-cyan-700 font-medium whitespace-nowrap">Editar</button>
         </div>
-        <div class="flex-1 min-w-0">
-          <p class="text-xs text-gray-500 uppercase tracking-wide mb-1">Ruta</p>
-          <p class="font-semibold text-gray-800 text-sm truncate">
-            {{ data?.origin?.name || data?.origin || 'Origen' }}
-            <span class="text-gray-400 mx-1">→</span>
-            {{ formatDestination(data?.destination) }}
-          </p>
+        <div class="p-5 flex items-center gap-4">
+          <div class="w-12 h-12 rounded-full bg-cyan-100 flex items-center justify-center shrink-0">
+            <span class="text-xl">📅</span>
+          </div>
+          <div class="flex-1 min-w-0">
+            <p class="text-xs text-gray-500 uppercase tracking-wide mb-1">Fechas</p>
+            <p class="font-semibold text-gray-800 text-sm truncate">
+              {{ formatDate(data?.dates?.start) }} — {{ formatDate(data?.dates?.end) }}
+            </p>
+          </div>
+          <button @click="$emit('go-to-step', 2)" class="text-xs text-cyan-600 hover:text-cyan-700 font-medium whitespace-nowrap">Editar</button>
         </div>
-        <button @click="$emit('go-to-step', 0)" class="text-xs text-cyan-600 hover:text-cyan-700 font-medium whitespace-nowrap">Editar</button>
+        <div class="p-5 flex items-center gap-4">
+          <div class="w-12 h-12 rounded-full bg-cyan-100 flex items-center justify-center shrink-0">
+            <span class="text-xl">👥</span>
+          </div>
+          <div class="flex-1 min-w-0">
+            <p class="text-xs text-gray-500 uppercase tracking-wide mb-1">Viajeros</p>
+            <p class="font-semibold text-gray-800 text-sm">{{ travelersLabels[data?.travelers] || data?.travelers || '—' }}</p>
+          </div>
+          <button @click="$emit('go-to-step', 3)" class="text-xs text-cyan-600 hover:text-cyan-700 font-medium whitespace-nowrap">Editar</button>
+        </div>
       </div>
 
-      <div class="p-5 flex items-center gap-4">
-        <div class="w-12 h-12 rounded-full bg-cyan-100 flex items-center justify-center shrink-0">
-          <span class="text-xl">📅</span>
+      <div class="space-y-6">
+        <div v-if="data?.selectedPlan" class="bg-gradient-to-r from-[#00184C] to-[#0B1A3D] rounded-2xl p-5">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-4">
+              <div class="w-14 h-14 rounded-2xl bg-yellow-400/20 flex items-center justify-center">
+                <span class="text-2xl">🛡️</span>
+              </div>
+              <div>
+                <p class="text-xs text-cyan-400 uppercase tracking-wide mb-1">Plan</p>
+                <p class="text-white font-bold text-lg">{{ getPlanName() }}</p>
+                <p class="text-gray-400 text-sm">Cobertura {{ planCoverages[data.selectedPlan] }} USD</p>
+              </div>
+            </div>
+            <div class="text-right">
+              <p class="text-3xl font-bold text-yellow-400">${{ getPlanPrice() }}</p>
+              <p class="text-gray-400 text-sm">USD</p>
+            </div>
+          </div>
         </div>
-        <div class="flex-1 min-w-0">
-          <p class="text-xs text-gray-500 uppercase tracking-wide mb-1">Fechas</p>
-          <p class="font-semibold text-gray-800 text-sm truncate">
-            {{ formatDate(data?.dates?.start) }} — {{ formatDate(data?.dates?.end) }}
-          </p>
-        </div>
-        <button @click="$emit('go-to-step', 1)" class="text-xs text-cyan-600 hover:text-cyan-700 font-medium whitespace-nowrap">Editar</button>
-      </div>
 
-      <div class="p-5 flex items-center gap-4">
-        <div class="w-12 h-12 rounded-full bg-cyan-100 flex items-center justify-center shrink-0">
-          <span class="text-xl">👥</span>
+        <div class="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm">
+          <div class="flex items-center gap-4">
+            <div class="w-12 h-12 rounded-full bg-cyan-100 flex items-center justify-center shrink-0">
+              <span class="text-xl">👤</span>
+            </div>
+            <div class="flex-1 min-w-0">
+              <p class="text-xs text-gray-500 uppercase tracking-wide mb-1">Contacto de emergencia</p>
+              <p class="font-semibold text-gray-800 text-sm truncate">{{ data?.emergencyContact?.name || data?.personalData?.name || '—' }}</p>
+              <p v-if="data?.emergencyContact?.phone || data?.personalData?.phone" class="text-sm text-gray-500">{{ data?.emergencyContact?.phone || data?.personalData?.phone }}</p>
+            </div>
+            <button @click="$emit('go-to-step', 6)" class="text-xs text-cyan-600 hover:text-cyan-700 font-medium whitespace-nowrap">Editar</button>
+          </div>
+          <p class="text-[11px] text-slate-400 mt-3 leading-tight">Estos datos son confidenciales. Solo nos comunicaremos con tu contacto en caso de una emergencia médica real durante el viaje.</p>
         </div>
-        <div class="flex-1 min-w-0">
-          <p class="text-xs text-gray-500 uppercase tracking-wide mb-1">Viajeros</p>
-          <p class="font-semibold text-gray-800 text-sm">{{ travelersLabels[data?.travelers] || data?.travelers || '—' }}</p>
-        </div>
-        <button @click="$emit('go-to-step', 3)" class="text-xs text-cyan-600 hover:text-cyan-700 font-medium whitespace-nowrap">Editar</button>
-      </div>
-
-      <div class="p-5 flex items-center gap-4">
-        <div class="w-12 h-12 rounded-full bg-cyan-100 flex items-center justify-center shrink-0">
-          <span class="text-xl">👤</span>
-        </div>
-        <div class="flex-1 min-w-0">
-          <p class="text-xs text-gray-500 uppercase tracking-wide mb-1">Contacto</p>
-          <p class="font-semibold text-gray-800 text-sm truncate">{{ data?.personalData?.name || '—' }}</p>
-        </div>
-        <button @click="$emit('go-to-step', 6)" class="text-xs text-cyan-600 hover:text-cyan-700 font-medium whitespace-nowrap">Editar</button>
       </div>
     </div>
 
-    <div v-if="data?.selectedPlan" class="bg-gradient-to-r from-[#00184C] to-[#0B1A3D] rounded-2xl p-5">
-      <div class="flex items-center justify-between">
-        <div class="flex items-center gap-4">
-          <div class="w-14 h-14 rounded-2xl bg-yellow-400/20 flex items-center justify-center">
-            <span class="text-2xl">🛡️</span>
-          </div>
-          <div>
-            <p class="text-xs text-cyan-400 uppercase tracking-wide mb-1">Plan</p>
-            <p class="text-white font-bold text-lg">{{ getPlanName() }}</p>
-            <p class="text-gray-400 text-sm">Cobertura {{ planCoverages[data.selectedPlan] }} USD</p>
-          </div>
+    <div class="bg-white border border-slate-200 shadow-sm rounded-2xl p-6">
+      <div class="flex items-center gap-2.5 mb-5 pb-4 border-b border-slate-100">
+        <div class="w-8 h-8 rounded-lg bg-cyan-50 flex items-center justify-center">
+          <svg class="w-5 h-5 text-cyan-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+          </svg>
         </div>
-        <div class="text-right">
-          <p class="text-3xl font-bold text-yellow-400">${{ getPlanPrice() }}</p>
-          <p class="text-gray-400 text-sm">USD</p>
-        </div>
+        <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider">Datos de pago</h3>
       </div>
-    </div>
-
-    <div class="bg-white rounded-2xl p-5 border border-gray-200">
-      <h3 class="text-sm font-bold text-slate-500 uppercase tracking-wider mb-4">Datos de pago</h3>
       <div class="space-y-4">
         <div>
-          <label class="block text-sm font-medium text-slate-900 mb-2">Número de tarjeta</label>
+          <label class="text-xs font-bold text-slate-500 uppercase tracking-wide mb-1.5 block">Número de tarjeta</label>
           <div class="relative">
-            <div class="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400">
+            <div class="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300 pointer-events-none">
               <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
               </svg>
@@ -172,40 +189,65 @@ function handleSubmit() {
             <input
               v-model="cardNumber"
               @input="formatCardNumber"
+              @blur="cardNumberTouched = true"
               type="text"
               inputmode="numeric"
               placeholder="1234 5678 9012 3456"
               maxlength="19"
-              class="w-full h-14 pl-12 pr-4 text-lg bg-white border-2 border-gray-200 rounded-xl focus:border-cyan-400 focus:ring-4 focus:ring-cyan-400/20 transition-all placeholder:text-gray-300"
+              class="w-full h-12 pl-12 pr-10 bg-slate-50 border rounded-xl text-slate-700 placeholder:text-slate-300 transition-all duration-200 focus:bg-white focus:border-cyan-400 focus:ring-4 focus:ring-cyan-50 outline-none text-lg tracking-wider"
+              :class="[cardNumberTouched && cardNumberValid ? 'border-green-300 bg-green-50/30' : 'border-slate-200', cardNumberTouched && !cardNumberValid ? 'border-red-300 ring-4 ring-red-50' : '']"
             />
+            <div v-if="cardNumberTouched && cardNumberValid" class="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
+              <svg class="w-5 h-5 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" />
+              </svg>
+            </div>
           </div>
         </div>
 
         <div>
-          <label class="block text-sm font-medium text-slate-900 mb-2">Nombre en la tarjeta</label>
-          <input
-            v-model="cardName"
-            type="text"
-            placeholder="Como aparece en tu tarjeta"
-            class="w-full h-14 px-4 text-lg bg-white border-2 border-gray-200 rounded-xl focus:border-cyan-400 focus:ring-4 focus:ring-cyan-400/20 transition-all placeholder:text-gray-300"
-          />
+          <label class="text-xs font-bold text-slate-500 uppercase tracking-wide mb-1.5 block">Nombre en la tarjeta</label>
+          <div class="relative">
+            <input
+              v-model="cardName"
+              type="text"
+              placeholder="Como aparece en tu tarjeta"
+              @blur="cardNameTouched = true"
+              class="w-full h-12 px-4 bg-slate-50 border rounded-xl text-slate-700 placeholder:text-slate-300 transition-all duration-200 focus:bg-white focus:border-cyan-400 focus:ring-4 focus:ring-cyan-50 outline-none pr-10"
+              :class="[cardNameTouched && cardNameValid ? 'border-green-300 bg-green-50/30' : 'border-slate-200', cardNameTouched && !cardNameValid ? 'border-red-300 ring-4 ring-red-50' : '']"
+            />
+            <div v-if="cardNameTouched && cardNameValid" class="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
+              <svg class="w-5 h-5 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" />
+              </svg>
+            </div>
+          </div>
         </div>
 
         <div class="grid grid-cols-2 gap-4">
           <div>
-            <label class="block text-sm font-medium text-slate-900 mb-2">Vencimiento</label>
-            <input
-              v-model="expiryDate"
-              @input="formatExpiry"
-              type="text"
-              inputmode="numeric"
-              placeholder="MM/AA"
-              maxlength="5"
-              class="w-full h-14 px-4 text-lg text-center bg-white border-2 border-gray-200 rounded-xl focus:border-cyan-400 focus:ring-4 focus:ring-cyan-400/20 transition-all placeholder:text-gray-400"
-            />
+            <label class="text-xs font-bold text-slate-500 uppercase tracking-wide mb-1.5 block">Vencimiento</label>
+            <div class="relative">
+              <input
+                v-model="expiryDate"
+                @input="formatExpiry"
+                @blur="expiryTouched = true"
+                type="text"
+                inputmode="numeric"
+                placeholder="MM/AA"
+                maxlength="5"
+                class="w-full h-12 px-4 bg-slate-50 border rounded-xl text-slate-700 placeholder:text-slate-300 transition-all duration-200 focus:bg-white focus:border-cyan-400 focus:ring-4 focus:ring-cyan-50 outline-none text-center pr-10"
+                :class="[expiryTouched && expiryValid ? 'border-green-300 bg-green-50/30' : 'border-slate-200', expiryTouched && !expiryValid ? 'border-red-300 ring-4 ring-red-50' : '']"
+              />
+              <div v-if="expiryTouched && expiryValid" class="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
+                <svg class="w-5 h-5 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" />
+                </svg>
+              </div>
+            </div>
           </div>
           <div>
-            <label class="block text-sm font-medium text-slate-900 mb-2">CVV</label>
+            <label class="text-xs font-bold text-slate-500 uppercase tracking-wide mb-1.5 block">Código de seguridad</label>
             <div class="relative">
               <input
                 v-model="cvv"
@@ -213,10 +255,17 @@ function handleSubmit() {
                 inputmode="numeric"
                 placeholder="CVV"
                 maxlength="4"
-                class="w-full h-14 px-4 pr-12 text-lg text-center bg-white border-2 border-gray-200 rounded-xl focus:border-cyan-400 focus:ring-4 focus:ring-cyan-400/20 transition-all placeholder:text-gray-400"
+                @blur="cvvTouched = true"
+                class="w-full h-12 px-4 pr-12 bg-slate-50 border rounded-xl text-slate-700 placeholder:text-slate-300 transition-all duration-200 focus:bg-white focus:border-cyan-400 focus:ring-4 focus:ring-cyan-50 outline-none text-center"
+                :class="[cvvTouched && cvvValid ? 'border-green-300 bg-green-50/30' : 'border-slate-200', cvvTouched && !cvvValid ? 'border-red-300 ring-4 ring-red-50' : '']"
               />
-              <div class="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div v-if="cvvTouched && cvvValid" class="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
+                <svg class="w-5 h-5 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" />
+                </svg>
+              </div>
+              <div class="absolute right-4 top-1/2 -translate-y-1/2 text-slate-300 pointer-events-none">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                 </svg>
               </div>
@@ -242,7 +291,7 @@ function handleSubmit() {
     <button
       @click="handleSubmit"
       :disabled="!isFormValid || isProcessing"
-      class="w-full bg-yellow-400 hover:bg-yellow-500 text-slate-900 font-bold py-4 rounded-xl transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-yellow-400/30 flex items-center justify-center gap-2"
+      class="w-full sm:w-auto min-w-[250px] px-8 py-3.5 bg-yellow-400 text-slate-900 font-extrabold rounded-xl hover:bg-yellow-500 transition-all shadow-sm mx-auto block disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
     >
       <svg v-if="isProcessing" class="animate-spin w-5 h-5" fill="none" viewBox="0 0 24 24">
         <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>

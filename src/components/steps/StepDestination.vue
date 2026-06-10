@@ -69,6 +69,7 @@ function handleContinue() {
 
 <template>
   <div class="space-y-6">
+    <p class="text-sm text-slate-500 mb-2 text-center">Selecciona uno o más destinos para tu cobertura médica.</p>
     <div class="relative">
       <svg class="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
@@ -157,7 +158,7 @@ function handleContinue() {
     <button
       @click="handleContinue"
       :disabled="selectedDestinations.length === 0"
-      class="w-full bg-yellow-400 hover:bg-yellow-500 text-slate-900 font-bold py-3 px-4 rounded-xl transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+      class="w-full sm:w-auto min-w-[250px] px-8 py-3.5 bg-yellow-400 text-slate-900 font-extrabold rounded-xl hover:bg-yellow-500 transition-all shadow-sm mx-auto block disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
     >
       <template v-if="selectedDestinations.length > 0">
         <span>Continuar ({{ selectedDestinations.length }} seleccionado{{ selectedDestinations.length > 1 ? 's' : '' }})</span>

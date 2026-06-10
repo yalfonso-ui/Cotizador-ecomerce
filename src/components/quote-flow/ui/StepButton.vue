@@ -37,7 +37,7 @@ const variantClasses = {
 
 const disabledClasses = 'bg-slate-100 text-slate-600 cursor-not-allowed rounded-full'
 
-const baseClasses = computed(() => `w-full py-4 px-6 font-semibold text-lg transition-all duration-200 flex items-center justify-center gap-2 focus:outline-none focus:ring-4 focus:ring-[#43D3FF]/30`)
+const baseClasses = computed(() => `w-full sm:w-auto min-w-[250px] px-8 py-3.5 font-extrabold text-base transition-all duration-200 flex items-center justify-center gap-2 focus:outline-none focus:ring-4 focus:ring-[#43D3FF]/30 mx-auto`)
 
 const buttonClasses = computed(() => {
   const roundedClass = props.disabled ? 'rounded-full' : 'rounded-xl'

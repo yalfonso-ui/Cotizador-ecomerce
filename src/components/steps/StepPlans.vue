@@ -104,7 +104,7 @@ function selectPlan(plan) {
     <button
       @click="emit('next', { selectedPlan: selectedPlan })"
       :disabled="!selectedPlan"
-      class="w-full bg-yellow-400 hover:bg-yellow-500 text-slate-900 font-bold py-4 px-4 rounded-xl transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg"
+      class="w-full sm:w-auto min-w-[250px] px-8 py-3.5 bg-yellow-400 text-slate-900 font-extrabold rounded-xl hover:bg-yellow-500 transition-all shadow-sm mx-auto block disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
     >
       Elegir {{ plans.find(p => p.id === selectedPlan)?.name || 'este plan' }}
     </button>

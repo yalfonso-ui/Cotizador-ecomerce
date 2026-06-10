@@ -1,5 +1,5 @@
 <template>
-  <div class="w-full max-w-2xl mx-auto bg-white rounded-[2rem] shadow-2xl overflow-hidden border border-slate-100 mt-6">
+  <div class="w-full max-w-2xl mx-auto overflow-hidden border border-slate-100 mt-6">
     <div class="bg-[#0B1A3D] p-8 text-center border-b-4 border-yellow-400 relative overflow-hidden">
       <div class="absolute inset-0 opacity-10 pointer-events-none" style="background-image: radial-gradient(#00D1FF 1px, transparent 1px); background-size: 20px 20px;"></div>
       <div class="relative z-10 flex flex-col items-center">
@@ -33,7 +33,7 @@
         </div>
         <div class="mt-5 pt-5 border-t border-slate-100">
           <h3 class="text-xs font-bold text-[#00D1FF] uppercase tracking-wider mb-2">Viajeros</h3>
-          <p class="font-semibold text-slate-800 capitalize">{{ formData?.travelers || '1 persona' }}</p>
+          <p class="font-semibold text-slate-800">{{ travelerCount() }} viajero{{ travelerCount() > 1 ? 's' : '' }}</p>
         </div>
       </div>
 
@@ -64,11 +64,11 @@
 </template>
 
 <script setup>
-defineProps({
+const props = defineProps({
   formData: { type: Object, default: () => ({}) },
   selectedPlan: { type: Object, default: () => ({}) }
-});
-defineEmits(['restart-flow']);
+})
+defineEmits(['restart-flow'])
 
 function formatDestination(dest) {
   if (!dest) return 'Internacional'
@@ -82,11 +82,20 @@ function formatDestination(dest) {
 function formatDateSafe(dateVal) {
   if (!dateVal) return '--'
   try {
-    const date = new Date(dateVal)
+    const [y, m, d] = dateVal.split('-').map(Number)
+    if (!y || !m || !d) return '--'
+    const date = new Date(y, m - 1, d)
     if (isNaN(date.getTime())) return '--'
     return date.toLocaleDateString('es-ES', { year: 'numeric', month: 'long', day: 'numeric' })
   } catch {
     return '--'
   }
+}
+
+function travelerCount() {
+  const ages = props.formData?.travelerAges
+  if (ages && ages.length > 0) return ages.length
+  const counts = { solo: 1, pareja: 2, familia: 4, grupo: 6 }
+  return counts[props.formData?.travelers] || 1
 }
 </script>

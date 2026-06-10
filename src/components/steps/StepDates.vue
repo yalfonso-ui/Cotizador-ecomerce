@@ -48,6 +48,7 @@ function handleContinue() {
         :inline="true"
         :manualInput="false"
         :minDate="minDate"
+        :numberOfMonths="2"
         :showWeek="false"
         class="w-full"
         inputClass="hidden"
@@ -75,7 +76,7 @@ function handleContinue() {
     <button
       @click="handleContinue"
       :disabled="!isValid"
-      class="w-full h-14 bg-yellow-400 hover:bg-yellow-500 text-slate-900 font-bold rounded-xl transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed shadow-lg shadow-yellow-400/20 flex items-center justify-center gap-2"
+      class="w-full sm:w-auto min-w-[250px] px-8 py-3.5 bg-yellow-400 text-slate-900 font-extrabold rounded-xl hover:bg-yellow-500 transition-all shadow-sm mx-auto block disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
     >
       Continuar
       <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
