@@ -1,5 +1,6 @@
 <script setup>
 import { ref, computed } from 'vue'
+import DiscountCodeField from '@/components/ui/DiscountCodeField.vue'
 
 const emit = defineEmits(['go-to-step', 'pay'])
 
@@ -15,6 +16,8 @@ const props = defineProps({
 })
 
 const isProcessing = ref(false)
+const appliedDiscount = ref(null)
+const discountError = ref('')
 
 const planNames = {
   essential: 'Essential',
@@ -50,6 +53,31 @@ function getPlanPrice() {
   return planPrices[plan] || 0
 }
 
+const discountAmount = computed(() => {
+  if (!appliedDiscount.value) return 0
+  return (getPlanPrice() * appliedDiscount.value.discountPercent) / 100
+})
+
+const finalPrice = computed(() => {
+  return Math.max(0, getPlanPrice() - discountAmount.value)
+})
+
+function handleApplyDiscount(discount) {
+  if (discount.error) {
+    discountError.value = discount.error
+    appliedDiscount.value = null
+    setTimeout(() => { discountError.value = '' }, 3000)
+  } else {
+    appliedDiscount.value = discount
+    discountError.value = ''
+  }
+}
+
+function handleRemoveDiscount() {
+  appliedDiscount.value = null
+  discountError.value = ''
+}
+
 function handlePay() {
   if (isProcessing.value) return
   isProcessing.value = true
@@ -78,16 +106,14 @@ function handleSaveQuote() {
         </svg>
       </div>
       <h2 class="text-2xl font-semibold text-gray-900 mb-2">¡Pago exitoso!</h2>
-      <p class="text-gray-500">Tu seguro de viaje está activo</p>
-      <p class="text-lg font-bold text-cyan-600 mt-2">${{ getPlanPrice() }} USD</p>
+      <p class="text-gray-500">Tu asistencia de viaje está activa</p>
+      <p class="text-lg font-bold text-cyan-600 mt-2">${{ finalPrice.toFixed(2) }} USD</p>
     </div>
 
     <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
       <div class="p-6 space-y-5">
         <div class="flex items-start gap-4 group">
-          <div class="w-12 h-12 rounded-full bg-cyan-100 flex items-center justify-center shrink-0">
-            <span class="text-xl">🌎</span>
-          </div>
+          
           <div class="flex-1">
             <p class="text-xs text-gray-500 uppercase tracking-wide mb-1">Ruta</p>
             <p class="font-semibold text-gray-800 text-lg">
@@ -111,9 +137,7 @@ function handleSaveQuote() {
         <div class="h-px bg-gray-100"></div>
 
         <div class="flex items-start gap-4 group">
-          <div class="w-12 h-12 rounded-full bg-cyan-100 flex items-center justify-center shrink-0">
-            <span class="text-xl">📅</span>
-          </div>
+          
           <div class="flex-1">
             <p class="text-xs text-gray-500 uppercase tracking-wide mb-1">Fechas</p>
             <p class="font-medium text-gray-800">
@@ -137,9 +161,7 @@ function handleSaveQuote() {
         <div class="h-px bg-gray-100"></div>
 
         <div class="flex items-start gap-4 group">
-          <div class="w-12 h-12 rounded-full bg-cyan-100 flex items-center justify-center shrink-0">
-            <span class="text-xl">👥</span>
-          </div>
+          
           <div class="flex-1">
             <p class="text-xs text-gray-500 uppercase tracking-wide mb-1">Viajeros</p>
             <p class="font-medium text-gray-800">
@@ -161,9 +183,7 @@ function handleSaveQuote() {
         <div class="h-px bg-gray-100"></div>
 
         <div v-if="data?.personalData?.name" class="flex items-start gap-4 group">
-          <div class="w-12 h-12 rounded-full bg-cyan-100 flex items-center justify-center shrink-0">
-            <span class="text-xl">👤</span>
-          </div>
+          
           <div class="flex-1">
             <p class="text-xs text-gray-500 uppercase tracking-wide mb-1">Datos de contacto</p>
             <p class="font-medium text-gray-800">{{ data.personalData.name }}</p>
@@ -213,6 +233,39 @@ function handleSaveQuote() {
       </div>
     </div>
 
+    <div v-if="!isFinal">
+      <DiscountCodeField
+        :modelValue="appliedDiscount"
+        @apply="handleApplyDiscount"
+        @remove="handleRemoveDiscount"
+      />
+
+      <Transition name="fade">
+        <p v-if="discountError" class="mt-2 text-red-500 text-xs flex items-center gap-1" role="alert">
+          <svg class="w-3 h-3 shrink-0" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
+            <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd" />
+          </svg>
+          {{ discountError }}
+        </p>
+      </Transition>
+
+      <div v-if="appliedDiscount" class="mt-3 bg-slate-50 rounded-xl p-4 space-y-2">
+        <div class="flex items-center justify-between text-sm">
+          <span class="text-slate-600">Subtotal</span>
+          <span class="font-semibold text-slate-700">${{ getPlanPrice() }}.00 USD</span>
+        </div>
+        <div class="flex items-center justify-between text-sm">
+          <span class="text-emerald-600 font-medium">Descuento ({{ appliedDiscount.discountPercent }}%)</span>
+          <span class="font-semibold text-emerald-600">-${{ discountAmount.toFixed(2) }} USD</span>
+        </div>
+        <div class="h-px bg-slate-200"></div>
+        <div class="flex items-center justify-between">
+          <span class="text-sm font-bold text-slate-800">Total a pagar</span>
+          <span class="text-xl font-black text-cyan-600">${{ finalPrice.toFixed(2) }} <span class="text-xs text-slate-500 font-medium">USD</span></span>
+        </div>
+      </div>
+    </div>
+
     <button
       v-if="data?.selectedPlan && !isFinal"
       @click="handlePay"
@@ -224,7 +277,7 @@ function handleSaveQuote() {
         <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
       </svg>
       <span v-if="isProcessing">Preparando pago...</span>
-      <span v-else>Pagar ${{ getPlanPrice() }} USD</span>
+      <span v-else>Pagar ${{ finalPrice.toFixed(2) }} USD</span>
     </button>
 
     <button
@@ -239,7 +292,18 @@ function handleSaveQuote() {
       <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
       </svg>
-      <span>Pago 100% seguro • Datos encriptados</span>
+      <span>Pago 100% asistencia • Datos encriptados</span>
     </div>
   </div>
 </template>
+
+<style scoped>
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.3s ease;
+}
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+}
+</style>

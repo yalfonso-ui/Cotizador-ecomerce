@@ -3,6 +3,7 @@ import { ref, computed, watch, onMounted } from 'vue'
 import LandingPage from './LandingPage.vue'
 import StepOrigin from './steps/StepOrigin.vue'
 import StepDestination from './steps/StepDestination.vue'
+import StepTripType from './steps/StepTripType.vue'
 import StepDates from './steps/StepDates.vue'
 import StepTravelerInfo from './steps/StepTravelerInfo.vue'
 import TravelersAgeStep from './steps/TravelersAgeStep.vue'
@@ -19,6 +20,7 @@ const direction = ref('left')
 const formData = ref({
   origin: null,
   destination: null,
+  tripType: null,
   dates: { start: null, end: null },
   travelers: null,
   travelerAges: [],
@@ -28,7 +30,7 @@ const formData = ref({
   emergencyContact: { name: '', phone: '', email: '' }
 })
 
-const TOTAL_STEPS = 9
+const TOTAL_STEPS = 10
 const progress = computed(() => ((currentStep.value) / (TOTAL_STEPS - 1)) * 100)
 
 const planPrices = { essential: 25, explorer: 40, premium: 65 }
@@ -45,13 +47,14 @@ function getPlanName() {
 const stepTitles = [
   { title: '¿Desde dónde viajas?', subtitle: 'Selecciona tu país de origen' },
   { title: '¿A dónde viajas?', subtitle: 'Selecciona tus destinos' },
+  { title: '¿Qué tipo de viaje es?', subtitle: 'Elige la duración de tu cobertura' },
   { title: '¿Cuándo es tu aventura?', subtitle: 'Selecciona las fechas de tu viaje' },
   { title: '¿Quiénes viajan?', subtitle: 'Selecciona el tipo de viaje' },
   { title: '¿Qué edad tienen los viajeros?', subtitle: 'Ingresa las edades' },
   { title: 'Elige tu plan de protección', subtitle: 'Compara los planes disponibles' },
   { title: 'Tus datos de contacto', subtitle: 'Titular y emergencia' },
   { title: 'Revisa y paga', subtitle: 'Confirma los detalles y completa el pago' },
-  { title: '¡Viaje confirmado!', subtitle: 'Tu seguro está activo' }
+  { title: '¡Viaje confirmado!', subtitle: 'Tu asistencia está activa' }
 ]
 
 function handleStart() {
@@ -84,7 +87,7 @@ function goToStep(step) {
 function handlePaymentSuccess(data) {
   clearWizardState()
   direction.value = 'left'
-  currentStep.value = 8
+  currentStep.value = 9
 }
 
 function restart() {
@@ -93,6 +96,7 @@ function restart() {
   formData.value = {
     origin: null,
     destination: null,
+    tripType: null,
     dates: { start: null, end: null },
     travelers: null,
     travelerAges: [],
@@ -151,12 +155,27 @@ function clearWizardState() {
       <div v-if="showWizard" class="min-h-screen flex flex-col">
         <header class="sticky top-0 z-50 bg-white border-b border-gray-100 px-4 py-4">
           <div class="max-w-5xl mx-auto">
-            <div class="flex items-center justify-between mb-4">
+            <div class="grid grid-cols-3 items-center mb-4">
               <div class="flex items-center gap-3">
+                <button
+                  v-if="currentStep > 0 && currentStep < 9"
+                  @click="prevStep"
+                  aria-label="Volver al paso anterior"
+                  class="inline-flex items-center gap-1.5 text-sm font-medium text-slate-500 hover:text-slate-800 active:text-slate-900 transition-colors duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-300 focus-visible:ring-offset-2 rounded px-2.5 py-1.5"
+                >
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                  </svg>
+                  <span class="hidden sm:inline">Volver</span>
+                </button>
+              </div>
+
+              <div class="flex items-center justify-center">
                 <img src="@/assets/images/uploads/Logotipo PNG.png" alt="Continental Assist Logo" class="h-10 w-auto" />
               </div>
-              <div class="flex items-center gap-3">
-                <span v-if="currentStep === 8" class="text-sm font-medium text-green-500">¡Completado!</span>
+
+              <div class="flex items-center justify-end">
+                <span v-if="currentStep === 9" class="text-sm font-medium text-green-500">¡Completado!</span>
                 <span v-else class="text-xs font-semibold text-[#00184C] bg-slate-100 px-3 py-1.5 rounded-full">
                   Paso {{ currentStep + 1 }} de {{ TOTAL_STEPS }}
                 </span>
@@ -175,10 +194,8 @@ function clearWizardState() {
           <div class="w-full max-w-5xl">
             <Transition :name="'slide-' + direction" mode="out-in">
               <div :key="currentStep" class="bg-white rounded-2xl shadow-lg p-6 md:p-8 border border-gray-100">
-                <div v-if="currentStep !== 8" class="text-center mb-8">
-                  <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-cyan-100 mb-4">
-                    <span class="text-3xl">{{ ['🌎', '✈️', '📅', '👥', '🎂', '🛡️', '👤', '💳', '✅'][currentStep] }}</span>
-                  </div>
+                <div v-if="currentStep !== 9" class="text-center mb-8">
+                  
                   <h2 class="text-2xl font-semibold text-gray-900 mb-2">{{ stepTitles[currentStep].title }}</h2>
                   <p class="text-gray-500 text-sm">{{ stepTitles[currentStep].subtitle }}</p>
                 </div>
@@ -190,25 +207,33 @@ function clearWizardState() {
                   <StepDestination @next="nextStep" />
                 </div>
                 <div v-else-if="currentStep === 2">
-                  <StepDates @next="nextStep" />
+                  <StepTripType :modelValue="formData.tripType" @next="nextStep" />
                 </div>
                 <div v-else-if="currentStep === 3">
-                  <StepTravelerInfo :modelValue="formData" @next="nextStep" />
+                  <StepDates :tripType="formData.tripType" @next="nextStep" />
                 </div>
                 <div v-else-if="currentStep === 4">
-                  <TravelersAgeStep :modelValue="formData" @next="nextStep" />
+                  <StepTravelerInfo :modelValue="formData" @next="nextStep" />
                 </div>
                 <div v-else-if="currentStep === 5">
-                  <StepPlans v-model="formData.selectedPlan" @next="nextStep" />
+                  <TravelersAgeStep :modelValue="formData" @next="nextStep" />
                 </div>
                 <div v-else-if="currentStep === 6">
-                  <DataStep @next="nextStep" />
+                  <StepPlans v-model="formData.selectedPlan" @next="nextStep" />
                 </div>
                 <div v-else-if="currentStep === 7">
-                  <StepCheckout :data="formData" @go-to-step="goToStep" @payment-success="handlePaymentSuccess" />
+                  <DataStep
+                    :selectedPlan="formData.selectedPlan"
+                    :travelers="formData.travelers"
+                    :travelersCount="formData.travelersCount"
+                    @next="nextStep"
+                  />
                 </div>
                 <div v-else-if="currentStep === 8">
-                  <SuccessStep 
+                  <StepCheckout :data="formData" @go-to-step="goToStep" @payment-success="handlePaymentSuccess" />
+                </div>
+                <div v-else-if="currentStep === 9">
+                  <SuccessStep
                     :formData="formData"
                     :selectedPlan="{ name: getPlanName(), price: getPlanPrice() }"
                     @restart-flow="restart"
@@ -218,17 +243,6 @@ function clearWizardState() {
             </Transition>
           </div>
         </main>
-
-        <footer v-if="currentStep > 0 && currentStep < 8" class="bg-white border-t border-gray-100 px-4 py-4 sticky bottom-0 z-50">
-          <div class="max-w-2xl mx-auto flex justify-center">
-            <button @click="prevStep" class="text-gray-500 hover:text-[#00184C] text-sm font-medium flex items-center gap-1 transition-colors">
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
-              </svg>
-              Atrás
-            </button>
-          </div>
-        </footer>
       </div>
     </Transition>
   </div>

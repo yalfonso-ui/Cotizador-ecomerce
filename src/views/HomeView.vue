@@ -70,7 +70,7 @@ const freeInclusions = [
 ]
 
 const paymentBadges = [
-  { icon: 'lock', text: 'SSL Seguro' },
+  { icon: 'lock', text: 'SSL Asistencia' },
   { icon: 'credit-card', text: 'Visa / MC / Amex' },
   { icon: 'shield', text: 'Datos protegidos' }
 ]

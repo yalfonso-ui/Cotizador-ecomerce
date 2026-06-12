@@ -38,7 +38,7 @@ const features = [
   {
     icon: 'shield-check',
     title: 'Compra segura',
-    description: 'Pagos 100% seguros con encriptación SSL.'
+    description: 'Pagos 100% ayudas con encriptación SSL.'
   },
   {
     icon: 'refresh-cw',

@@ -145,7 +145,7 @@ function handleSubmit() {
 
     <div class="flex items-center justify-center gap-2 text-sm text-gray-500 py-2">
       <span>🔒</span>
-      <span>Pago 100% seguro. Datos encriptados de extremo a extremo.</span>
+      <span>Pago 100% asistencia. Datos encriptados de extremo a extremo.</span>
     </div>
 
     <div class="flex items-center justify-center gap-4 py-3">

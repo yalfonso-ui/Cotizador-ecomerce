@@ -86,7 +86,7 @@
 
 @layer utilities {
   .font-heading {
-    font-family: 'Galano Grotesque', 'Montserrat', sans-serif;
+    font-family: 'Galano Grotesque', 'Inter', sans-serif;
   }
 
   .font-accent {

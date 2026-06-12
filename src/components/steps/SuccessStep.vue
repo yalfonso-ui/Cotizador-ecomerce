@@ -9,7 +9,7 @@
           </svg>
         </div>
         <h1 class="text-3xl font-black text-white tracking-tight mb-2">¡TU VIAJE ESTÁ PROTEGIDO!</h1>
-        <p class="text-cyan-100 font-medium text-sm">Tu seguro está activo. Disfruta tu aventura con tranquilidad.</p>
+        <p class="text-cyan-100 font-medium text-sm">Tu asistencia está activa. Disfruta tu aventura con tranquilidad.</p>
       </div>
     </div>
 

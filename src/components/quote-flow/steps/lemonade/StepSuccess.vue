@@ -34,7 +34,7 @@ function restart() {
     </div>
 
     <div class="bg-white border border-slate-200 rounded-xl p-5 text-left shadow-sm space-y-4">
-      <h3 class="text-sm font-bold text-slate-800 uppercase tracking-wider">Resumen de tu seguro</h3>
+      <h3 class="text-sm font-bold text-slate-800 uppercase tracking-wider">Resumen de tu asistencia</h3>
       <div class="space-y-3">
         <div class="flex justify-between items-center">
           <span class="text-slate-500 text-sm">Plan</span>

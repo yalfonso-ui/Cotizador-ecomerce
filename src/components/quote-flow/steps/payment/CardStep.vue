@@ -120,7 +120,7 @@ function validateAndSubmit() {
       <h2 class="font-heading text-2xl md:text-3xl font-semibold text-[#00184C] mb-2">
         Datos de tu tarjeta
       </h2>
-      <p class="text-gray-500">Pago 100% seguro y encriptado</p>
+      <p class="text-gray-500">Pago 100% asistencia y encriptado</p>
     </div>
 
     <!-- Order Summary with Discount -->
@@ -217,7 +217,7 @@ function validateAndSubmit() {
       <svg class="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
       </svg>
-      <span>Pago seguro con SSL de 256-bit</span>
+      <span>Pago asistencia con SSL de 256-bit</span>
     </div>
 
     <div class="pt-4">

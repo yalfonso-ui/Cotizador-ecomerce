@@ -1,13 +1,15 @@
 <script setup>
 import { ref } from 'vue'
+import PlanCompareModal from '@/components/ui/PlanCompareModal.vue'
 
-const emit = defineEmits(['update'])
+const emit = defineEmits(['update', 'next'])
 
 const props = defineProps({
   modelValue: String
 })
 
 const selectedPlan = ref(props.modelValue)
+const isCompareModalOpen = ref(false)
 
 const plans = [
   {
@@ -16,7 +18,7 @@ const plans = [
     price: 65,
     anchorPrice: 89,
     coverage: '$100,000 USD',
-    features: ['Todo de Explorer', 'Seguro de actividades', 'Mayores límites', 'Concierge personal', 'Cobertura familiar'],
+    features: ['Todo de Explorer', 'Asistencia de actividades', 'Mayores límites', 'Concierge personal', 'Cobertura familiar'],
     popular: false
   },
   {
@@ -43,10 +45,14 @@ function selectPlan(plan) {
   selectedPlan.value = plan.id
   emit('update:modelValue', plan.id)
 }
+
+function openCompare() {
+  isCompareModalOpen.value = true
+}
 </script>
 
 <template>
-  <div class="space-y-8 pb-6">
+  <div class="space-y-6 pb-6">
     <div class="grid grid-cols-1 md:grid-cols-3 gap-6 w-full">
       <button
         v-for="plan in plans"
@@ -101,12 +107,31 @@ function selectPlan(plan) {
       </button>
     </div>
 
-    <button
-      @click="emit('next', { selectedPlan: selectedPlan })"
-      :disabled="!selectedPlan"
-      class="w-full sm:w-auto min-w-[250px] px-8 py-3.5 bg-yellow-400 text-slate-900 font-extrabold rounded-xl hover:bg-yellow-500 transition-all shadow-sm mx-auto block disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-    >
-      Elegir {{ plans.find(p => p.id === selectedPlan)?.name || 'este plan' }}
-    </button>
+    <div class="flex flex-col sm:flex-row items-center justify-center gap-3">
+      <button
+        type="button"
+        @click="openCompare"
+        class="w-full sm:w-auto px-6 py-3 text-sm font-semibold text-cyan-700 bg-cyan-50 hover:bg-cyan-100 active:scale-[0.98] rounded-xl transition-all flex items-center justify-center gap-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500 focus-visible:ring-offset-2"
+      >
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+        </svg>
+        Ver detalles
+      </button>
+
+      <button
+        @click="emit('next', { selectedPlan: selectedPlan })"
+        :disabled="!selectedPlan"
+        class="w-full sm:w-auto min-w-[250px] px-8 py-3.5 bg-yellow-400 text-slate-900 font-extrabold rounded-xl hover:bg-yellow-500 active:scale-[0.98] transition-all shadow-sm disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-yellow-500 focus-visible:ring-offset-2"
+      >
+        Elegir {{ plans.find(p => p.id === selectedPlan)?.name || 'este plan' }}
+      </button>
+    </div>
+
+    <PlanCompareModal
+      v-model="isCompareModalOpen"
+      :plans="plans"
+      :selectedPlanId="selectedPlan"
+    />
   </div>
 </template>

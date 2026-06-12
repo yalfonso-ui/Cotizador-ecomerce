@@ -77,7 +77,7 @@ function validateAndProceed() {
       <h2 class="font-heading text-2xl md:text-3xl font-semibold text-[#00184C] mb-2">
         ¿Cuándo naciste?
       </h2>
-      <p class="text-gray-500">Necesitamos tu fecha de nacimiento para el seguro</p>
+      <p class="text-gray-500">Necesitamos tu fecha de nacimiento para la asistencia</p>
     </div>
 
     <div class="space-y-4">
