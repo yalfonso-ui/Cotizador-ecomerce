@@ -7,15 +7,15 @@ function handleStart() {
 </script>
 
 <template>
-  <div class="min-h-screen bg-[#00184C] relative overflow-hidden">
+  <div class="min-h-screen bg-[primary-500] relative overflow-hidden">
     <div class="absolute inset-0 z-0">
       <img 
         src="https://images.unsplash.com/photo-1488085061387-422e29b40080?w=1920&h=1080&fit=crop" 
         alt="Viajero" 
         class="w-full h-full object-cover" 
       />
-      <div class="absolute inset-0 bg-[#00184C]/70"></div>
-      <div class="absolute inset-0 bg-gradient-to-r from-[#00184C]/90 via-transparent to-transparent"></div>
+      <div class="absolute inset-0 bg-[primary-500]/70"></div>
+      <div class="absolute inset-0 bg-gradient-to-r from-[primary-500]/90 via-transparent to-transparent"></div>
     </div>
 
     <div class="relative z-10 min-h-screen flex items-center">
@@ -41,9 +41,9 @@ function handleStart() {
             Protege tu aventura desde solo <strong class="text-yellow-400">$25 USD</strong> — menos que tu café diario.
           </p>
 
-          <button
+          <button type="button"
             @click="handleStart"
-            class="inline-flex items-center gap-3 bg-yellow-400 text-[#00184C] font-bold px-8 py-4 rounded-xl hover:bg-yellow-500 transition-all duration-200 shadow-lg shadow-yellow-400/30 text-lg"
+            class="inline-flex items-center gap-3 bg-yellow-400 text-[primary-500] font-bold px-8 py-4 rounded-xl hover:bg-yellow-500 transition-all duration-200 shadow-lg shadow-yellow-400/30 text-lg"
           >
             <span class="text-xl">✨</span>
             ¡Comenzar ahora!

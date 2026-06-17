@@ -1,130 +1,264 @@
 <script setup>
-import { ref } from 'vue'
+import { ref, computed, onMounted, onUnmounted, nextTick } from 'vue'
 import PlanCompareModal from '@/components/ui/PlanCompareModal.vue'
+import MultitripInfoModal from '@/components/ui/MultitripInfoModal.vue'
+import { PLANS as allPlans } from '@/data/plans.js'
+import { showToast } from '@/composables/useToast.js'
 
 const emit = defineEmits(['update', 'next'])
-
 const props = defineProps({
-  modelValue: String
+  modelValue: String,
+  destination: { type: [Object, Array], default: null }
 })
 
-const selectedPlan = ref(props.modelValue)
+const selectedPlan = ref(null)
 const isCompareModalOpen = ref(false)
+const isMultitripModalOpen = ref(false)
+const carouselRef = ref(null)
+const canScrollLeft = ref(false)
+const canScrollRight = ref(true)
+const currentCarouselIndex = ref(0)
 
-const plans = [
-  {
-    id: 'premium',
-    name: 'Premium',
-    price: 65,
-    anchorPrice: 89,
-    coverage: '$100,000 USD',
-    features: ['Todo de Explorer', 'Asistencia de actividades', 'Mayores límites', 'Concierge personal', 'Cobertura familiar'],
-    popular: false
-  },
-  {
-    id: 'explorer',
-    name: 'Explorer',
-    price: 40,
-    anchorPrice: 59,
-    coverage: '$50,000 USD',
-    features: ['Todo de Essential', 'Cancelación de viaje', 'Equipaje protegido', 'COVID-19 incluido', 'Asistencia 24/7'],
-    popular: true
-  },
-  {
-    id: 'essential',
-    name: 'Essential',
-    price: 25,
-    anchorPrice: null,
-    coverage: '$15,000 USD',
-    features: ['Emergencias médicas', 'Repatriación básica', 'Teleconsulta 24/7', 'COVID-19'],
-    popular: false
+const recommendedPlanId = computed(() => {
+  const dests = Array.isArray(props.destination) ? props.destination : [props.destination]
+  const codes = dests.filter(Boolean).map(d => d.code?.toLowerCase()).filter(Boolean)
+  if (codes.length === 0) return 'explorer'
+  for (const plan of allPlans) {
+    if (plan.bestFor.some(c => codes.includes(c))) return plan.id
   }
-]
+  return 'explorer'
+})
+
+const plans = computed(() => {
+  return allPlans.map(p => ({
+    ...p,
+    recommended: p.id === recommendedPlanId.value
+  }))
+})
 
 function selectPlan(plan) {
   selectedPlan.value = plan.id
   emit('update:modelValue', plan.id)
+  emit('next', { selectedPlan: plan.id })
 }
 
 function openCompare() {
   isCompareModalOpen.value = true
 }
+
+function openMultitripInfo() {
+  isMultitripModalOpen.value = true
+}
+
+function scrollCarousel(direction) {
+  if (!carouselRef.value) return
+  const scrollAmount = 320
+  carouselRef.value.scrollBy({
+    left: direction === 'left' ? -scrollAmount : scrollAmount,
+    behavior: 'smooth'
+  })
+}
+
+function updateScrollButtons() {
+  if (!carouselRef.value) return
+  canScrollLeft.value = carouselRef.value.scrollLeft > 4
+  canScrollRight.value = carouselRef.value.scrollLeft < carouselRef.value.scrollWidth - carouselRef.value.clientWidth - 4
+  const cardWidth = carouselRef.value.firstElementChild?.offsetWidth || 300
+  const gap = 16
+  const idx = Math.round(carouselRef.value.scrollLeft / (cardWidth + gap))
+  currentCarouselIndex.value = Math.min(Math.max(idx, 0), (plans.value?.length || 1) - 1)
+}
+
+function scrollToPlan(index) {
+  if (!carouselRef.value) return
+  const card = carouselRef.value.children[index]
+  if (card) {
+    card.scrollIntoView({ behavior: 'smooth', inline: 'start', block: 'nearest' })
+  }
+}
+
+function handleSaveQuote() {
+  showToast('Cotización enviada a tu correo. Revisa tu bandeja de entrada.', { variant: 'success', duration: 8000 })
+}
+
+onMounted(() => {
+  nextTick(() => {
+    updateScrollButtons()
+    if (carouselRef.value) {
+      carouselRef.value.addEventListener('scroll', updateScrollButtons, { passive: true })
+    }
+  })
+})
+
+onUnmounted(() => {
+  if (carouselRef.value) {
+    carouselRef.value.removeEventListener('scroll', updateScrollButtons)
+  }
+})
 </script>
 
 <template>
   <div class="space-y-6 pb-6">
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 w-full">
-      <button
-        v-for="plan in plans"
-        :key="plan.id"
-        @click="selectPlan(plan)"
-        class="relative p-5 rounded-2xl border-2 transition-all duration-200 text-center flex flex-col min-h-[320px]"
-        :class="(selectedPlan === plan.id)
-          ? 'border-[#00184C] ring-4 ring-[#00184C]/20 bg-[#00184C]/5 shadow-lg'
-          : (plan.popular)
-          ? 'border-[#00D1FF] bg-white shadow-lg hover:border-[#00184C] hover:ring-4 hover:ring-[#00184C]/20'
-          : 'border-gray-200 bg-white hover:border-[#00184C] hover:ring-4 hover:ring-[#00184C]/20'"
-      >
-        <span
-          v-if="plan.popular"
-          class="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 bg-[#00184C] text-white text-xs font-bold rounded-full shadow-lg"
+    <div class="text-center px-2">
+      <p class="text-sm text-slate-600">
+        ¿Vas a viajar varias veces al año?
+        <button type="button"
+          @click="openMultitripInfo"
+          class="ml-1 text-cyan-700 font-semibold underline underline-offset-2 hover:text-cyan-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500 focus-visible:ring-offset-1 rounded"
         >
-          ⭐ Más popular
-        </span>
+          Ver más
+        </button>
+      </p>
+    </div>
 
-        <div class="flex items-center justify-center mb-3 mt-2">
-          <div v-if="selectedPlan === plan.id" class="w-6 h-6 rounded-full bg-[#00184C] flex items-center justify-center">
-            <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <div class="relative -mx-6 px-6">
+      <button type="button"
+        v-if="canScrollLeft"
+        @click="scrollCarousel('left')"
+        class="hidden md:flex absolute left-0 top-1/2 -translate-y-1/2 z-10 w-10 h-10 rounded-full bg-white shadow-lg border border-slate-200 items-center justify-center text-slate-700 hover:text-cyan-600 hover:border-cyan-300 transition-all active:scale-95"
+        aria-label="Anterior"
+      >
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+        </svg>
+      </button>
+
+      <button type="button"
+        v-if="canScrollRight"
+        @click="scrollCarousel('right')"
+        class="hidden md:flex absolute right-0 top-1/2 -translate-y-1/2 z-10 w-10 h-10 rounded-full bg-white shadow-lg border border-slate-200 items-center justify-center text-slate-700 hover:text-cyan-600 hover:border-cyan-300 transition-all active:scale-95"
+        aria-label="Siguiente"
+      >
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+        </svg>
+      </button>
+
+      <div
+        ref="carouselRef"
+        class="flex gap-4 pb-2 overflow-x-auto snap-x snap-mandatory scroll-smooth scrollbar-hide sm:grid sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 sm:overflow-visible sm:snap-none"
+        style="scrollbar-width: none; -ms-overflow-style: none;"
+      >
+        <article
+          v-for="plan in plans"
+          :key="plan.id"
+          @click="selectPlan(plan)"
+          class="snap-start shrink-0 w-[280px] sm:w-auto border-2 rounded-2xl p-5 transition-all duration-200 relative cursor-pointer hover:scale-[1.01]"
+          :class="[
+            selectedPlan === plan.id
+              ? 'bg-cyan-50 border-secondary-300 ring-4 ring-secondary-300/20 shadow-lg'
+              : 'bg-white border-slate-200 hover:border-secondary-300 hover:shadow-md hover:ring-2 hover:ring-secondary-300/20'
+          ]"
+        >
+          <span
+            v-if="plan.recommended"
+            class="absolute -top-2.5 left-4 px-2.5 py-0.5 rounded-full bg-gradient-to-r from-amber-400 to-orange-400 text-[10px] font-bold text-white uppercase tracking-wider shadow-sm"
+          >
+            Recomendado
+          </span>
+
+          <div
+            v-if="selectedPlan === plan.id"
+            class="absolute -top-2 -right-2 w-8 h-8 rounded-full flex items-center justify-center shadow-lg"
+            style="background: primary-500;"
+            aria-label="Plan seleccionado"
+          >
+            <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7" />
             </svg>
           </div>
-        </div>
+          
 
-        <h3 class="font-bold text-xl mb-2" :class="selectedPlan === plan.id ? 'text-[#00184C]' : 'text-slate-900'">{{ plan.name }}</h3>
+          <div class="text-center mb-4">
+            <h3 class="text-lg font-bold text-slate-900">{{ plan.name }}</h3>
+            <p class="text-xs text-slate-500 mt-1 leading-snug min-h-[2.5rem]">{{ plan.description }}</p>
+          </div>
 
-        <div class="mb-3">
-          <span v-if="plan.anchorPrice" class="text-lg text-gray-400 line-through mr-2">${{ plan.anchorPrice }}</span>
-          <span class="text-4xl font-extrabold" :class="selectedPlan === plan.id ? 'text-[#00184C]' : 'text-slate-900'">${{ plan.price }}</span>
-          <span class="text-sm opacity-60 ml-1">USD</span>
-        </div>
-        <div v-if="plan.anchorPrice" class="text-xs font-semibold text-green-500 mb-2">Ahorras ${{ plan.anchorPrice - plan.price }} USD</div>
+          <div class="text-center mb-4 pb-4 border-b border-slate-100">
+            <div class="flex items-baseline justify-center gap-1">
+              <span class="text-4xl font-black text-cyan-600">${{ plan.price }}</span>
+              <span class="text-sm font-semibold text-slate-500">{{ plan.currency }}</span>
+            </div>
+            <p v-if="plan.anchorPrice" class="text-xs text-slate-400 mt-1">
+              <span class="line-through">${{ plan.anchorPrice }}</span>
+              <span class="ml-1 text-emerald-600 font-semibold">Ahorras ${{ plan.anchorPrice - plan.price }}</span>
+            </p>
+            <p class="text-[11px] text-slate-500 mt-2">
+              Cobertura <span class="font-semibold text-slate-700">${{ plan.coverage }} {{ plan.currency }}</span>
+            </p>
+          </div>
 
-        <p class="text-sm opacity-70 mb-4">Cobertura {{ plan.coverage }}</p>
+          <ul class="space-y-1.5 mb-5 min-h-[7rem]">
+            <li
+              v-for="feature in plan.features"
+              :key="feature"
+              class="flex items-start gap-2 text-xs text-slate-600"
+            >
+              <svg class="w-3.5 h-3.5 text-cyan-500 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7" />
+              </svg>
+              <span>{{ feature }}</span>
+            </li>
+          </ul>
 
-        <ul class="text-left space-y-1.5 flex-1">
-          <li
-            v-for="feature in plan.features"
-            :key="feature"
-            class="flex items-start gap-2 text-sm"
-            :class="selectedPlan === plan.id ? 'text-[#00184C]' : 'text-gray-600'"
+          <button type="button"
+            @click.stop="selectPlan(plan)"
+            class="w-full py-2.5 rounded-xl text-sm font-bold transition-all"
+            :class="selectedPlan === plan.id
+              ? 'bg-primary-500 text-white hover:bg-primary-600'
+              : 'bg-accent-300 text-primary-500 hover:bg-accent-400 font-extrabold'"
           >
-            <svg class="w-4 h-4 shrink-0 mt-0.5" :class="selectedPlan === plan.id ? 'text-[#00D1FF]' : 'text-[#00D1FF]'" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-            </svg>
-            {{ feature }}
-          </li>
-        </ul>
-      </button>
+            <span v-if="selectedPlan === plan.id" class="flex items-center justify-center gap-2">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" />
+              </svg>
+              Activo
+            </span>
+            <span v-else>Elegir este plan</span>
+          </button>
+        </article>
+      </div>
+
+      <div class="flex items-center justify-center gap-1.5 mt-3" role="tablist" aria-label="Posición en el carrusel de planes">
+        <button
+          v-for="(plan, idx) in plans"
+          :key="plan.id"
+          type="button"
+          @click="scrollToPlan(idx)"
+          :aria-label="`Ir al plan ${idx + 1}: ${plan.name}`"
+          :aria-current="currentCarouselIndex === idx"
+          class="transition-all rounded-full"
+          :class="currentCarouselIndex === idx
+            ? 'w-6 h-2 bg-cyan-500'
+            : 'w-2 h-2 bg-slate-300 hover:bg-slate-400'"
+        />
+        <span class="ml-2 text-xs text-slate-500 tabular-nums" aria-live="polite">
+          {{ currentCarouselIndex + 1 }} / {{ plans.length }}
+        </span>
+      </div>
     </div>
 
     <div class="flex flex-col sm:flex-row items-center justify-center gap-3">
-      <button
-        type="button"
+      <button type="button"
         @click="openCompare"
-        class="w-full sm:w-auto px-6 py-3 text-sm font-semibold text-cyan-700 bg-cyan-50 hover:bg-cyan-100 active:scale-[0.98] rounded-xl transition-all flex items-center justify-center gap-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500 focus-visible:ring-offset-2"
+        class="w-full sm:w-auto px-5 py-2.5 text-sm font-semibold text-cyan-700 bg-cyan-50 hover:bg-cyan-100 active:scale-[0.98] rounded-xl transition-all flex items-center justify-center gap-2"
       >
         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
         </svg>
-        Ver detalles
+        Comparar planes
       </button>
+    </div>
 
-      <button
-        @click="emit('next', { selectedPlan: selectedPlan })"
-        :disabled="!selectedPlan"
-        class="w-full sm:w-auto min-w-[250px] px-8 py-3.5 bg-yellow-400 text-slate-900 font-extrabold rounded-xl hover:bg-yellow-500 active:scale-[0.98] transition-all shadow-sm disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-yellow-500 focus-visible:ring-offset-2"
+    <div class="text-center">
+      <button type="button"
+        @click="handleSaveQuote"
+        class="text-xs text-slate-500 hover:text-cyan-600 transition-colors inline-flex items-center gap-1.5"
       >
-        Elegir {{ plans.find(p => p.id === selectedPlan)?.name || 'este plan' }}
+        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+        </svg>
+        Enviar cotización por correo
       </button>
     </div>
 
@@ -133,5 +267,13 @@ function openCompare() {
       :plans="plans"
       :selectedPlanId="selectedPlan"
     />
+
+    <MultitripInfoModal v-model="isMultitripModalOpen" />
   </div>
 </template>
+
+<style scoped>
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+</style>

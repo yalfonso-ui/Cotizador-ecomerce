@@ -72,7 +72,7 @@ const samplePlanData = ref({
     <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
       <div class="relative">
         <nav class="flex">
-          <button
+          <button type="button"
             v-for="(tab, index) in tabs"
             :key="tab.id"
             @click="activeTab = index"
@@ -206,7 +206,7 @@ const samplePlanData = ref({
         :visible="hasUnsavedChanges"
       />
 
-      <button
+      <button type="button"
         @click="handlePrimaryAction"
         class="w-full h-14 font-semibold text-lg rounded-xl transition-all duration-200 transform hover:scale-105 active:scale-95"
         :class="buttonConfig.class"

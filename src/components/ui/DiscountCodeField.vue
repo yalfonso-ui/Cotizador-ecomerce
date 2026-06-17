@@ -81,6 +81,7 @@ function handleRemove() {
           v-model="code"
           type="text"
           placeholder="Ej: WELCOME10"
+          title="Ingresa un código de descuento. Prueba WELCOME10, PROMO20 o TRAVEL15"
           @input="onInput"
           @blur="onBlur"
           @keyup.enter="handleApply"

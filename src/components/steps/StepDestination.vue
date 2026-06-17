@@ -1,174 +1,401 @@
-<script setup>
-import { ref, computed } from 'vue'
+<script setup lang="ts">
+import { ref, computed, watch, onMounted, onBeforeUnmount } from 'vue'
 
-const props = defineProps({
-  modelValue: Array
-})
-const emit = defineEmits(['update', 'next'])
+interface Country {
+  code: string
+  name: string
+  flag: string
+}
 
-const search = ref('')
+const props = withDefaults(
+  defineProps<{
+    modelValue?: Country[]
+    maxDestinations?: number
+  }>(),
+  {
+    modelValue: () => [],
+    maxDestinations: 5,
+  }
+)
 
-const selectedDestinations = ref(props.modelValue || [])
+const emit = defineEmits<{
+  'update:modelValue': [value: Country[]]
+  next: [payload: { destination: Country[] }]
+}>()
 
-const destinations = [
-  { code: 'US', name: 'Estados Unidos', flag: 'us', popular: true },
-  { code: 'ES', name: 'España', flag: 'es', popular: true },
-  { code: 'FR', name: 'Francia', flag: 'fr',  popular: true },
-  { code: 'IT', name: 'Italia', flag: 'it', popular: true },
-  { code: 'GB', name: 'Reino Unido', flag: 'gb', popular: true },
-  { code: 'DE', name: 'Alemania', flag: 'de', popular: true },
-  { code: 'PT', name: 'Portugal', flag: 'pt', popular: false },
-  { code: 'NL', name: 'Países Bajos', flag: 'nl', popular: false },
-  { code: 'MX', name: 'México', flag: 'mx', popular: true },
-  { code: 'BR', name: 'Brasil', flag: 'br', popular: true },
-  { code: 'CA', name: 'Canadá', flag: 'ca', popular: true },
-  { code: 'JP', name: 'Japón', flag: 'jp', popular: true },
-  { code: 'AR', name: 'Argentina', flag: 'ar', popular: false },
-  { code: 'CL', name: 'Chile', flag: 'cl', popular: false },
-  { code: 'CO', name: 'Colombia', flag: 'co', popular: false },
-  { code: 'PE', name: 'Perú', flag: 'pe', popular: false },
-  { code: 'CH', name: 'Suiza', flag: 'ch', popular: false },
-  { code: 'AU', name: 'Australia', flag: 'au', popular: false },
+const MAX_DESTINATIONS = props.maxDestinations
+
+const searchQuery = ref<string>('')
+const isOpen = ref<boolean>(false)
+const selectedCountries = ref<Country[]>([...props.modelValue])
+
+const allCountries: Country[] = [
+  { code: 'US', name: 'Estados Unidos', flag: 'us' },
+  { code: 'ES', name: 'España', flag: 'es' },
+  { code: 'FR', name: 'Francia', flag: 'fr' },
+  { code: 'IT', name: 'Italia', flag: 'it' },
+  { code: 'GB', name: 'Reino Unido', flag: 'gb' },
+  { code: 'DE', name: 'Alemania', flag: 'de' },
+  { code: 'MX', name: 'México', flag: 'mx' },
+  { code: 'BR', name: 'Brasil', flag: 'br' },
+  { code: 'CA', name: 'Canadá', flag: 'ca' },
+  { code: 'JP', name: 'Japón', flag: 'jp' },
+  { code: 'AR', name: 'Argentina', flag: 'ar' },
+  { code: 'CL', name: 'Chile', flag: 'cl' },
+  { code: 'CO', name: 'Colombia', flag: 'co' },
+  { code: 'PE', name: 'Perú', flag: 'pe' },
+  { code: 'CH', name: 'Suiza', flag: 'ch' },
+  { code: 'AU', name: 'Australia', flag: 'au' },
+  { code: 'PT', name: 'Portugal', flag: 'pt' },
+  { code: 'NL', name: 'Países Bajos', flag: 'nl' },
 ]
 
-const popular = computed(() => {
-  if (search.value.trim()) return []
-  return destinations.filter(d => d.popular)
+const popularDestinations: Country[] = [
+  { code: 'ES', name: 'España', flag: 'es' },
+  { code: 'US', name: 'Estados Unidos', flag: 'us' },
+  { code: 'FR', name: 'Francia', flag: 'fr' },
+  { code: 'IT', name: 'Italia', flag: 'it' },
+]
+
+const isSearching = computed<boolean>(() => searchQuery.value.trim().length > 0)
+
+const filteredCountries = computed<Country[]>(() => {
+  const query = searchQuery.value.trim().toLowerCase()
+  if (!query) return allCountries
+  return allCountries.filter(
+    (c) => c.name.toLowerCase().includes(query) || c.code.toLowerCase().includes(query)
+  )
 })
 
-const others = computed(() => {
-  if (search.value.trim()) return []
-  return destinations.filter(d => !d.popular)
+const atMaxCapacity = computed<boolean>(
+  () => selectedCountries.value.length >= MAX_DESTINATIONS
+)
+
+const collapsedDisplay = computed<string>(() => {
+  const list = selectedCountries.value
+  if (list.length === 0) return ''
+  if (list.length <= 2) return list.map((c) => c.name).join(', ')
+  const visible = list.slice(0, 2).map((c) => c.name).join(', ')
+  return `${visible} +${list.length - 2}`
 })
 
-const filtered = computed(() => {
-  if (!search.value.trim()) return []
-  const q = search.value.toLowerCase()
-  return destinations.filter(d => d.name.toLowerCase().includes(q))
-})
-
-function isSelected(dest) {
-  return selectedDestinations.value.some(d => d.code === dest.code)
+function isSelected(country: Country): boolean {
+  return selectedCountries.value.some((c) => c.code === country.code)
 }
 
-function toggle(dest) {
-  if (isSelected(dest)) {
-    selectedDestinations.value = selectedDestinations.value.filter(d => d.code !== dest.code)
-  } else {
-    selectedDestinations.value = [...selectedDestinations.value, dest]
+function toggleCountry(country: Country): void {
+  if (isSelected(country)) {
+    selectedCountries.value = selectedCountries.value.filter(
+      (c) => c.code !== country.code
+    )
+    return
   }
-  emit('update', selectedDestinations.value)
+  if (atMaxCapacity.value) return
+  selectedCountries.value = [...selectedCountries.value, country]
 }
 
-function handleContinue() {
-  if (selectedDestinations.value.length > 0) {
-    emit('next', { destination: selectedDestinations.value })
+function removeCountry(code: string): void {
+  selectedCountries.value = selectedCountries.value.filter((c) => c.code !== code)
+}
+
+function clearAll(): void {
+  selectedCountries.value = []
+  searchQuery.value = ''
+}
+
+function openDropdown(): void {
+  isOpen.value = true
+  searchQuery.value = ''
+}
+
+function handleDone(): void {
+  isOpen.value = false
+  searchQuery.value = ''
+}
+
+function handleWrapperClick(): void {
+  if (!isOpen.value) {
+    isOpen.value = true
+    searchQuery.value = ''
   }
 }
+
+function handleClearSearch(): void {
+  searchQuery.value = ''
+}
+
+function handleContinue(): void {
+  if (selectedCountries.value.length === 0) return
+  emit('next', { destination: selectedCountries.value })
+}
+
+function handleClickOutside(event: MouseEvent): void {
+  const target = event.target as HTMLElement
+  if (!target.closest('[data-destination-root]')) {
+    isOpen.value = false
+    searchQuery.value = ''
+  }
+}
+
+onMounted(() => {
+  document.addEventListener('mousedown', handleClickOutside)
+})
+
+onBeforeUnmount(() => {
+  document.removeEventListener('mousedown', handleClickOutside)
+})
+
+watch(
+  selectedCountries,
+  (val) => {
+    emit('update:modelValue', val)
+  },
+  { deep: true }
+)
 </script>
 
 <template>
-  <div class="space-y-6">
-    <p class="text-sm text-slate-500 mb-2 text-center">Selecciona uno o más destinos para tu cobertura médica.</p>
+  <div class="space-y-4 font-body" data-destination-root>
     <div class="relative">
-      <svg class="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-      </svg>
-      <input
-        v-model="search"
-        type="text"
-        placeholder="Buscar destino..."
-        class="w-full h-14 pl-12 pr-4 text-lg bg-white border-2 border-gray-200 rounded-xl focus:border-cyan-400 focus:outline-none focus:ring-4 focus:ring-cyan-400/20 transition-all"
-      />
-    </div>
-
-    <div v-if="!search.trim()" class="space-y-6">
-      <div>
-        <p class="text-sm font-medium text-gray-500 mb-3">Populares</p>
-        <div class="grid grid-cols-2 md:grid-cols-3 gap-3">
-          <button
-            v-for="dest in popular"
-            :key="dest.code"
-            @click="toggle(dest)"
-            class="relative flex items-center gap-3 p-4 rounded-xl border-2 bg-white transition-all duration-200"
-            :class="isSelected(dest)
-              ? 'border-cyan-500 ring-4 ring-cyan-500/20 bg-cyan-50/30 shadow-lg'
-              : 'border-gray-100 hover:border-cyan-500 hover:ring-4 hover:ring-cyan-500/20'"
-          >
-            <div v-if="isSelected(dest)" class="absolute -top-2 -right-2 w-6 h-6 rounded-full bg-cyan-500 flex items-center justify-center">
-              <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7" />
-              </svg>
-            </div>
-            <img :src="`https://flagcdn.com/w40/${dest.flag}.png`" :alt="dest.name" class="w-8 h-8 rounded-full object-cover ring-2 ring-white shadow-md" />
-            <span class="font-medium" :class="isSelected(dest) ? 'text-cyan-700' : 'text-gray-700'">{{ dest.name }}</span>
-          </button>
-        </div>
-      </div>
-      <div>
-        <p class="text-sm font-medium text-gray-500 mb-3">Todos los destinos</p>
-        <div class="grid grid-cols-2 gap-3 max-h-48 overflow-y-auto">
-          <button
-            v-for="dest in others"
-            :key="dest.code"
-            @click="toggle(dest)"
-            class="relative flex items-center gap-2 p-3 rounded-xl border-2 bg-white transition-all duration-200"
-            :class="isSelected(dest)
-              ? 'border-cyan-500 ring-4 ring-cyan-500/20 bg-cyan-50/30 shadow-lg'
-              : 'border-gray-100 hover:border-cyan-500 hover:ring-4 hover:ring-cyan-500/20'"
-          >
-            <div v-if="isSelected(dest)" class="absolute -top-2 -right-2 w-5 h-5 rounded-full bg-cyan-500 flex items-center justify-center">
-              <svg class="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7" />
-              </svg>
-            </div>
-            <img :src="`https://flagcdn.com/w40/${dest.flag}.png`" :alt="dest.name" class="w-8 h-8 rounded-full object-cover ring-2 ring-white shadow-md" />
-            <span class="font-medium text-sm" :class="isSelected(dest) ? 'text-cyan-700' : 'text-gray-700'">{{ dest.name }}</span>
-          </button>
-        </div>
-      </div>
-    </div>
-
-    <div v-else class="space-y-3">
-      <p class="text-sm font-medium text-gray-500">{{ filtered.length }} resultados</p>
-      <div class="grid grid-cols-2 gap-3 max-h-80 overflow-y-auto">
-        <button
-          v-for="dest in filtered"
-          :key="dest.code"
-          @click="toggle(dest)"
-          class="relative flex items-center gap-3 p-4 rounded-xl border-2 bg-white transition-all duration-200"
-          :class="isSelected(dest)
-            ? 'border-cyan-500 ring-4 ring-cyan-500/20 bg-cyan-50/30 shadow-lg'
-            : 'border-gray-100 hover:border-cyan-500 hover:ring-4 hover:ring-cyan-500/20'"
+      <div
+        data-testid="destination-trigger"
+        class="group flex items-center h-14 px-4 bg-white border border-slate-200 rounded-xl transition-all duration-200 cursor-pointer hover:border-slate-300"
+        :class="isOpen
+          ? 'border-secondary-300 ring-2 ring-secondary-300/20 shadow-sm'
+          : ''"
+        @click="handleWrapperClick"
+      >
+        <svg
+          class="w-5 h-5 text-slate-400 shrink-0"
+          fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"
         >
-          <div v-if="isSelected(dest)" class="absolute -top-2 -right-2 w-6 h-6 rounded-full bg-cyan-500 flex items-center justify-center">
-            <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7" />
-            </svg>
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+        </svg>
+
+        <div class="flex-1 mx-3 min-w-0">
+          <div
+            v-if="!isOpen && selectedCountries.length > 0"
+            class="flex items-center gap-2 truncate"
+          >
+            <span class="text-base text-slate-900 truncate">{{ collapsedDisplay }}</span>
           </div>
-            <img :src="`https://flagcdn.com/w40/${dest.flag}.png`" :alt="dest.name" class="w-8 h-8 rounded-full object-cover ring-2 ring-white shadow-md" />
-          <span class="font-medium" :class="isSelected(dest) ? 'text-cyan-700' : 'text-gray-700'">{{ dest.name }}</span>
-        </button>
+          <input
+            v-else
+            ref="searchInputRef"
+            v-model="searchQuery"
+            type="text"
+            :placeholder="selectedCountries.length === 0 ? '¿A dónde viajas?' : 'Añade otro destino'"
+            class="w-full text-base text-slate-900 placeholder:text-slate-400 bg-transparent border-0 outline-none focus:ring-0 p-0"
+            autocomplete="off"
+          />
+        </div>
+
+        <div class="flex items-center gap-1 shrink-0">
+          <button
+            v-if="!isOpen && selectedCountries.length > 0"
+            type="button"
+            @click.stop="clearAll"
+            class="w-7 h-7 rounded-full flex items-center justify-center text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-secondary-300"
+            aria-label="Limpiar selección"
+          >
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+
+          <svg
+            class="w-4 h-4 text-slate-400 transition-transform duration-200"
+            :class="isOpen ? 'rotate-180' : 'rotate-0'"
+            fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"
+          >
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+          </svg>
+        </div>
       </div>
-      <p v-if="filtered.length === 0" class="text-center text-gray-500 py-8">
-        No encontramos "{{ search }}"
-      </p>
+
+      <div
+        v-if="isOpen"
+        class="absolute left-0 right-0 top-full mt-2 z-30 bg-white border border-slate-200 rounded-2xl shadow-2xl shadow-slate-900/5 overflow-hidden"
+      >
+        <div class="px-2 pt-2 pb-1">
+          <div
+            v-if="selectedCountries.length > 0"
+            class="px-2 py-2 mb-1 flex flex-wrap items-center gap-2 border-b border-slate-100"
+          >
+            <span
+              v-for="country in selectedCountries"
+              :key="`pill-${country.code}`"
+              class="inline-flex items-center gap-1.5 bg-slate-100 text-slate-700 rounded-full pl-2.5 pr-1 py-1 text-sm"
+            >
+              <img
+                :src="`https://flagcdn.com/w40/${country.flag}.png`"
+                :alt="''"
+                class="w-4 h-4 rounded-full object-cover"
+              />
+              <span class="font-medium">{{ country.name }}</span>
+              <button
+                type="button"
+                @click.stop="removeCountry(country.code)"
+                class="w-5 h-5 rounded-full flex items-center justify-center text-slate-500 hover:text-slate-900 hover:bg-white/70 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-secondary-300"
+                :aria-label="`Quitar ${country.name}`"
+              >
+                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </span>
+
+            <button
+              type="button"
+              @click="handleDone"
+              class="ml-auto px-4 py-1.5 text-sm font-semibold text-slate-700 bg-white border border-slate-200 rounded-full hover:bg-slate-50 hover:border-slate-300 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-secondary-300 focus-visible:ring-offset-1"
+            >
+              Hecho
+            </button>
+          </div>
+
+          <div class="relative px-2">
+            <svg
+              class="absolute left-5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none"
+              fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"
+            >
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+            <input
+              v-model="searchQuery"
+              type="text"
+              placeholder="Busca un país o región"
+              class="w-full h-10 pl-9 pr-9 text-sm text-slate-900 placeholder:text-slate-400 bg-slate-50 border border-transparent rounded-lg transition-colors duration-150 focus:bg-white focus:border-secondary-300 focus:outline-none"
+              autocomplete="off"
+            />
+            <button
+              v-if="searchQuery"
+              type="button"
+              @click="handleClearSearch"
+              class="absolute right-3 top-1/2 -translate-y-1/2 w-6 h-6 rounded-full flex items-center justify-center text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-secondary-300"
+              aria-label="Limpiar búsqueda"
+            >
+              <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        <div class="max-h-60 overflow-y-auto py-1">
+          <template v-if="!isSearching">
+            <p class="px-6 pt-2 pb-1 text-[11px] font-semibold text-slate-400 uppercase tracking-wider">
+              Destinos principales
+            </p>
+            <button
+              v-for="country in popularDestinations"
+              :key="`pop-${country.code}`"
+              type="button"
+              @click="toggleCountry(country)"
+              :disabled="atMaxCapacity && !isSelected(country)"
+              class="w-full flex items-center gap-3 py-3 px-4 text-left transition-colors duration-100 hover:bg-slate-50 disabled:hover:bg-transparent disabled:opacity-40 disabled:cursor-not-allowed focus:outline-none focus-visible:bg-slate-50"
+            >
+              <span
+                class="w-5 h-5 rounded-md border-2 flex items-center justify-center transition-all duration-150 shrink-0"
+                :class="isSelected(country)
+                  ? 'bg-secondary-300 border-secondary-300'
+                  : 'bg-white border-slate-300'"
+              >
+                <svg
+                  v-if="isSelected(country)"
+                  class="w-3 h-3 text-primary-700"
+                  fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"
+                >
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7" />
+                </svg>
+              </span>
+              <img
+                :src="`https://flagcdn.com/w40/${country.flag}.png`"
+                :alt="''"
+                class="w-6 h-6 rounded-full object-cover ring-1 ring-slate-100 shrink-0"
+              />
+              <span class="flex-1 text-sm font-medium text-slate-700">{{ country.name }}</span>
+            </button>
+          </template>
+
+          <template v-else>
+            <p class="px-6 pt-2 pb-1 text-[11px] font-semibold text-slate-400 uppercase tracking-wider">
+              {{ filteredCountries.length }} resultado{{ filteredCountries.length === 1 ? '' : 's' }}
+            </p>
+            <p
+              v-if="filteredCountries.length === 0"
+              class="text-center text-sm text-slate-500 py-8"
+            >
+              No encontramos resultados para "{{ searchQuery }}"
+            </p>
+            <button
+              v-for="country in filteredCountries"
+              :key="`res-${country.code}`"
+              type="button"
+              @click="toggleCountry(country)"
+              :disabled="atMaxCapacity && !isSelected(country)"
+              class="w-full flex items-center gap-3 py-3 px-4 text-left transition-colors duration-100 hover:bg-slate-50 disabled:hover:bg-transparent disabled:opacity-40 disabled:cursor-not-allowed focus:outline-none focus-visible:bg-slate-50"
+            >
+              <span
+                class="w-5 h-5 rounded-md border-2 flex items-center justify-center transition-all duration-150 shrink-0"
+                :class="isSelected(country)
+                  ? 'bg-secondary-300 border-secondary-300'
+                  : 'bg-white border-slate-300'"
+              >
+                <svg
+                  v-if="isSelected(country)"
+                  class="w-3 h-3 text-primary-700"
+                  fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"
+                >
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7" />
+                </svg>
+              </span>
+              <img
+                :src="`https://flagcdn.com/w40/${country.flag}.png`"
+                :alt="''"
+                class="w-6 h-6 rounded-full object-cover ring-1 ring-slate-100 shrink-0"
+              />
+              <span class="flex-1 text-sm font-medium text-slate-700">{{ country.name }}</span>
+            </button>
+          </template>
+        </div>
+
+        <div
+          v-if="atMaxCapacity"
+          class="px-4 py-2.5 bg-slate-50 border-t border-slate-100 text-xs text-slate-600 flex items-center gap-2"
+          role="status"
+        >
+          <svg class="w-4 h-4 shrink-0 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          <span>Máximo de {{ MAX_DESTINATIONS }} destinos. Quita uno para agregar otro.</span>
+        </div>
+      </div>
     </div>
+
+    <p
+      v-if="!isOpen && selectedCountries.length === 0"
+      class="px-1 text-xs text-slate-500"
+    >
+      Selecciona hasta {{ MAX_DESTINATIONS }} destinos para tu viaje.
+    </p>
 
     <button
+      type="button"
       @click="handleContinue"
-      :disabled="selectedDestinations.length === 0"
-      class="w-full sm:w-auto min-w-[250px] px-8 py-3.5 bg-yellow-400 text-slate-900 font-extrabold rounded-xl hover:bg-yellow-500 transition-all shadow-sm mx-auto block disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+      :disabled="selectedCountries.length === 0"
+      class="w-full px-8 py-4 bg-accent-300 text-primary-700 font-bold text-base rounded-xl hover:bg-accent-400 active:scale-[0.99] transition-all shadow-sm hover:shadow-md disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-accent-300 disabled:hover:shadow-sm flex items-center justify-center gap-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2"
     >
-      <template v-if="selectedDestinations.length > 0">
-        <span>Continuar ({{ selectedDestinations.length }} seleccionado{{ selectedDestinations.length > 1 ? 's' : '' }})</span>
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6" />
-        </svg>
-      </template>
-      <template v-else>
-        <span>Selecciona al menos un destino</span>
-      </template>
+      <span v-if="selectedCountries.length > 0">
+        Continuar
+        <span v-if="selectedCountries.length > 1" class="text-sm font-medium opacity-80 ml-1">
+          ({{ selectedCountries.length }} destinos)
+        </span>
+      </span>
+      <span v-else>Selecciona un destino</span>
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6" />
+      </svg>
     </button>
   </div>
 </template>

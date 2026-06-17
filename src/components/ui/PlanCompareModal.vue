@@ -1,5 +1,6 @@
 <script setup>
-import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { useModalFocus } from '@/composables/useModalFocus.js'
 
 const props = defineProps({
   modelValue: { type: Boolean, default: false },
@@ -55,19 +56,7 @@ function handleBackdropClick(e) {
   }
 }
 
-function handleKeydown(e) {
-  if (e.key === 'Escape' && isOpen.value) {
-    close()
-  }
-}
-
-watch(isOpen, (val) => {
-  if (val) {
-    document.body.style.overflow = 'hidden'
-  } else {
-    document.body.style.overflow = ''
-  }
-})
+const { handleKeydown } = useModalFocus(isOpen, close)
 
 onMounted(() => {
   document.addEventListener('keydown', handleKeydown)
@@ -75,7 +64,6 @@ onMounted(() => {
 
 onUnmounted(() => {
   document.removeEventListener('keydown', handleKeydown)
-  document.body.style.overflow = ''
 })
 </script>
 

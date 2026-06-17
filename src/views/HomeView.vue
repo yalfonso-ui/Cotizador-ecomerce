@@ -92,11 +92,11 @@ const paymentBadges = [
     </div>
 
     <!-- HERO SECTION -->
-    <section class="w-full relative min-h-[520px] flex items-center overflow-hidden bg-[#00184C]">
+    <section class="w-full relative min-h-[520px] flex items-center overflow-hidden bg-[primary-500]">
       <div class="absolute inset-0 z-0">
         <img src="https://images.unsplash.com/photo-1488085061387-422e29b40080?w=1920&h=1080&fit=crop" alt="Viajero" class="w-full h-full object-cover" />
-        <div class="absolute inset-0 bg-[#00184C]/60"></div>
-        <div class="absolute inset-0 bg-gradient-to-r from-[#00184C]/90 via-transparent to-transparent"></div>
+        <div class="absolute inset-0 bg-[primary-500]/60"></div>
+        <div class="absolute inset-0 bg-gradient-to-r from-[primary-500]/90 via-transparent to-transparent"></div>
       </div>
       
       <div class="relative z-10 w-full py-12 md:py-16 px-4 sm:px-6 lg:px-8 xl:px-12">

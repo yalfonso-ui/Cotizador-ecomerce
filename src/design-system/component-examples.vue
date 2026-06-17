@@ -183,7 +183,7 @@ contactMethods.forEach((_, i) => {
     <section
       ref="heroRef"
       class="relative min-h-[600px] flex items-center justify-center overflow-hidden"
-      style="background: linear-gradient(135deg, #00184C 0%, #0040A0 50%, #00184C 100%);"
+      style="background: linear-gradient(135deg, primary-500 0%, #0040A0 50%, primary-500 100%);"
     >
       <!-- Decorative circles -->
       <div class="absolute top-20 left-10 w-64 h-64 rounded-full opacity-10 bg-secondary-300 blur-3xl"></div>
@@ -209,7 +209,7 @@ contactMethods.forEach((_, i) => {
 
         <!-- CTAs -->
         <div class="flex flex-col sm:flex-row gap-4 justify-center mb-12" v-motion>
-          <button class="btn btn-lg" style="background: linear-gradient(135deg, #43D3FF 0%, #1BA8D4 100%); color: #00184C;">
+          <button class="btn btn-lg" style="background: linear-gradient(135deg, secondary-300 0%, #1BA8D4 100%); color: primary-500;">
             Ver colección
           </button>
           <button class="btn btn-lg btn-outline border-white text-white hover:bg-white hover:text-primary-500">
@@ -254,7 +254,7 @@ contactMethods.forEach((_, i) => {
             <!-- Icon placeholder -->
             <div
               class="w-12 h-12 mx-auto mb-4 rounded-xl flex items-center justify-center"
-              style="background: linear-gradient(135deg, #43D3FF 0%, #1BA8D4 100%);"
+              style="background: linear-gradient(135deg, secondary-300 0%, #1BA8D4 100%);"
             >
               <span class="text-xl">{{ index === 0 ? '🚚' : index === 1 ? '🛡️' : index === 2 ? '🔄' : '🎧' }}</span>
             </div>
@@ -276,7 +276,7 @@ contactMethods.forEach((_, i) => {
     <section
       ref="ctaRef"
       class="py-16 md:py-24 relative overflow-hidden"
-      style="background: linear-gradient(135deg, #43D3FF 0%, #F9D35A 100%);"
+      style="background: linear-gradient(135deg, secondary-300 0%, accent-300 100%);"
     >
       <div class="absolute inset-0 opacity-20">
         <div class="absolute top-0 left-1/4 w-64 h-64 rounded-full bg-primary-500 blur-3xl"></div>
@@ -293,7 +293,7 @@ contactMethods.forEach((_, i) => {
         <p class="text-gray-600 max-w-lg mx-auto mb-8">
           Usa el código VERANO30 al momento del checkout. Válido hasta el 31 de diciembre.
         </p>
-        <button class="btn btn-xl" style="background: linear-gradient(135deg, #00184C 0%, #002B8A 100%); color: white;">
+        <button class="btn btn-xl" style="background: linear-gradient(135deg, primary-500 0%, primary-400 100%); color: white;">
           Aprovechar oferta
         </button>
       </div>
@@ -379,7 +379,7 @@ contactMethods.forEach((_, i) => {
                 type="submit"
                 class="btn btn-primary btn-lg w-full"
                 :disabled="formStatus === 'sending'"
-                style="background: linear-gradient(135deg, #00184C 0%, #002B8A 100%);"
+                style="background: linear-gradient(135deg, primary-500 0%, primary-400 100%);"
               >
                 <span v-if="formStatus === 'idle'">Enviar mensaje</span>
                 <span v-else-if="formStatus === 'sending'" class="flex items-center gap-2">
@@ -420,7 +420,7 @@ contactMethods.forEach((_, i) => {
           >
             <div
               class="w-10 h-10 rounded-lg mb-4 flex items-center justify-center text-lg"
-              style="background: linear-gradient(135deg, #F9D35A 0%, #D4A82A 100%);"
+              style="background: linear-gradient(135deg, accent-300 0%, #D4A82A 100%);"
             >
               📍️
             </div>
@@ -437,7 +437,7 @@ contactMethods.forEach((_, i) => {
     <!-- ====================================================== -->
     <!-- 6. STATISTICS SECTION                                   -->
     <!-- ====================================================== -->
-    <section ref="statsSection" class="py-16" style="background: linear-gradient(180deg, #00184C 0%, #000F30 100%);">
+    <section ref="statsSection" class="py-16" style="background: linear-gradient(180deg, primary-500 0%, #000F30 100%);">
       <div class="container">
         <div class="grid grid-cols-2 lg:grid-cols-4 gap-6 md:gap-8">
           <div
@@ -486,7 +486,7 @@ contactMethods.forEach((_, i) => {
             <div
               v-if="plan.highlighted"
               class="absolute -top-3 left-1/2 -translate-x-1/2 px-4 py-1 text-xs font-semibold rounded-full text-primary-500"
-              style="background: linear-gradient(135deg, #43D3FF 0%, #1BA8D4 100%);"
+              style="background: linear-gradient(135deg, secondary-300 0%, #1BA8D4 100%);"
             >
               Más popular
             </div>
@@ -549,7 +549,7 @@ contactMethods.forEach((_, i) => {
           >
             <div
               class="w-12 h-12 rounded-xl flex-shrink-0 flex items-center justify-center text-xl"
-              style="background: linear-gradient(135deg, #43D3FF 0%, #1BA8D4 100%);"
+              style="background: linear-gradient(135deg, secondary-300 0%, #1BA8D4 100%);"
             >
               {{ index === 0 ? '💬' : index === 1 ? '📞' : index === 2 ? '✉️' : '🗺️' }}
             </div>

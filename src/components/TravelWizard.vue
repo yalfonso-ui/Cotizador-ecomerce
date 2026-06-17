@@ -1,58 +1,60 @@
 <script setup>
-import { ref, computed, watch, onMounted } from 'vue'
+import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
+import { getPlanPrice as planPrice, getPlanName as planName } from '@/data/plans.js'
+import { showToast } from '@/composables/useToast.js'
+import { STEPS, TOTAL_STEPS } from '@/composables/useWizardSteps.js'
 import LandingPage from './LandingPage.vue'
 import StepOrigin from './steps/StepOrigin.vue'
 import StepDestination from './steps/StepDestination.vue'
-import StepTripType from './steps/StepTripType.vue'
 import StepDates from './steps/StepDates.vue'
-import StepTravelerInfo from './steps/StepTravelerInfo.vue'
-import TravelersAgeStep from './steps/TravelersAgeStep.vue'
+import TravelersBirthdateStep from './steps/TravelersBirthdateStep.vue'
 import StepPlans from './steps/StepPlans.vue'
 import DataStep from './steps/DataStep.vue'
+import StepUpgrades from './steps/StepUpgrades.vue'
 import StepCheckout from './steps/StepCheckout.vue'
 import SuccessStep from './steps/SuccessStep.vue'
+import TourOverlay from './ui/TourOverlay.vue'
 
 const showLanding = ref(true)
 const showWizard = ref(false)
 const currentStep = ref(0)
 const direction = ref('left')
+const isPaymentCompleted = ref(false)
 
 const formData = ref({
   origin: null,
   destination: null,
-  tripType: null,
   dates: { start: null, end: null },
-  travelers: null,
-  travelerAges: [],
+  tripDuration: null,
+  travelersCount: 1,
   birthdates: [],
+  ages: [],
   selectedPlan: null,
   personalData: { name: '', email: '', phone: '' },
+  companions: [],
+  travelersInfo: [],
+  upgrades: {},
   emergencyContact: { name: '', phone: '', email: '' }
 })
 
-const TOTAL_STEPS = 10
 const progress = computed(() => ((currentStep.value) / (TOTAL_STEPS - 1)) * 100)
 
-const planPrices = { essential: 25, explorer: 40, premium: 65 }
-const planNames = { essential: 'Essential', explorer: 'Explorer', premium: 'Premium' }
-
 function getPlanPrice() {
-  return planPrices[formData.value.selectedPlan] || 0
+  return planPrice(formData.value.selectedPlan)
 }
 
 function getPlanName() {
-  return planNames[formData.value.selectedPlan] || ''
+  return planName(formData.value.selectedPlan)
 }
 
 const stepTitles = [
-  { title: '¿Desde dónde viajas?', subtitle: 'Selecciona tu país de origen' },
+  { title: '¿Desde dónde viajas?', subtitle: 'Detectamos tu ubicación automáticamente' },
   { title: '¿A dónde viajas?', subtitle: 'Selecciona tus destinos' },
-  { title: '¿Qué tipo de viaje es?', subtitle: 'Elige la duración de tu cobertura' },
   { title: '¿Cuándo es tu aventura?', subtitle: 'Selecciona las fechas de tu viaje' },
-  { title: '¿Quiénes viajan?', subtitle: 'Selecciona el tipo de viaje' },
-  { title: '¿Qué edad tienen los viajeros?', subtitle: 'Ingresa las edades' },
+  { title: 'Datos de los viajeros', subtitle: 'Ingresa las fechas de nacimiento' },
   { title: 'Elige tu plan de protección', subtitle: 'Compara los planes disponibles' },
   { title: 'Tus datos de contacto', subtitle: 'Titular y emergencia' },
+  { title: 'Mejora tu cobertura', subtitle: 'Coberturas adicionales opcionales' },
   { title: 'Revisa y paga', subtitle: 'Confirma los detalles y completa el pago' },
   { title: '¡Viaje confirmado!', subtitle: 'Tu asistencia está activa' }
 ]
@@ -65,7 +67,14 @@ function handleStart() {
 }
 
 function nextStep(data = {}) {
-  formData.value = { ...formData.value, ...data }
+  let nextData = { ...data }
+  if (data.dates?.start && data.dates?.end) {
+    const start = new Date(data.dates.start)
+    const end = new Date(data.dates.end)
+    const days = Math.ceil((end - start) / (1000 * 60 * 60 * 24)) + 1
+    nextData.tripDuration = days
+  }
+  formData.value = { ...formData.value, ...nextData }
   direction.value = 'left'
   currentStep.value++
 }
@@ -85,24 +94,29 @@ function goToStep(step) {
 }
 
 function handlePaymentSuccess(data) {
+  isPaymentCompleted.value = true
   clearWizardState()
   direction.value = 'left'
-  currentStep.value = 9
+  currentStep.value = STEPS.SUCCESS
 }
 
 function restart() {
+  isPaymentCompleted.value = false
   showWizard.value = false
   currentStep.value = 0
   formData.value = {
     origin: null,
     destination: null,
-    tripType: null,
     dates: { start: null, end: null },
-    travelers: null,
-    travelerAges: [],
+    tripDuration: null,
+    travelersCount: 1,
     birthdates: [],
+    ages: [],
     selectedPlan: null,
     personalData: { name: '', email: '', phone: '' },
+    companions: [],
+    travelersInfo: [],
+    upgrades: {},
     emergencyContact: { name: '', phone: '', email: '' }
   }
   setTimeout(() => {
@@ -114,18 +128,83 @@ watch(currentStep, () => {
   window.scrollTo({ top: 0, behavior: 'smooth' })
 })
 
+const STORAGE_KEY = 'wizard_state'
+const STATE_TTL_DAYS = 7
+const SAVE_DEBOUNCE_MS = 500
+
+function saveWizardState() {
+  try {
+    const payload = {
+      formData: formData.value,
+      currentStep: currentStep.value,
+      savedAt: Date.now()
+    }
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(payload))
+  } catch (e) {
+    console.warn('Failed to save wizard state:', e)
+  }
+}
+
+let saveDebounceTimeout = null
+function saveWizardStateDebounced() {
+  if (saveDebounceTimeout) clearTimeout(saveDebounceTimeout)
+  saveDebounceTimeout = setTimeout(() => {
+    if (!isPaymentCompleted.value) saveWizardState()
+  }, SAVE_DEBOUNCE_MS)
+}
+
+function isStateExpired(savedAt) {
+  if (!savedAt) return true
+  const ageMs = Date.now() - savedAt
+  return ageMs > STATE_TTL_DAYS * 24 * 60 * 60 * 1000
+}
+
+function flushSave() {
+  if (saveDebounceTimeout) {
+    clearTimeout(saveDebounceTimeout)
+    saveDebounceTimeout = null
+  }
+  if (!isPaymentCompleted.value) saveWizardState()
+}
+
 watch([formData, currentStep], () => {
-  localStorage.setItem('wizard_state', JSON.stringify({
-    formData: formData.value,
-    currentStep: currentStep.value
-  }))
+  saveWizardStateDebounced()
 }, { deep: true })
 
 onMounted(() => {
-  const saved = localStorage.getItem('wizard_state')
+  const urlParams = new URLSearchParams(window.location.search)
+  const resumeToken = urlParams.get('resume')
+
+  if (resumeToken) {
+    try {
+      const decoded = JSON.parse(atob(decodeURIComponent(resumeToken)))
+      if (decoded.data) {
+        formData.value = { ...formData.value, ...decoded.data }
+      }
+      if (typeof decoded.step === 'number' && decoded.step >= 0 && decoded.step < TOTAL_STEPS) {
+        currentStep.value = decoded.step
+        showLanding.value = false
+        showWizard.value = true
+        if (decoded.data?.selectedPlan === null && typeof decoded.step === 'number') {
+          currentStep.value = Math.min(decoded.step, TOTAL_STEPS - 2)
+        }
+      }
+      window.history.replaceState({}, '', window.location.pathname)
+    } catch (e) {
+      console.warn('Failed to parse resume token:', e)
+      showTransientNotice('No pudimos recuperar tu progreso. Empezando de nuevo.')
+    }
+    return
+  }
+
+  const saved = localStorage.getItem(STORAGE_KEY)
   if (saved) {
     try {
       const state = JSON.parse(saved)
+      if (isStateExpired(state.savedAt)) {
+        localStorage.removeItem(STORAGE_KEY)
+        return
+      }
       if (state.formData) {
         formData.value = { ...formData.value, ...state.formData }
       }
@@ -136,17 +215,46 @@ onMounted(() => {
       }
     } catch (e) {
       console.warn('Failed to restore wizard state:', e)
+      showTransientNotice('No pudimos recuperar tu progreso guardado.')
     }
+  }
+
+  if (typeof window !== 'undefined') {
+    window.addEventListener('beforeunload', beforeUnloadHandler)
   }
 })
 
+onUnmounted(() => {
+  if (typeof window !== 'undefined') {
+    window.removeEventListener('beforeunload', beforeUnloadHandler)
+  }
+})
+
+function beforeUnloadHandler(e) {
+  if (isPaymentCompleted.value) return
+  if (currentStep.value <= 0 || currentStep.value >= TOTAL_STEPS - 1) return
+  flushSave()
+  e.preventDefault()
+  e.returnValue = ''
+  return ''
+}
+
 function clearWizardState() {
-  localStorage.removeItem('wizard_state')
+  try {
+    localStorage.removeItem(STORAGE_KEY)
+  } catch (e) {
+    console.warn('Failed to clear wizard state:', e)
+  }
+}
+
+function showTransientNotice(message) {
+  showToast(message, { variant: 'warning', duration: 5000 })
 }
 </script>
 
 <template>
   <div class="min-h-screen bg-slate-50">
+    <TourOverlay />
     <Transition name="fade">
       <LandingPage v-if="showLanding" @start="handleStart" />
     </Transition>
@@ -157,8 +265,8 @@ function clearWizardState() {
           <div class="max-w-5xl mx-auto">
             <div class="grid grid-cols-3 items-center mb-4">
               <div class="flex items-center gap-3">
-                <button
-                  v-if="currentStep > 0 && currentStep < 9"
+                <button type="button"
+                  v-if="currentStep > 0 && currentStep < STEPS.SUCCESS"
                   @click="prevStep"
                   aria-label="Volver al paso anterior"
                   class="inline-flex items-center gap-1.5 text-sm font-medium text-slate-500 hover:text-slate-800 active:text-slate-900 transition-colors duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-300 focus-visible:ring-offset-2 rounded px-2.5 py-1.5"
@@ -174,16 +282,35 @@ function clearWizardState() {
                 <img src="@/assets/images/uploads/Logotipo PNG.png" alt="Continental Assist Logo" class="h-10 w-auto" />
               </div>
 
-              <div class="flex items-center justify-end">
-                <span v-if="currentStep === 9" class="text-sm font-medium text-green-500">¡Completado!</span>
-                <span v-else class="text-xs font-semibold text-[#00184C] bg-slate-100 px-3 py-1.5 rounded-full">
+              <div class="flex items-center justify-end gap-2">
+                <a
+                  v-if="currentStep !== STEPS.SUCCESS"
+                  href="https://www.ejemplo.com/ayuda"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  class="hidden sm:inline-flex items-center gap-1 text-xs font-medium text-slate-500 hover:text-cyan-600 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-300 rounded px-2 py-1"
+                >
+                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  ¿Necesitas ayuda?
+                </a>
+                <span v-if="currentStep === STEPS.SUCCESS" class="text-sm font-medium text-green-500">¡Completado!</span>
+                <span v-else class="text-xs font-semibold text-[primary-500] bg-slate-100 px-3 py-1.5 rounded-full">
                   Paso {{ currentStep + 1 }} de {{ TOTAL_STEPS }}
                 </span>
               </div>
             </div>
-            <div class="h-2 bg-gray-200 rounded-full overflow-hidden shadow-inner">
+            <div
+              class="h-2 bg-gray-200 rounded-full overflow-hidden shadow-inner"
+              role="progressbar"
+              :aria-valuenow="Math.round(progress)"
+              aria-valuemin="0"
+              aria-valuemax="100"
+              :aria-label="`Progreso del wizard: paso ${currentStep + 1} de ${TOTAL_STEPS}`"
+            >
               <div
-                class="h-full bg-gradient-to-r from-[#00184C] to-[#00D1FF] rounded-full transition-all duration-500 ease-out shadow-lg shadow-cyan-500/30"
+                class="h-full bg-gradient-to-r from-[primary-500] to-[secondary-300] rounded-full transition-all duration-500 ease-out shadow-lg shadow-cyan-500/30"
                 :style="{ width: progress + '%' }"
               />
             </div>
@@ -194,45 +321,49 @@ function clearWizardState() {
           <div class="w-full max-w-5xl">
             <Transition :name="'slide-' + direction" mode="out-in">
               <div :key="currentStep" class="bg-white rounded-2xl shadow-lg p-6 md:p-8 border border-gray-100">
-                <div v-if="currentStep !== 9" class="text-center mb-8">
-                  
+                <div v-if="currentStep !== 8" class="text-center mb-8">
+
                   <h2 class="text-2xl font-semibold text-gray-900 mb-2">{{ stepTitles[currentStep].title }}</h2>
                   <p class="text-gray-500 text-sm">{{ stepTitles[currentStep].subtitle }}</p>
                 </div>
 
                 <div v-if="currentStep === 0">
-                  <StepOrigin @next="nextStep" />
+                  <StepOrigin v-model="formData.origin" @next="nextStep" />
                 </div>
                 <div v-else-if="currentStep === 1">
-                  <StepDestination @next="nextStep" />
+                  <StepDestination v-model="formData.destination" @next="nextStep" />
                 </div>
                 <div v-else-if="currentStep === 2">
-                  <StepTripType :modelValue="formData.tripType" @next="nextStep" />
+                  <StepDates @next="nextStep" />
                 </div>
                 <div v-else-if="currentStep === 3">
-                  <StepDates :tripType="formData.tripType" @next="nextStep" />
+                  <TravelersBirthdateStep :modelValue="formData" @next="nextStep" />
                 </div>
                 <div v-else-if="currentStep === 4">
-                  <StepTravelerInfo :modelValue="formData" @next="nextStep" />
+                  <StepPlans v-model="formData.selectedPlan" :destination="formData.destination" @next="nextStep" />
                 </div>
                 <div v-else-if="currentStep === 5">
-                  <TravelersAgeStep :modelValue="formData" @next="nextStep" />
-                </div>
-                <div v-else-if="currentStep === 6">
-                  <StepPlans v-model="formData.selectedPlan" @next="nextStep" />
-                </div>
-                <div v-else-if="currentStep === 7">
                   <DataStep
                     :selectedPlan="formData.selectedPlan"
                     :travelers="formData.travelers"
                     :travelersCount="formData.travelersCount"
+                    :preloadedBirthdates="formData.birthdates"
                     @next="nextStep"
                   />
                 </div>
-                <div v-else-if="currentStep === 8">
+                <div v-else-if="currentStep === 6">
+                  <StepUpgrades
+                    v-model="formData.upgrades"
+                    :travelers="formData.travelers"
+                    :travelersCount="formData.travelersCount"
+                    :personalData="formData.travelersInfo"
+                    @next="nextStep"
+                  />
+                </div>
+                <div v-else-if="currentStep === STEPS.CHECKOUT">
                   <StepCheckout :data="formData" @go-to-step="goToStep" @payment-success="handlePaymentSuccess" />
                 </div>
-                <div v-else-if="currentStep === 9">
+                <div v-else-if="currentStep === STEPS.SUCCESS">
                   <SuccessStep
                     :formData="formData"
                     :selectedPlan="{ name: getPlanName(), price: getPlanPrice() }"

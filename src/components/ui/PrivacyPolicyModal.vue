@@ -1,5 +1,6 @@
 <script setup>
-import { computed, watch, onMounted, onUnmounted } from 'vue'
+import { computed, onMounted, onUnmounted } from 'vue'
+import { useModalFocus } from '@/composables/useModalFocus.js'
 
 const props = defineProps({
   modelValue: { type: Boolean, default: false }
@@ -17,25 +18,13 @@ function close() {
   emit('close')
 }
 
+const { handleKeydown } = useModalFocus(isOpen, close)
+
 function handleBackdropClick(e) {
   if (e.target === e.currentTarget) {
     close()
   }
 }
-
-function handleKeydown(e) {
-  if (e.key === 'Escape' && isOpen.value) {
-    close()
-  }
-}
-
-watch(isOpen, (val) => {
-  if (val) {
-    document.body.style.overflow = 'hidden'
-  } else {
-    document.body.style.overflow = ''
-  }
-})
 
 onMounted(() => {
   document.addEventListener('keydown', handleKeydown)
@@ -43,7 +32,6 @@ onMounted(() => {
 
 onUnmounted(() => {
   document.removeEventListener('keydown', handleKeydown)
-  document.body.style.overflow = ''
 })
 </script>
 
@@ -154,7 +142,18 @@ onUnmounted(() => {
             </section>
           </div>
 
-          <footer class="flex items-center justify-end gap-3 p-4 md:p-5 border-t border-slate-100 flex-shrink-0 bg-slate-50">
+          <footer class="flex items-center justify-between gap-3 p-4 md:p-5 border-t border-slate-100 flex-shrink-0 bg-slate-50">
+            <a
+              href="https://www.ejemplo.com/politica-de-privacidad"
+              target="_blank"
+              rel="noopener noreferrer"
+              class="text-xs font-semibold text-cyan-700 hover:text-cyan-800 underline underline-offset-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500 focus-visible:ring-offset-2 rounded"
+            >
+              Ver política completa
+              <svg class="w-3 h-3 inline-block ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+              </svg>
+            </a>
             <button
               type="button"
               @click="close"
