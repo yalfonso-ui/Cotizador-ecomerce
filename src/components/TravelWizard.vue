@@ -311,7 +311,7 @@ function showTransientNotice(message) {
         </div>
 
         <main class="flex-1 flex items-start justify-center px-4 py-10">
-          <div class="w-full max-w-md">
+          <div class="w-full max-w-7xl">
             <Transition :name="'slide-' + direction" mode="out-in">
               <div :key="currentStep">
                 <div v-if="currentStep === 0">

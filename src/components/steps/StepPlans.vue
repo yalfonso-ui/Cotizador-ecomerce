@@ -98,8 +98,8 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div class="ds-focus-column space-y-8 w-full max-w-6xl">
-    <div class="space-y-2">
+  <div class="w-full max-w-7xl mx-auto px-4 sm:px-6 space-y-6">
+    <div class="space-y-2 text-center">
       <span class="ds-eyebrow">Elige tu protección</span>
       <h1 class="ds-heading-1">¿Qué plan necesitas?</h1>
       <p class="ds-helper">Selecciona un plan para continuar.</p>
@@ -119,14 +119,14 @@ onUnmounted(() => {
       <div>
         <div
           ref="carouselRef"
-          class="flex gap-4 overflow-x-auto snap-x snap-mandatory scroll-smooth scrollbar-hide pb-2 sm:grid sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 sm:overflow-visible sm:snap-none sm:gap-4"
+          class="flex gap-3 overflow-x-auto snap-x snap-mandatory scroll-smooth scrollbar-hide pb-2 sm:grid sm:grid-cols-3 lg:grid-cols-5 sm:overflow-visible sm:snap-none sm:gap-4"
           style="scrollbar-width: none; -ms-overflow-style: none;"
         >
           <article
             v-for="plan in plans"
             :key="plan.id"
             @click="selectPlan(plan)"
-            class="snap-start shrink-0 relative w-[260px] sm:w-auto min-w-[260px] sm:min-w-0 border rounded-xl p-4 transition-colors duration-200 cursor-pointer bg-white flex flex-col"
+            class="snap-start shrink-0 relative w-[260px] sm:w-auto min-w-[260px] sm:min-w-0 border rounded-xl p-3 transition-colors duration-200 cursor-pointer bg-white flex flex-col gap-2"
             :class="[
               selectedPlan === plan.id
                 ? 'border-slate-900 ring-2 ring-slate-900/10'
@@ -184,23 +184,23 @@ onUnmounted(() => {
 
             <button type="button"
               @click.stop="selectPlan(plan)"
-              class="w-full py-2 rounded-full text-xs font-semibold transition-colors mt-auto"
+              class="w-full py-2 rounded-full text-xs font-semibold transition-colors mt-auto whitespace-nowrap"
               :class="selectedPlan === plan.id
                 ? 'bg-slate-900 text-white'
                 : 'bg-slate-100 text-slate-900 hover:bg-slate-200'"
             >
-              <span v-if="selectedPlan === plan.id" class="flex items-center justify-center gap-1.5">
+              <span v-if="selectedPlan === plan.id" class="flex items-center justify-center gap-1">
                 <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" />
                 </svg>
                 Activo
               </span>
-              <span v-else>Elegir este plan</span>
+              <span v-else>Elegir</span>
             </button>
           </article>
         </div>
 
-        <div class="flex items-center justify-center gap-1.5 mt-4" role="tablist" aria-label="Posición en el carrusel de planes">
+        <div class="flex items-center justify-center gap-1.5 mt-4 sm:hidden" role="tablist" aria-label="Posición en el carrusel de planes">
           <button
             v-for="(plan, idx) in plans"
             :key="plan.id"

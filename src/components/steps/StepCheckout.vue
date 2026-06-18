@@ -192,10 +192,10 @@ function handleSubmit() {
 </script>
 
 <template>
-  <div class="space-y-6">
-    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8">
+  <div class="max-w-5xl mx-auto space-y-5 px-2 sm:px-0">
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-4 lg:gap-6">
 
-      <section class="lg:col-span-7 space-y-5">
+      <section class="lg:col-span-7 space-y-4">
         <div>
           <DiscountCodeField
             :modelValue="appliedDiscount"
@@ -229,7 +229,7 @@ function handleSubmit() {
           </div>
         </div>
 
-        <div class="bg-white border-2 rounded-2xl p-5 md:p-6 space-y-4 shadow-sm" :class="submitAttempted && !isFormValid ? 'border-red-200' : 'border-slate-200'">
+        <div class="bg-white border-2 rounded-2xl p-4 md:p-5 space-y-3 shadow-sm" :class="submitAttempted && !isFormValid ? 'border-red-200' : 'border-slate-200'">
           <div class="flex items-center gap-2.5 pb-3 border-b border-slate-100">
             <div class="w-8 h-8 rounded-lg bg-cyan-50 flex items-center justify-center">
               <svg class="w-5 h-5 text-cyan-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
@@ -385,7 +385,7 @@ function handleSubmit() {
         </div>
       </section>
 
-      <aside class="lg:col-span-5 space-y-3 lg:sticky lg:top-20 lg:self-start">
+      <aside class="lg:col-span-5 space-y-2 lg:sticky lg:top-20 lg:self-start">
         <div v-if="data?.selectedPlan" class="bg-[#00184C] rounded-2xl p-5 shadow-sm">
           <div class="flex items-center justify-between gap-3 mb-3">
             <div class="flex items-center gap-3 min-w-0">

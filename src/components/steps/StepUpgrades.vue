@@ -36,7 +36,7 @@ watch(travelersUpgrades, (val) => {
   emit('update:modelValue', val)
 }, { deep: true })
 
-const upgradeOptions = [
+const allUpgradeOptions = [
   {
     id: 'preexistencias',
     title: 'Preexistencias médicas',
@@ -44,7 +44,8 @@ const upgradeOptions = [
     coverage: 'USD 5,000',
     price: 18.20,
     color: 'rose',
-    iconBg: 'bg-rose-100'
+    iconBg: 'bg-rose-100',
+    icon: '🏥'
   },
   {
     id: 'deportes',
@@ -53,7 +54,8 @@ const upgradeOptions = [
     coverage: 'USD 10,000',
     price: 14.50,
     color: 'sky',
-    iconBg: 'bg-sky-100'
+    iconBg: 'bg-sky-100',
+    icon: '⛷️'
   },
   {
     id: 'futura-mama',
@@ -62,27 +64,12 @@ const upgradeOptions = [
     coverage: 'USD 8,000',
     price: 22.00,
     color: 'pink',
-    iconBg: 'bg-pink-100'
-  },
-  {
-    id: 'equipaje-extra',
-    title: 'Equipaje extra',
-    description: 'Incrementa el límite por pérdida o daño de equipaje.',
-    coverage: 'USD 2,500',
-    price: 9.80,
-    color: 'amber',
-    iconBg: 'bg-amber-100'
-  },
-  {
-    id: 'cancelacion-flex',
-    title: 'Cancelación flexible',
-    description: 'Cancela tu viaje hasta 48h antes sin penalización.',
-    coverage: 'Cobertura total',
-    price: 12.40,
-    color: 'violet',
-    iconBg: 'bg-violet-100'
+    iconBg: 'bg-pink-100',
+    icon: '🤰'
   }
 ]
+
+const upgradeOptions = allUpgradeOptions
 
 const colorMap = {
   rose: { selected: 'border-rose-400 bg-rose-50/40', toggle: 'bg-rose-500', dot: 'bg-rose-500' },
@@ -141,20 +128,11 @@ function handleNext() {
 </script>
 
 <template>
-  <div class="ds-focus-column space-y-8">
+  <div class="ds-focus-column max-w-5xl mx-auto space-y-8 w-full">
     <div class="space-y-2">
       <span class="ds-eyebrow">Coberturas opcionales</span>
       <h1 class="ds-heading-1">Mejora tu cobertura</h1>
-      <p class="ds-helper">Añade coberturas adicionales para cada viajero.</p>
-    </div>
-
-    <div class="w-full bg-slate-50 border border-slate-100 rounded-xl p-4 text-left">
-      <p class="text-xs text-slate-700 flex items-start gap-2">
-        <svg class="w-4 h-4 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
-        </svg>
-        Mejora la cobertura de tu asistencia con coberturas adicionales opcionales.
-      </p>
+      <p class="ds-helper">Selecciona las coberturas adicionales para cada viajero.</p>
     </div>
 
     <div
@@ -176,7 +154,7 @@ function handleNext() {
         </div>
       </div>
 
-      <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div
           v-for="upgrade in upgradeOptions"
           :key="upgrade.id"
@@ -291,7 +269,7 @@ function handleNext() {
 
       <button type="button"
         @click="handleNext"
-        class="ds-cta"
+        class="ds-cta w-auto px-6 py-2.5 text-sm whitespace-nowrap"
       >
         <span>Continuar</span>
         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">

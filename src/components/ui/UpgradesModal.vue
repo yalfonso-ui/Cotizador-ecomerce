@@ -52,15 +52,11 @@ const upgrades = [
   }
 ]
 
+const visibleUpgrades = upgrades
+
 function isSelected(upgradeId) {
   return localSelected.value.includes(upgradeId)
 }
-
-const ALLOWED_UPGRADE_IDS = ['preexistencias', 'deportes', 'futura-mama']
-
-const visibleUpgrades = computed(() =>
-  upgrades.filter(u => ALLOWED_UPGRADE_IDS.includes(u.id))
-)
 
 const totalPrice = computed(() => {
   return localSelected.value.reduce((sum, id) => {
@@ -126,7 +122,7 @@ onUnmounted(() => {
         <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" aria-hidden="true" />
 
         <div
-          class="relative w-full md:max-w-2xl md:mx-4 bg-white rounded-t-3xl md:rounded-3xl shadow-2xl max-h-[92vh] flex flex-col overflow-hidden"
+          class="relative w-full md:max-w-4xl md:mx-4 bg-white rounded-t-3xl md:rounded-3xl shadow-2xl max-h-[92vh] flex flex-col overflow-hidden"
           role="dialog"
           aria-modal="true"
           :aria-labelledby="`upgrades-title-${travelerId}`"
@@ -155,7 +151,7 @@ onUnmounted(() => {
             </button>
           </header>
 
-          <div class="flex-1 overflow-y-auto p-5 md:p-6 space-y-3">
+          <div class="flex-1 overflow-y-auto p-5 md:p-6 grid grid-cols-1 md:grid-cols-3 gap-4">
             <div
               v-for="upgrade in visibleUpgrades"
               :key="upgrade.id"

@@ -245,95 +245,100 @@ watch(travelers_data, () => {
 </script>
 
 <template>
-  <div class="ds-focus-column max-w-5xl mx-auto space-y-8 w-full">
-    <div class="space-y-2">
+  <div class="ds-focus-column max-w-5xl mx-auto space-y-6 w-full">
+    <header class="space-y-2 text-center">
       <span class="ds-eyebrow">Tus datos de contacto</span>
       <h1 class="ds-heading-1">Cuéntanos de ti</h1>
-    </div>
+    </header>
 
-    <div class="w-full bg-slate-50 border border-slate-100 rounded-xl p-4 text-left">
-      <p class="text-xs text-slate-700 flex items-start gap-2">
-        <svg class="w-4 h-4 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-        </svg>
-        Tus datos están seguros. Solo los usaremos para emitir tu asistencia.
-      </p>
-    </div>
+    <p class="flex items-start gap-2 text-xs text-slate-600 px-1">
+      <svg class="w-4 h-4 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+      </svg>
+      Tus datos están seguros. Solo los usaremos para emitir tu asistencia.
+    </p>
 
-    <div class="w-full bg-white border border-slate-200 rounded-xl overflow-hidden">
-      <div class="px-5 py-4 border-b border-slate-100">
+    <div class="bg-white border border-slate-200 rounded-2xl overflow-hidden">
+      <div class="px-5 pt-5 border-b border-slate-100">
         <SubStepIndicator :current-sub-step="activeTab + 1" :steps="tabs" />
       </div>
 
       <div class="p-5">
         <transition name="fade" mode="out-in">
-          <div v-if="activeTab === 0" key="titular" class="space-y-3">
-            <div
+          <div v-if="activeTab === 0" key="titular" class="space-y-4">
+            <p
               v-if="titulErrorsCount > 0"
-              class="bg-red-50 border border-red-200 rounded-xl p-3 flex items-start gap-2.5"
+              class="bg-red-50 border border-red-200 rounded-xl p-3 flex items-start gap-2.5 text-sm text-red-700"
               role="alert"
               aria-live="polite"
             >
               <svg class="w-4 h-4 text-red-500 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01M5 19h14a2 2 0 001.84-2.75L13.74 4a2 2 0 00-3.48 0L3.16 16.25A2 2 0 005 19z" />
               </svg>
-              <p class="text-sm text-red-700">
-                Tienes {{ titulErrorsCount }} {{ titulErrorsCount === 1 ? 'campo por completar' : 'campos por completar' }} en este formulario.
-              </p>
-            </div>
+              Tienes {{ titulErrorsCount }} {{ titulErrorsCount === 1 ? 'campo por completar' : 'campos por completar' }} en este formulario.
+            </p>
 
-
-            <div
+            <article
               v-for="traveler in travelers_data"
               :key="traveler.id"
-              class="rounded-xl border-2 overflow-hidden transition-all duration-200"
-              :class="expandedTraveler === traveler.id
-                ? 'bg-white border-cyan-400 shadow-sm'
-                : isTravelerComplete(traveler)
-                  ? 'bg-emerald-50/40 border-emerald-200'
-                  : 'bg-slate-50 border-slate-200'"
+              class="rounded-xl border-2 transition-colors"
+              :class="[
+                expandedTraveler === traveler.id
+                  ? 'bg-white border-cyan-400'
+                  : isTravelerComplete(traveler)
+                    ? 'bg-emerald-50/40 border-emerald-200'
+                    : 'bg-slate-50 border-slate-200'
+              ]"
             >
-              <button
-                type="button"
-                @click="toggleTravelerAccordion(traveler.id)"
-                class="w-full flex items-center justify-between gap-3 px-4 py-3 text-left transition-colors"
-                :aria-expanded="expandedTraveler === traveler.id"
-                :aria-controls="`traveler-panel-${traveler.id}`"
-              >
-                <div class="flex items-center gap-3 min-w-0 flex-1">
-                  <div
-                    class="w-8 h-8 rounded-full flex items-center justify-center shrink-0 text-sm font-bold transition-colors"
+              <div class="flex items-center justify-between gap-3 px-4 py-3">
+                <button
+                  type="button"
+                  @click="toggleTravelerAccordion(traveler.id)"
+                  class="flex items-center gap-3 min-w-0 flex-1 text-left"
+                  :aria-expanded="expandedTraveler === traveler.id"
+                  :aria-controls="`traveler-panel-${traveler.id}`"
+                >
+                  <span
+                    class="w-8 h-8 rounded-full flex items-center justify-center shrink-0 text-sm font-bold text-white transition-colors"
                     :class="isTravelerComplete(traveler)
-                      ? 'bg-emerald-500 text-white'
+                      ? 'bg-emerald-500'
                       : expandedTraveler === traveler.id
-                        ? 'bg-cyan-500 text-white'
-                        : 'bg-slate-300 text-white'"
+                        ? 'bg-cyan-500'
+                        : 'bg-slate-300'"
                   >
                     <svg v-if="isTravelerComplete(traveler)" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7" />
                     </svg>
                     <span v-else>{{ traveler.id }}</span>
-                  </div>
-                  <div class="min-w-0 flex-1">
-                    <p class="text-sm font-bold text-slate-800 truncate">
-                      Viajero {{ traveler.id }} - {{ traveler.id === 1 ? 'Titular' : 'Acompañante' }}
+                  </span>
+                  <span class="min-w-0 flex-1">
+                    <span class="block text-sm font-bold text-slate-800 truncate">
+                      Viajero {{ traveler.id }} — {{ traveler.id === 1 ? 'Titular' : 'Acompañante' }}
                       <span v-if="getAge(traveler) !== null" class="text-xs font-medium text-slate-400 ml-1">
                         ({{ getAge(traveler) }} años)
                       </span>
-                    </p>
-                    <p v-if="expandedTraveler !== traveler.id && traveler.name" class="text-xs text-slate-500 truncate">
+                    </span>
+                    <span v-if="expandedTraveler !== traveler.id && traveler.name" class="block text-xs text-slate-500 truncate">
                       {{ traveler.name }}
-                    </p>
-                    <p v-else-if="expandedTraveler !== traveler.id && !traveler.name" class="text-xs text-slate-400 truncate">
+                    </span>
+                    <span v-else-if="expandedTraveler !== traveler.id" class="block text-xs text-slate-400 truncate">
                       Pendiente
-                    </p>
-                  </div>
-                </div>
+                    </span>
+                  </span>
+                  <svg
+                    class="w-4 h-4 text-slate-400 shrink-0 transition-transform"
+                    :class="expandedTraveler === traveler.id ? 'rotate-180' : ''"
+                    fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                    aria-hidden="true"
+                  >
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                  </svg>
+                </button>
                 <button
                   v-if="traveler.id > 1 && expandedTraveler === traveler.id && travelers_data[0]"
                   type="button"
                   @click.stop="copyFromTitular(traveler)"
-                  class="shrink-0 inline-flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-semibold text-cyan-700 hover:text-cyan-800 bg-cyan-50 hover:bg-cyan-100 border border-cyan-200 rounded-lg transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500"
+                  class="shrink-0 inline-flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-semibold text-cyan-700 bg-cyan-50 hover:bg-cyan-100 border border-cyan-200 rounded-lg transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500"
                   :aria-label="`Usar los mismos datos del titular para el viajero ${traveler.id}`"
                   title="Copia nombre, identificación, email y teléfono del titular"
                 >
@@ -343,22 +348,15 @@ watch(travelers_data, () => {
                   <span class="hidden sm:inline">Usar datos del titular</span>
                   <span class="sm:hidden">Copiar</span>
                 </button>
-                <svg
-                  class="w-4 h-4 text-slate-400 transition-transform shrink-0"
-                  :class="expandedTraveler === traveler.id ? 'rotate-180' : ''"
-                  fill="none" stroke="currentColor" viewBox="0 0 24 24"
-                >
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-                </svg>
-              </button>
+              </div>
 
               <transition name="accordion">
                 <div
                   v-if="expandedTraveler === traveler.id"
                   :id="`traveler-panel-${traveler.id}`"
-                  class="px-4 pb-4 pt-2 space-y-3 border-t border-slate-100"
+                  class="px-4 pb-4 pt-2 space-y-4 border-t border-slate-100"
                 >
-                  <div class="grid grid-cols-1 md:grid-cols-2 gap-6 pt-2">
+                  <div class="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
                     <div>
                       <label :for="`name-${traveler.id}`" class="text-xs font-bold text-slate-500 uppercase tracking-wide mb-1.5 block">
                         Nombre completo <span class="text-red-500">*</span>
@@ -373,11 +371,9 @@ watch(travelers_data, () => {
                           class="w-full h-12 px-4 bg-slate-50 border rounded-xl text-slate-700 placeholder:text-slate-300 transition-all duration-200 focus:bg-white focus:border-cyan-400 focus:ring-4 focus:ring-cyan-50 outline-none pr-9 text-sm"
                           :class="[isFieldTouched(traveler.id, 'name') && isFieldValid(traveler, 'name') ? 'border-green-300 bg-green-50/30' : 'border-slate-200', isFieldTouched(traveler.id, 'name') && !isFieldValid(traveler, 'name') ? 'border-red-300 ring-4 ring-red-50' : '']"
                         />
-                        <div v-if="isFieldTouched(traveler.id, 'name') && isFieldValid(traveler, 'name')" class="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
-                          <svg class="w-4 h-4 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" />
-                          </svg>
-                        </div>
+                        <svg v-if="isFieldTouched(traveler.id, 'name') && isFieldValid(traveler, 'name')" class="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-green-400 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" />
+                        </svg>
                       </div>
                       <p v-if="isFieldTouched(traveler.id, 'name') && !isFieldValid(traveler, 'name')" class="text-red-500 text-xs mt-1">Mínimo 3 caracteres</p>
                     </div>
@@ -398,11 +394,9 @@ watch(travelers_data, () => {
                           class="w-full h-12 px-4 bg-slate-50 border rounded-xl text-slate-700 placeholder:text-slate-300 transition-all duration-200 focus:bg-white focus:border-cyan-400 focus:ring-4 focus:ring-cyan-50 outline-none pr-9 text-sm uppercase"
                           :class="[isFieldTouched(traveler.id, 'idNumber') && isFieldValid(traveler, 'idNumber') ? 'border-green-300 bg-green-50/30' : 'border-slate-200', isFieldTouched(traveler.id, 'idNumber') && !isFieldValid(traveler, 'idNumber') ? 'border-red-300 ring-4 ring-red-50' : '']"
                         />
-                        <div v-if="isFieldTouched(traveler.id, 'idNumber') && isFieldValid(traveler, 'idNumber')" class="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
-                          <svg class="w-4 h-4 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" />
-                          </svg>
-                        </div>
+                        <svg v-if="isFieldTouched(traveler.id, 'idNumber') && isFieldValid(traveler, 'idNumber')" class="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-green-400 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" />
+                        </svg>
                       </div>
                       <p v-if="isFieldTouched(traveler.id, 'idNumber') && !isFieldValid(traveler, 'idNumber')" class="text-red-500 text-xs mt-1">Mínimo 6 caracteres</p>
                     </div>
@@ -421,11 +415,9 @@ watch(travelers_data, () => {
                           class="w-full h-12 px-4 bg-slate-50 border rounded-xl text-slate-700 placeholder:text-slate-300 transition-all duration-200 focus:bg-white focus:border-cyan-400 focus:ring-4 focus:ring-cyan-50 outline-none pr-9 text-sm"
                           :class="[isFieldTouched(traveler.id, 'email') && isFieldValid(traveler, 'email') ? 'border-green-300 bg-green-50/30' : 'border-slate-200', isFieldTouched(traveler.id, 'email') && !isFieldValid(traveler, 'email') ? 'border-red-300 ring-4 ring-red-50' : '']"
                         />
-                        <div v-if="isFieldTouched(traveler.id, 'email') && isFieldValid(traveler, 'email')" class="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
-                          <svg class="w-4 h-4 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" />
-                          </svg>
-                        </div>
+                        <svg v-if="isFieldTouched(traveler.id, 'email') && isFieldValid(traveler, 'email')" class="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-green-400 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" />
+                        </svg>
                       </div>
                       <p v-if="isFieldTouched(traveler.id, 'email') && !isFieldValid(traveler, 'email')" class="text-red-500 text-xs mt-1">Correo inválido</p>
                     </div>
@@ -444,11 +436,9 @@ watch(travelers_data, () => {
                           class="w-full h-12 px-4 bg-slate-50 border rounded-xl text-slate-700 placeholder:text-slate-300 transition-all duration-200 focus:bg-white focus:border-cyan-400 focus:ring-4 focus:ring-cyan-50 outline-none pr-9 text-sm"
                           :class="[isFieldTouched(traveler.id, 'phone') && isFieldValid(traveler, 'phone') ? 'border-green-300 bg-green-50/30' : 'border-slate-200', isFieldTouched(traveler.id, 'phone') && !isFieldValid(traveler, 'phone') ? 'border-red-300 ring-4 ring-red-50' : '']"
                         />
-                        <div v-if="isFieldTouched(traveler.id, 'phone') && isFieldValid(traveler, 'phone')" class="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
-                          <svg class="w-4 h-4 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" />
-                          </svg>
-                        </div>
+                        <svg v-if="isFieldTouched(traveler.id, 'phone') && isFieldValid(traveler, 'phone')" class="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-green-400 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" />
+                        </svg>
                       </div>
                       <p v-if="isFieldTouched(traveler.id, 'phone') && !isFieldValid(traveler, 'phone')" class="text-red-500 text-xs mt-1">Mínimo 10 dígitos</p>
                     </div>
@@ -501,7 +491,7 @@ watch(travelers_data, () => {
                   </div>
                 </div>
               </transition>
-            </div>
+            </article>
 
           </div>
 
@@ -529,7 +519,7 @@ watch(travelers_data, () => {
               <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider">Contacto de emergencia</h3>
             </div>
 
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label for="emergency-name" class="text-xs font-bold text-slate-500 uppercase tracking-wide mb-1.5 block">Nombre completo</label>
                 <div class="relative">
@@ -542,11 +532,9 @@ watch(travelers_data, () => {
                     class="w-full h-12 px-4 bg-slate-50 border rounded-xl text-slate-700 placeholder:text-slate-300 transition-all duration-200 focus:bg-white focus:border-cyan-400 focus:ring-4 focus:ring-cyan-50 outline-none pr-9 text-sm"
                     :class="[emergencyNameTouched && emergencyNameValid ? 'border-green-300 bg-green-50/30' : 'border-slate-200', emergencyNameTouched && !emergencyNameValid ? 'border-red-300 ring-4 ring-red-50' : '']"
                   />
-                  <div v-if="emergencyNameTouched && emergencyNameValid" class="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
-                    <svg class="w-4 h-4 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" />
-                    </svg>
-                  </div>
+                  <svg v-if="emergencyNameTouched && emergencyNameValid" class="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-green-400 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" />
+                  </svg>
                 </div>
                 <p v-if="emergencyNameTouched && !emergencyNameValid" class="text-red-500 text-xs mt-1">Mínimo 3 caracteres</p>
               </div>
@@ -563,16 +551,14 @@ watch(travelers_data, () => {
                     class="w-full h-12 px-4 bg-slate-50 border rounded-xl text-slate-700 placeholder:text-slate-300 transition-all duration-200 focus:bg-white focus:border-cyan-400 focus:ring-4 focus:ring-cyan-50 outline-none pr-9 text-sm"
                     :class="[emergencyPhoneTouched && emergencyPhoneValid ? 'border-green-300 bg-green-50/30' : 'border-slate-200', emergencyPhoneTouched && !emergencyPhoneValid ? 'border-red-300 ring-4 ring-red-50' : '']"
                   />
-                  <div v-if="emergencyPhoneTouched && emergencyPhoneValid" class="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
-                    <svg class="w-4 h-4 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" />
-                    </svg>
-                  </div>
+                  <svg v-if="emergencyPhoneTouched && emergencyPhoneValid" class="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-green-400 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" />
+                  </svg>
                 </div>
                 <p v-if="emergencyPhoneTouched && !emergencyPhoneValid" class="text-red-500 text-xs mt-1">Mínimo 10 dígitos</p>
               </div>
 
-              <div class="sm:col-span-2">
+              <div class="md:col-span-2">
                 <label class="text-xs font-bold text-slate-500 uppercase tracking-wide mb-1.5 block">Correo electrónico (opcional)</label>
                 <input
                   v-model="emergencyEmail"
@@ -624,7 +610,7 @@ watch(travelers_data, () => {
     <button type="button"
       @click="handleNext"
       :disabled="activeTab === 0 ? !tab0Valid : !canSubmit"
-      class="ds-cta"
+      class="ds-cta w-auto sm:w-auto min-w-0 px-6 py-2.5 text-sm mx-auto"
     >
       <span>{{ activeTab === 0 ? 'Siguiente' : 'Ver coberturas opcionales' }}</span>
       <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">

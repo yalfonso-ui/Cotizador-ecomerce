@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import { useModalFocus } from '@/composables/useModalFocus.js'
 
 const props = defineProps({
@@ -15,35 +15,38 @@ const isOpen = computed({
   set: (v) => emit('update:modelValue', v)
 })
 
-const comparisonData = [
+const planIds = computed(() => props.plans.map(p => p.id))
+
+const buildComparisonData = (ids) => [
   {
     category: 'Salud y emergencias',
     benefits: [
-      { name: 'Emergencias médicas', essential: 'USD 15.000', explorer: 'USD 50.000', premium: 'USD 100.000' },
-      { name: 'Repatriación básica', essential: 'check', explorer: 'check', premium: 'check' },
-      { name: 'Teleconsulta 24/7', essential: 'check', explorer: 'check', premium: 'check' },
-      { name: 'COVID-19', essential: 'dash', explorer: 'check', premium: 'check' },
-      { name: 'Asistencia de actividades', essential: 'dash', explorer: 'dash', premium: 'check' }
+      { name: 'Emergencias médicas', values: { lite: 'USD 10.000', essential: 'USD 15.000', explorer: 'USD 50.000', premium: 'USD 100.000', elite: 'USD 250.000' }, ids },
+      { name: 'Repatriación', values: { lite: 'check', essential: 'check', explorer: 'check', premium: 'check', elite: 'check' }, ids },
+      { name: 'Teleconsulta 24/7', values: { lite: 'dash', essential: 'check', explorer: 'check', premium: 'check', elite: 'check' }, ids },
+      { name: 'COVID-19', values: { lite: 'dash', essential: 'check', explorer: 'check', premium: 'check', elite: 'check' }, ids },
+      { name: 'Asistencia de actividades', values: { lite: 'dash', essential: 'dash', explorer: 'dash', premium: 'check', elite: 'check' }, ids }
     ]
   },
   {
     category: 'Viaje, equipajes y cancelaciones',
     benefits: [
-      { name: 'Cancelación de viaje', essential: 'dash', explorer: 'check', premium: 'check' },
-      { name: 'Equipaje protegido', essential: 'USD 500', explorer: 'USD 1.500', premium: 'USD 3.000' },
-      { name: 'Concierge personal', essential: 'dash', explorer: 'dash', premium: 'check' },
-      { name: 'Cobertura familiar', essential: 'dash', explorer: 'dash', premium: 'check' },
-      { name: 'Asistencia 24/7', essential: 'check', explorer: 'check', premium: 'check' }
+      { name: 'Cancelación de viaje', values: { lite: 'dash', essential: 'dash', explorer: 'check', premium: 'check', elite: 'check' }, ids },
+      { name: 'Equipaje protegido', values: { lite: 'USD 500', essential: 'USD 1.000', explorer: 'USD 1.500', premium: 'USD 3.000', elite: 'USD 5.000' }, ids },
+      { name: 'Concierge personal', values: { lite: 'dash', essential: 'dash', explorer: 'dash', premium: 'check', elite: 'check' }, ids },
+      { name: 'Asistencia premium 24/7', values: { lite: 'check', essential: 'check', explorer: 'check', premium: 'check', elite: 'check' }, ids }
     ]
   },
   {
     category: 'Límites',
     benefits: [
-      { name: 'Límite de edad', essential: '70 años', explorer: '75 años', premium: 'Sin límite' },
-      { name: 'Duración del viaje', essential: '60 días', explorer: '180 días', premium: '365 días' }
+      { name: 'Límite de edad', values: { lite: '70 años', essential: '70 años', explorer: '75 años', premium: '80 años', elite: 'Sin límite' }, ids },
+      { name: 'Duración del viaje', values: { lite: '30 días', essential: '60 días', explorer: '180 días', premium: '365 días', elite: 'Sin límite' }, ids }
     ]
   }
 ]
+
+const comparisonData = computed(() => buildComparisonData(planIds.value))
 
 function close() {
   isOpen.value = false
@@ -72,13 +75,13 @@ onUnmounted(() => {
     <Transition name="modal">
       <div
         v-if="isOpen"
-        class="fixed inset-0 z-50 flex items-end md:items-center justify-center"
+        class="fixed inset-0 z-[100] flex items-end md:items-center justify-center"
         @click="handleBackdropClick"
       >
         <div class="absolute inset-0 bg-black/40 backdrop-blur-sm" aria-hidden="true" />
 
         <div
-          class="relative w-full md:max-w-5xl md:mx-4 bg-white rounded-t-3xl md:rounded-2xl shadow-2xl max-h-[92vh] flex flex-col overflow-hidden"
+          class="relative w-full md:max-w-6xl md:mx-4 bg-white rounded-t-3xl md:rounded-2xl shadow-2xl max-h-[92vh] flex flex-col overflow-hidden"
           role="dialog"
           aria-modal="true"
           aria-labelledby="compare-title"
@@ -103,7 +106,7 @@ onUnmounted(() => {
           </header>
 
           <div class="flex-1 overflow-y-auto">
-            <table class="w-full min-w-[720px] border-collapse">
+            <table class="w-full min-w-[900px] border-collapse">
               <thead class="sticky top-0 z-20 backdrop-blur-md bg-white/80 border-b border-slate-100">
                 <tr>
                   <th
@@ -116,7 +119,7 @@ onUnmounted(() => {
                     v-for="plan in plans"
                     :key="plan.id"
                     scope="col"
-                    class="text-center px-6 py-4 min-w-[160px] relative"
+                    class="text-center px-4 py-4 min-w-[140px] relative"
                   >
                     <div class="flex flex-col items-center gap-1">
                       <span class="text-[11px] font-medium text-slate-500 uppercase tracking-wider">
@@ -161,19 +164,19 @@ onUnmounted(() => {
                     <td
                       v-for="plan in plans"
                       :key="plan.id"
-                      class="text-center px-6 py-3.5 text-[14px]"
+                      class="text-center px-4 py-3.5 text-[14px]"
                       :class="plan.id === selectedPlanId ? 'bg-slate-50/40' : ''"
                     >
-                      <template v-if="benefit[plan.id] === 'check'">
+                      <template v-if="benefit.values[plan.id] === 'check'">
                         <svg class="w-5 h-5 text-cyan-600 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-label="Incluido">
                           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
                         </svg>
                       </template>
-                      <template v-else-if="benefit[plan.id] === 'dash'">
+                      <template v-else-if="benefit.values[plan.id] === 'dash'">
                         <span class="inline-block w-4 h-px bg-slate-300" aria-label="No incluido"></span>
                       </template>
                       <template v-else>
-                        <span class="font-medium text-slate-900 tabular-nums">{{ benefit[plan.id] }}</span>
+                        <span class="font-medium text-slate-900 tabular-nums">{{ benefit.values[plan.id] }}</span>
                       </template>
                     </td>
                   </tr>
