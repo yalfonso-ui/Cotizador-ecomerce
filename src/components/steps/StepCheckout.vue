@@ -215,7 +215,7 @@ function handleSubmit() {
 </script>
 
 <template>
-  <div class="space-y-6">
+  <div class="space-y-8">
     <div class="grid grid-cols-1 lg:grid-cols-5 gap-6 lg:gap-8">
 
       <aside class="lg:col-span-2 lg:order-2 lg:sticky lg:top-4 lg:self-start space-y-2">
@@ -239,7 +239,7 @@ function handleSubmit() {
           </div>
         </div>
 
-        <div class="bg-white rounded-2xl border border-slate-200 shadow-sm divide-y divide-slate-100">
+        <div class="bg-white rounded-xl border border-slate-200 divide-y divide-slate-100">
           <div class="grid grid-cols-2">
             <div class="p-2.5">
               <p class="text-[10px] text-slate-500 font-semibold tracking-wide mb-0.5">Origen</p>
@@ -342,7 +342,7 @@ function handleSubmit() {
           </p>
         </Transition>
 
-        <div class="bg-white border border-slate-200 shadow-sm rounded-2xl p-5">
+        <div class="bg-white border border-slate-200 rounded-xl p-5">
           <div class="flex items-center gap-2.5 mb-4 pb-3 border-b border-slate-100">
             <div class="w-7 h-7 rounded-lg bg-cyan-50 flex items-center justify-center">
               <svg class="w-4 h-4 text-cyan-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
@@ -376,7 +376,7 @@ function handleSubmit() {
                   title="Número de 16 dígitos que aparece al frente de tu tarjeta"
                   :aria-invalid="cardNumberTouched && !cardNumberValid"
                   :aria-describedby="cardNumberTouched && !cardNumberValid ? 'card-number-error' : undefined"
-                  class="w-full h-11 pl-11 pr-10 bg-slate-50 border rounded-xl text-slate-700 placeholder:text-slate-300 transition-all duration-200 focus:bg-white focus:border-cyan-400 focus:ring-4 focus:ring-cyan-50 outline-none text-sm tracking-wider"
+                  class="ds-input h-11 pl-11 pr-10 text-sm tracking-wider"
                   :class="[cardNumberTouched && cardNumberValid ? 'border-green-300 bg-green-50/30' : 'border-slate-200', cardNumberTouched && !cardNumberValid ? 'border-red-300 ring-4 ring-red-50' : '']"
                 />
                 <div v-if="cardNumberTouched && cardNumberValid" class="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
@@ -408,7 +408,7 @@ function handleSubmit() {
                   autocomplete="cc-name"
                   :aria-invalid="cardNameTouched && !cardNameValid"
                   :aria-describedby="cardNameTouched && !cardNameValid ? 'card-name-error' : undefined"
-                  class="w-full h-11 px-3.5 bg-slate-50 border rounded-xl text-slate-700 placeholder:text-slate-300 transition-all duration-200 focus:bg-white focus:border-cyan-400 focus:ring-4 focus:ring-cyan-50 outline-none pr-10 text-sm"
+                  class="ds-input h-11 px-3.5 pr-10 text-sm"
                   :class="[cardNameTouched && cardNameValid ? 'border-green-300 bg-green-50/30' : 'border-slate-200', cardNameTouched && !cardNameValid ? 'border-red-300 ring-4 ring-red-50' : '']"
                 />
                 <div v-if="cardNameTouched && cardNameValid" class="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
@@ -444,7 +444,7 @@ function handleSubmit() {
                     autocomplete="cc-exp"
                     :aria-invalid="expiryTouched && !expiryValid"
                     :aria-describedby="expiryTouched && !expiryValid ? 'card-expiry-error' : undefined"
-                    class="w-full h-11 px-3.5 bg-slate-50 border rounded-xl text-slate-700 placeholder:text-slate-300 transition-all duration-200 focus:bg-white focus:border-cyan-400 focus:ring-4 focus:ring-cyan-50 outline-none text-center text-sm pr-10"
+                    class="ds-input h-11 px-3.5 pr-10 text-center text-sm"
                     :class="[expiryTouched && expiryValid ? 'border-green-300 bg-green-50/30' : 'border-slate-200', expiryTouched && !expiryValid ? 'border-red-300 ring-4 ring-red-50' : '']"
                   />
                   <div v-if="expiryTouched && expiryValid" class="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
@@ -474,7 +474,7 @@ function handleSubmit() {
                     autocomplete="cc-csc"
                     :aria-invalid="cvvTouched && !cvvValid"
                     :aria-describedby="cvvTouched && !cvvValid ? 'card-cvv-error' : undefined"
-                    class="w-full h-11 px-3.5 pr-11 bg-slate-50 border rounded-xl text-slate-700 placeholder:text-slate-300 transition-all duration-200 focus:bg-white focus:border-cyan-400 focus:ring-4 focus:ring-cyan-50 outline-none text-center text-sm"
+                    class="ds-input h-11 px-3.5 pr-11 text-center text-sm"
                     :class="[cvvTouched && cvvValid ? 'border-green-300 bg-green-50/30' : 'border-slate-200', cvvTouched && !cvvValid ? 'border-red-300 ring-4 ring-red-50' : '']"
                   />
                   <div v-if="cvvTouched && cvvValid" class="absolute right-9 top-1/2 -translate-y-1/2 pointer-events-none">
@@ -504,7 +504,7 @@ function handleSubmit() {
               type="submit"
               :disabled="!isFormValid || isProcessing"
               :aria-busy="isProcessing"
-              class="w-full px-6 py-3.5 bg-yellow-400 text-slate-900 font-extrabold text-base rounded-xl transition-all shadow-md mx-auto block disabled:bg-slate-100 disabled:text-slate-400 disabled:shadow-none disabled:cursor-not-allowed enabled:hover:bg-yellow-500 enabled:active:scale-[0.99] enabled:hover:shadow-lg flex items-center justify-center gap-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-yellow-500 focus-visible:ring-offset-2"
+              class="ds-cta"
             >
               <svg v-if="isProcessing" class="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24" aria-hidden="true">
                 <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>

@@ -98,168 +98,172 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div class="space-y-6 pb-6">
-    <div class="text-center px-2">
-      <p class="text-sm text-slate-600">
+  <div class="ds-focus-column space-y-8 w-full max-w-3xl">
+    <div class="space-y-2">
+      <span class="ds-eyebrow">Elige tu protección</span>
+      <h1 class="ds-heading-1">¿Qué plan necesitas?</h1>
+      <p class="ds-helper">Selecciona un plan para continuar.</p>
+    </div>
+
+    <div class="w-full">
+      <p class="text-sm text-slate-600 text-center mb-4">
         ¿Vas a viajar varias veces al año?
         <button type="button"
           @click="openMultitripInfo"
-          class="ml-1 text-cyan-700 font-semibold underline underline-offset-2 hover:text-cyan-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500 focus-visible:ring-offset-1 rounded"
+          class="ml-1 text-slate-900 font-semibold underline underline-offset-2 hover:text-slate-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--ds-focus)] focus-visible:ring-offset-1 rounded"
         >
           Ver más
         </button>
       </p>
-    </div>
 
-    <div class="relative -mx-6 px-6">
-      <button type="button"
-        v-if="canScrollLeft"
-        @click="scrollCarousel('left')"
-        class="hidden md:flex absolute left-0 top-1/2 -translate-y-1/2 z-10 w-10 h-10 rounded-full bg-white shadow-lg border border-slate-200 items-center justify-center text-slate-700 hover:text-cyan-600 hover:border-cyan-300 transition-all active:scale-95"
-        aria-label="Anterior"
-      >
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
-        </svg>
-      </button>
-
-      <button type="button"
-        v-if="canScrollRight"
-        @click="scrollCarousel('right')"
-        class="hidden md:flex absolute right-0 top-1/2 -translate-y-1/2 z-10 w-10 h-10 rounded-full bg-white shadow-lg border border-slate-200 items-center justify-center text-slate-700 hover:text-cyan-600 hover:border-cyan-300 transition-all active:scale-95"
-        aria-label="Siguiente"
-      >
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
-        </svg>
-      </button>
-
-      <div
-        ref="carouselRef"
-        class="flex gap-4 pb-2 overflow-x-auto snap-x snap-mandatory scroll-smooth scrollbar-hide sm:grid sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 sm:overflow-visible sm:snap-none"
-        style="scrollbar-width: none; -ms-overflow-style: none;"
-      >
-        <article
-          v-for="plan in plans"
-          :key="plan.id"
-          @click="selectPlan(plan)"
-          class="snap-start shrink-0 w-[280px] sm:w-auto border-2 rounded-2xl p-5 transition-all duration-200 relative cursor-pointer hover:scale-[1.01]"
-          :class="[
-            selectedPlan === plan.id
-              ? 'bg-cyan-50 border-secondary-300 ring-4 ring-secondary-300/20 shadow-lg'
-              : 'bg-white border-slate-200 hover:border-secondary-300 hover:shadow-md hover:ring-2 hover:ring-secondary-300/20'
-          ]"
+      <div class="relative">
+        <button type="button"
+          v-if="canScrollLeft"
+          @click="scrollCarousel('left')"
+          class="hidden md:flex absolute left-0 top-1/2 -translate-y-1/2 z-10 w-10 h-10 rounded-full bg-white border border-slate-200 items-center justify-center text-slate-700 hover:text-slate-900 transition-all active:scale-95"
+          aria-label="Anterior"
         >
-          <span
-            v-if="plan.recommended"
-            class="absolute -top-2.5 left-4 px-2.5 py-0.5 rounded-full bg-gradient-to-r from-amber-400 to-orange-400 text-[10px] font-bold text-white uppercase tracking-wider shadow-sm"
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+          </svg>
+        </button>
+
+        <button type="button"
+          v-if="canScrollRight"
+          @click="scrollCarousel('right')"
+          class="hidden md:flex absolute right-0 top-1/2 -translate-y-1/2 z-10 w-10 h-10 rounded-full bg-white border border-slate-200 items-center justify-center text-slate-700 hover:text-slate-900 transition-all active:scale-95"
+          aria-label="Siguiente"
+        >
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+          </svg>
+        </button>
+
+        <div
+          ref="carouselRef"
+          class="flex gap-4 pb-2 overflow-x-auto snap-x snap-mandatory scroll-smooth scrollbar-hide sm:grid sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 sm:overflow-visible sm:snap-none"
+          style="scrollbar-width: none; -ms-overflow-style: none;"
+        >
+          <article
+            v-for="plan in plans"
+            :key="plan.id"
+            @click="selectPlan(plan)"
+            class="snap-start shrink-0 w-[280px] sm:w-auto border rounded-xl p-5 transition-colors duration-200 relative cursor-pointer bg-white"
+            :class="[
+              selectedPlan === plan.id
+                ? 'border-slate-900 ring-2 ring-slate-900/10'
+                : 'border-slate-200 hover:border-slate-400'
+            ]"
           >
-            Recomendado
-          </span>
-
-          <div
-            v-if="selectedPlan === plan.id"
-            class="absolute -top-2 -right-2 w-8 h-8 rounded-full flex items-center justify-center shadow-lg"
-            style="background: primary-500;"
-            aria-label="Plan seleccionado"
-          >
-            <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7" />
-            </svg>
-          </div>
-          
-
-          <div class="text-center mb-4">
-            <h3 class="text-lg font-bold text-slate-900">{{ plan.name }}</h3>
-            <p class="text-xs text-slate-500 mt-1 leading-snug min-h-[2.5rem]">{{ plan.description }}</p>
-          </div>
-
-          <div class="text-center mb-4 pb-4 border-b border-slate-100">
-            <div class="flex items-baseline justify-center gap-1">
-              <span class="text-4xl font-black text-cyan-600">${{ plan.price }}</span>
-              <span class="text-sm font-semibold text-slate-500">{{ plan.currency }}</span>
-            </div>
-            <p v-if="plan.anchorPrice" class="text-xs text-slate-400 mt-1">
-              <span class="line-through">${{ plan.anchorPrice }}</span>
-              <span class="ml-1 text-emerald-600 font-semibold">Ahorras ${{ plan.anchorPrice - plan.price }}</span>
-            </p>
-            <p class="text-[11px] text-slate-500 mt-2">
-              Cobertura <span class="font-semibold text-slate-700">${{ plan.coverage }} {{ plan.currency }}</span>
-            </p>
-          </div>
-
-          <ul class="space-y-1.5 mb-5 min-h-[7rem]">
-            <li
-              v-for="feature in plan.features"
-              :key="feature"
-              class="flex items-start gap-2 text-xs text-slate-600"
+            <span
+              v-if="plan.recommended"
+              class="absolute -top-2.5 left-4 px-2.5 py-0.5 rounded-full bg-slate-900 text-[10px] font-bold text-white uppercase tracking-wider"
             >
-              <svg class="w-3.5 h-3.5 text-cyan-500 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              Recomendado
+            </span>
+
+            <div
+              v-if="selectedPlan === plan.id"
+              class="absolute -top-2 -right-2 w-7 h-7 rounded-full flex items-center justify-center bg-slate-900"
+              aria-label="Plan seleccionado"
+            >
+              <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7" />
               </svg>
-              <span>{{ feature }}</span>
-            </li>
-          </ul>
+            </div>
 
-          <button type="button"
-            @click.stop="selectPlan(plan)"
-            class="w-full py-2.5 rounded-xl text-sm font-bold transition-all"
-            :class="selectedPlan === plan.id
-              ? 'bg-primary-500 text-white hover:bg-primary-600'
-              : 'bg-accent-300 text-primary-500 hover:bg-accent-400 font-extrabold'"
-          >
-            <span v-if="selectedPlan === plan.id" class="flex items-center justify-center gap-2">
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" />
-              </svg>
-              Activo
-            </span>
-            <span v-else>Elegir este plan</span>
-          </button>
-        </article>
+            <div class="text-center mb-4">
+              <h3 class="text-lg font-bold text-slate-900">{{ plan.name }}</h3>
+              <p class="text-xs text-slate-500 mt-1 leading-snug min-h-[2.5rem]">{{ plan.description }}</p>
+            </div>
+
+            <div class="text-center mb-4 pb-4 border-b border-slate-100">
+              <div class="flex items-baseline justify-center gap-1">
+                <span class="text-4xl font-black text-slate-900">${{ plan.price }}</span>
+                <span class="text-sm font-semibold text-slate-500">{{ plan.currency }}</span>
+              </div>
+              <p v-if="plan.anchorPrice" class="text-xs text-slate-400 mt-1">
+                <span class="line-through">${{ plan.anchorPrice }}</span>
+                <span class="ml-1 text-emerald-600 font-semibold">Ahorras ${{ plan.anchorPrice - plan.price }}</span>
+              </p>
+              <p class="text-[11px] text-slate-500 mt-2">
+                Cobertura <span class="font-semibold text-slate-700">${{ plan.coverage }} {{ plan.currency }}</span>
+              </p>
+            </div>
+
+            <ul class="space-y-1.5 mb-5 min-h-[7rem] text-left">
+              <li
+                v-for="feature in plan.features"
+                :key="feature"
+                class="flex items-start gap-2 text-xs text-slate-600"
+              >
+                <svg class="w-3.5 h-3.5 text-slate-900 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7" />
+                </svg>
+                <span>{{ feature }}</span>
+              </li>
+            </ul>
+
+            <button type="button"
+              @click.stop="selectPlan(plan)"
+              class="w-full py-2.5 rounded-full text-sm font-semibold transition-colors"
+              :class="selectedPlan === plan.id
+                ? 'bg-slate-900 text-white'
+                : 'bg-slate-100 text-slate-900 hover:bg-slate-200'"
+            >
+              <span v-if="selectedPlan === plan.id" class="flex items-center justify-center gap-2">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" />
+                </svg>
+                Activo
+              </span>
+              <span v-else>Elegir este plan</span>
+            </button>
+          </article>
+        </div>
+
+        <div class="flex items-center justify-center gap-1.5 mt-3" role="tablist" aria-label="Posición en el carrusel de planes">
+          <button
+            v-for="(plan, idx) in plans"
+            :key="plan.id"
+            type="button"
+            @click="scrollToPlan(idx)"
+            :aria-label="`Ir al plan ${idx + 1}: ${plan.name}`"
+            :aria-current="currentCarouselIndex === idx"
+            class="transition-all rounded-full"
+            :class="currentCarouselIndex === idx
+              ? 'w-6 h-2 bg-slate-900'
+              : 'w-2 h-2 bg-slate-300 hover:bg-slate-400'"
+          />
+          <span class="ml-2 text-xs text-slate-500 tabular-nums" aria-live="polite">
+            {{ currentCarouselIndex + 1 }} / {{ plans.length }}
+          </span>
+        </div>
       </div>
 
-      <div class="flex items-center justify-center gap-1.5 mt-3" role="tablist" aria-label="Posición en el carrusel de planes">
-        <button
-          v-for="(plan, idx) in plans"
-          :key="plan.id"
-          type="button"
-          @click="scrollToPlan(idx)"
-          :aria-label="`Ir al plan ${idx + 1}: ${plan.name}`"
-          :aria-current="currentCarouselIndex === idx"
-          class="transition-all rounded-full"
-          :class="currentCarouselIndex === idx
-            ? 'w-6 h-2 bg-cyan-500'
-            : 'w-2 h-2 bg-slate-300 hover:bg-slate-400'"
-        />
-        <span class="ml-2 text-xs text-slate-500 tabular-nums" aria-live="polite">
-          {{ currentCarouselIndex + 1 }} / {{ plans.length }}
-        </span>
+      <div class="flex flex-col sm:flex-row items-center justify-center gap-3 mt-6">
+        <button type="button"
+          @click="openCompare"
+          class="w-full sm:w-auto px-5 py-2.5 text-sm font-semibold text-slate-700 bg-white border border-slate-200 hover:bg-slate-50 hover:border-slate-300 active:scale-[0.98] rounded-full transition-colors flex items-center justify-center gap-2"
+        >
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+          </svg>
+          Comparar planes
+        </button>
       </div>
-    </div>
 
-    <div class="flex flex-col sm:flex-row items-center justify-center gap-3">
-      <button type="button"
-        @click="openCompare"
-        class="w-full sm:w-auto px-5 py-2.5 text-sm font-semibold text-cyan-700 bg-cyan-50 hover:bg-cyan-100 active:scale-[0.98] rounded-xl transition-all flex items-center justify-center gap-2"
-      >
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-        </svg>
-        Comparar planes
-      </button>
-    </div>
-
-    <div class="text-center">
-      <button type="button"
-        @click="handleSaveQuote"
-        class="text-xs text-slate-500 hover:text-cyan-600 transition-colors inline-flex items-center gap-1.5"
-      >
-        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-        </svg>
-        Enviar cotización por correo
-      </button>
+      <div class="text-center mt-4">
+        <button type="button"
+          @click="handleSaveQuote"
+          class="text-xs text-slate-500 hover:text-slate-900 transition-colors inline-flex items-center gap-1.5"
+        >
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+          </svg>
+          Enviar cotización por correo
+        </button>
+      </div>
     </div>
 
     <PlanCompareModal

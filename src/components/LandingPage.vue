@@ -7,21 +7,20 @@ function handleStart() {
 </script>
 
 <template>
-  <div class="min-h-screen bg-[primary-500] relative overflow-hidden">
+  <div class="min-h-screen relative overflow-hidden" style="background-color: #00184C;">
     <div class="absolute inset-0 z-0">
-      <img 
-        src="https://images.unsplash.com/photo-1488085061387-422e29b40080?w=1920&h=1080&fit=crop" 
-        alt="Viajero" 
-        class="w-full h-full object-cover" 
+      <img
+        src="https://images.unsplash.com/photo-1488085061387-422e29b40080?w=1920&h=1080&fit=crop"
+        alt="Viajero"
+        class="w-full h-full object-cover opacity-50"
       />
-      <div class="absolute inset-0 bg-[primary-500]/70"></div>
-      <div class="absolute inset-0 bg-gradient-to-r from-[primary-500]/90 via-transparent to-transparent"></div>
+      <div class="absolute inset-0" style="background: linear-gradient(135deg, #00184C 0%, #00184C 35%, rgba(0, 24, 76, 0.7) 60%, rgba(0, 24, 76, 0.3) 100%);"></div>
     </div>
 
     <div class="relative z-10 min-h-screen flex items-center">
       <div class="max-w-5xl mx-auto px-6 py-16 w-full">
         <div class="max-w-2xl">
-          <div class="inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm px-4 py-2 rounded-full mb-6">
+          <div class="inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm px-4 py-2 rounded-full mb-6 border border-white/15">
             <span class="relative flex h-2 w-2">
               <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-yellow-400 opacity-75"></span>
               <span class="relative inline-flex rounded-full h-2 w-2 bg-yellow-400"></span>
@@ -34,16 +33,17 @@ function handleStart() {
             vuelve con <span class="text-cyan-400">historias</span>
           </h1>
 
-          <p class="text-xl text-white/80 mb-4">
+          <p class="text-xl text-white/85 mb-4">
             <strong class="text-yellow-400">¿Sabías que una emergencia médica en EE.UU. puede costar más de $50,000?</strong>
           </p>
-          <p class="text-lg text-white/70 mb-8">
+          <p class="text-lg text-white/75 mb-8">
             Protege tu aventura desde solo <strong class="text-yellow-400">$25 USD</strong> — menos que tu café diario.
           </p>
 
           <button type="button"
             @click="handleStart"
-            class="inline-flex items-center gap-3 bg-yellow-400 text-[primary-500] font-bold px-8 py-4 rounded-xl hover:bg-yellow-500 transition-all duration-200 shadow-lg shadow-yellow-400/30 text-lg"
+            class="inline-flex items-center gap-3 bg-yellow-400 font-bold px-8 py-4 rounded-xl hover:bg-yellow-500 transition-all duration-200 shadow-lg shadow-yellow-400/30 text-lg active:scale-[0.98]"
+            style="color: #00184C;"
           >
             <span class="text-xl">✨</span>
             ¡Comenzar ahora!

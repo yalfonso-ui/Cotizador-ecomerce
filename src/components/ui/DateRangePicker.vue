@@ -1,0 +1,430 @@
+<script setup>
+import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
+
+const props = defineProps({
+  modelValue: {
+    type: Array,
+    default: () => []
+  },
+  minDate: {
+    type: Date,
+    default: () => new Date()
+  },
+  placeholder: {
+    type: String,
+    default: ''
+  }
+})
+
+const emit = defineEmits(['update:modelValue', 'change'])
+
+const isOpen = ref(false)
+const containerRef = ref(null)
+const startDate = ref(null)
+const endDate = ref(null)
+const hoveredDate = ref(null)
+const currentMonth = ref(new Date().getMonth())
+const currentYear = ref(new Date().getFullYear())
+
+const MONTHS_ES = [
+  'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
+  'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'
+]
+
+const WEEKDAYS = ['Lu', 'Ma', 'Mi', 'Ju', 'Vi', 'Sá', 'Do']
+
+function normalizeDate(d) {
+  if (!d) return null
+  const date = d instanceof Date ? new Date(d) : new Date(d)
+  date.setHours(0, 0, 0, 0)
+  return date
+}
+
+function sameDay(a, b) {
+  if (!a || !b) return false
+  if (typeof a.getDate !== 'function' || typeof b.getDate !== 'function') return false
+  return a.getFullYear() === b.getFullYear()
+      && a.getMonth() === b.getMonth()
+      && a.getDate() === b.getDate()
+}
+
+function isBefore(a, b) {
+  if (!a || !b) return false
+  return a.getTime() < b.getTime()
+}
+
+function isBetween(d, start, end) {
+  if (!start || !end) return false
+  const t = d.getTime()
+  return t > start.getTime() && t < end.getTime()
+}
+
+function isInRangeOrHovered(d) {
+  const start = startDate.value
+  const end = endDate.value || hoveredDate.value
+  if (!start || !end) return false
+  const a = isBefore(start, end) ? start : end
+  const b = isBefore(start, end) ? end : start
+  return isBetween(d, a, b)
+}
+
+function buildCalendar(month, year) {
+  const firstDay = new Date(year, month, 1)
+  const lastDay = new Date(year, month + 1, 0)
+  const startWeekday = (firstDay.getDay() + 6) % 7
+  const days = []
+
+  const prevMonthLastDay = new Date(year, month, 0).getDate()
+  for (let i = startWeekday - 1; i >= 0; i--) {
+    days.push({
+      date: new Date(year, month - 1, prevMonthLastDay - i),
+      isCurrentMonth: false
+    })
+  }
+
+  for (let i = 1; i <= lastDay.getDate(); i++) {
+    days.push({
+      date: new Date(year, month, i),
+      isCurrentMonth: true
+    })
+  }
+
+  const remaining = 42 - days.length
+  for (let i = 1; i <= remaining; i++) {
+    days.push({
+      date: new Date(year, month + 1, i),
+      isCurrentMonth: false
+    })
+  }
+
+  return days
+}
+
+const firstMonthDays = computed(() => buildCalendar(currentMonth.value, currentYear.value))
+const secondMonthDays = computed(() => {
+  const nextMonth = currentMonth.value === 11 ? 0 : currentMonth.value + 1
+  const nextYear = currentMonth.value === 11 ? currentYear.value + 1 : currentYear.value
+  return buildCalendar(nextMonth, nextYear)
+})
+
+const secondMonthLabel = computed(() => {
+  const nextMonth = currentMonth.value === 11 ? 0 : currentMonth.value + 1
+  const nextYear = currentMonth.value === 11 ? currentYear.value + 1 : currentYear.value
+  return `${MONTHS_ES[nextMonth]} ${nextYear}`
+})
+
+const firstMonthLabel = computed(() => `${MONTHS_ES[currentMonth.value]} ${currentYear.value}`)
+
+function prevMonths() {
+  if (currentMonth.value === 0) {
+    currentMonth.value = 11
+    currentYear.value -= 1
+  } else {
+    currentMonth.value -= 1
+  }
+}
+
+function nextMonths() {
+  if (currentMonth.value === 11) {
+    currentMonth.value = 0
+    currentYear.value += 1
+  } else {
+    currentMonth.value += 1
+  }
+}
+
+function isDisabled(date) {
+  const min = normalizeDate(props.minDate)
+  return isBefore(date, min)
+}
+
+function onDayClick(date) {
+  if (isDisabled(date)) return
+
+  if (!startDate.value || (startDate.value && endDate.value)) {
+    startDate.value = date
+    endDate.value = null
+    hoveredDate.value = null
+    return
+  }
+
+  if (isBefore(date, startDate.value)) {
+    startDate.value = date
+    endDate.value = null
+    return
+  }
+
+  if (sameDay(date, startDate.value)) {
+    startDate.value = date
+    endDate.value = date
+    finalize()
+    return
+  }
+
+  endDate.value = date
+  finalize()
+}
+
+function onDayHover(date) {
+  if (startDate.value && !endDate.value) {
+    hoveredDate.value = date
+  }
+}
+
+function onDayLeave() {
+  hoveredDate.value = null
+}
+
+function finalize() {
+  emit('update:modelValue', [startDate.value, endDate.value])
+  emit('change', { start: startDate.value, end: endDate.value })
+  setTimeout(() => { isOpen.value = false }, 200)
+}
+
+function close() {
+  isOpen.value = false
+}
+
+function clearSelection(e) {
+  e.stopPropagation()
+  startDate.value = null
+  endDate.value = null
+  hoveredDate.value = null
+  emit('update:modelValue', [])
+}
+
+function formatDisplay(date) {
+  if (!date) return props.placeholder || 'Seleccionar'
+  const d = String(date.getDate()).padStart(2, '0')
+  const m = MONTHS_ES[date.getMonth()].slice(0, 3).toLowerCase()
+  const y = date.getFullYear()
+  return `${d} ${m} ${y}`
+}
+
+const tripDays = computed(() => {
+  if (!startDate.value || !endDate.value) return 0
+  const diff = endDate.value.getTime() - startDate.value.getTime()
+  return Math.round(diff / (1000 * 60 * 60 * 24)) + 1
+})
+
+function dayClass(day) {
+  const notCurrentMonth = !day.isCurrentMonth
+  const isStart = sameDay(day.date, startDate.value)
+  const isEnd = sameDay(day.date, endDate.value)
+  const inRange = !isStart && !isEnd && isInRangeOrHovered(day.date)
+  const isPlain = day.isCurrentMonth && !isInRangeOrHovered(day.date) && !isStart && !isEnd
+
+  if (isStart || isEnd) {
+    return 'bg-blue-600 text-white hover:bg-blue-700'
+  }
+  if (inRange) {
+    return 'bg-blue-50 text-blue-950'
+  }
+  if (notCurrentMonth) {
+    return 'text-slate-300'
+  }
+  if (isPlain) {
+    return 'text-slate-700 hover:bg-slate-100'
+  }
+  return 'text-slate-700'
+}
+
+function onContainerClick(e) {
+  if (!containerRef.value?.contains(e.target)) {
+    isOpen.value = false
+  }
+}
+
+onMounted(() => {
+  document.addEventListener('mousedown', onContainerClick)
+})
+
+onBeforeUnmount(() => {
+  document.removeEventListener('mousedown', onContainerClick)
+})
+
+function initFromModel() {
+  if (Array.isArray(props.modelValue) && props.modelValue.length === 2) {
+    const [s, e] = props.modelValue
+    if (s) {
+      startDate.value = normalizeDate(s)
+      const sDate = startDate.value
+      currentMonth.value = sDate.getMonth()
+      currentYear.value = sDate.getFullYear()
+    }
+    if (e) endDate.value = normalizeDate(e)
+  }
+}
+
+initFromModel()
+</script>
+
+<template>
+  <div ref="containerRef" class="relative w-full">
+    <div class="grid grid-cols-2 gap-3 w-full">
+      <button
+        type="button"
+        data-testid="date-from-trigger"
+        @click="isOpen = !isOpen"
+        :aria-expanded="isOpen"
+        class="flex flex-col items-start px-4 py-3 bg-white border border-slate-200 rounded-xl text-left transition-colors duration-200 hover:border-slate-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/20 focus:border-blue-500"
+        :class="startDate ? 'border-blue-500 ring-2 ring-blue-500/10' : ''"
+      >
+        <span class="text-xs font-medium text-slate-400 mb-1">Desde</span>
+        <span class="text-base font-semibold text-slate-800">
+          {{ formatDisplay(startDate) }}
+        </span>
+      </button>
+
+      <button
+        type="button"
+        data-testid="date-to-trigger"
+        @click="isOpen = !isOpen"
+        :aria-expanded="isOpen"
+        :disabled="!startDate"
+        class="flex flex-col items-start px-4 py-3 bg-white border border-slate-200 rounded-xl text-left transition-colors duration-200 hover:border-slate-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/20 focus:border-blue-500 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:border-slate-200"
+        :class="endDate ? 'border-blue-500 ring-2 ring-blue-500/10' : ''"
+      >
+        <span class="text-xs font-medium text-slate-400 mb-1">Hasta</span>
+        <span class="text-base font-semibold text-slate-800">
+          {{ formatDisplay(endDate) }}
+        </span>
+      </button>
+    </div>
+
+    <Transition name="calendar-fade">
+      <div
+        v-if="isOpen"
+        class="absolute left-0 right-0 top-full mt-2 z-30 bg-white border border-slate-200 rounded-2xl shadow-xl overflow-hidden"
+      >
+        <div class="flex items-center justify-between px-5 py-4 border-b border-slate-100">
+          <button
+            type="button"
+            @click="prevMonths"
+            class="w-9 h-9 rounded-full flex items-center justify-center text-slate-500 hover:bg-slate-100 hover:text-slate-900 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/20"
+            aria-label="Meses anteriores"
+          >
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+            </svg>
+          </button>
+
+          <div class="flex items-center gap-2">
+            <span class="text-sm font-semibold text-slate-900">{{ firstMonthLabel }}</span>
+            <span class="text-sm text-slate-400">—</span>
+            <span class="text-sm font-semibold text-slate-900">{{ secondMonthLabel }}</span>
+          </div>
+
+          <button
+            type="button"
+            @click="nextMonths"
+            class="w-9 h-9 rounded-full flex items-center justify-center text-slate-500 hover:bg-slate-100 hover:text-slate-900 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/20"
+            aria-label="Meses siguientes"
+          >
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+            </svg>
+          </button>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 p-5">
+          <div class="space-y-3">
+            <div class="grid grid-cols-7 gap-1">
+              <span
+                v-for="(day, idx) in WEEKDAYS"
+                :key="`w1-${idx}`"
+                class="text-[10px] font-bold text-slate-400 uppercase tracking-wider text-center py-1"
+              >
+                {{ day }}
+              </span>
+            </div>
+
+            <div class="grid grid-cols-7 gap-1">
+              <button
+                v-for="(day, idx) in firstMonthDays"
+                :key="`m1-${idx}`"
+                type="button"
+                @click="onDayClick(day.date)"
+                @mouseenter="onDayHover(day.date)"
+                @mouseleave="onDayLeave"
+                :disabled="isDisabled(day.date)"
+                class="relative h-10 flex items-center justify-center text-sm font-medium rounded-full transition-colors duration-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/30 disabled:opacity-30 disabled:cursor-not-allowed"
+                :class="dayClass(day)"
+              >
+                {{ day.date.getDate() }}
+              </button>
+            </div>
+          </div>
+
+          <div class="space-y-3">
+            <div class="grid grid-cols-7 gap-1">
+              <span
+                v-for="(day, idx) in WEEKDAYS"
+                :key="`w2-${idx}`"
+                class="text-[10px] font-bold text-slate-400 uppercase tracking-wider text-center py-1"
+              >
+                {{ day }}
+              </span>
+            </div>
+
+            <div class="grid grid-cols-7 gap-1">
+              <button
+                v-for="(day, idx) in secondMonthDays"
+                :key="`m2-${idx}`"
+                type="button"
+                @click="onDayClick(day.date)"
+                @mouseenter="onDayHover(day.date)"
+                @mouseleave="onDayLeave"
+                :disabled="isDisabled(day.date)"
+                class="relative h-10 flex items-center justify-center text-sm font-medium rounded-full transition-colors duration-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/30 disabled:opacity-30 disabled:cursor-not-allowed"
+                :class="dayClass(day)"
+              >
+                {{ day.date.getDate() }}
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div
+          v-if="startDate && endDate"
+          class="flex items-center justify-between gap-3 px-5 py-4 border-t border-slate-100 bg-slate-50/50"
+        >
+          <div class="flex items-center gap-2 text-sm text-slate-600">
+            <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <span>{{ tripDays }} {{ tripDays === 1 ? 'día' : 'días' }} seleccionados</span>
+          </div>
+          <div class="flex items-center gap-2">
+            <button
+              type="button"
+              @click="clearSelection"
+              class="text-xs font-medium text-slate-500 hover:text-slate-900 transition-colors focus:outline-none focus-visible:underline"
+            >
+              Limpiar
+            </button>
+            <button
+              type="button"
+              @click="close"
+              class="text-xs font-semibold text-blue-600 hover:text-blue-700 transition-colors focus:outline-none focus-visible:underline"
+            >
+              Cerrar
+            </button>
+          </div>
+        </div>
+      </div>
+    </Transition>
+  </div>
+</template>
+
+<style scoped>
+.calendar-fade-enter-active,
+.calendar-fade-leave-active {
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+.calendar-fade-enter-from,
+.calendar-fade-leave-to {
+  opacity: 0;
+  transform: translateY(-4px);
+}
+</style>

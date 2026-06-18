@@ -79,95 +79,109 @@ function handleContinue() {
 </script>
 
 <template>
-  <div class="space-y-6">
-    <div v-if="isDetecting" class="space-y-3" role="status" aria-live="polite">
-      <div class="w-full h-14 bg-slate-100 border-2 border-slate-200 rounded-xl animate-pulse"></div>
-      <p class="text-xs text-slate-500 text-center">
-        Preparando opciones para ti
-      </p>
+  <div class="flex flex-col items-center justify-center min-h-[60vh] w-full max-w-md mx-auto text-center">
+    <div v-if="isDetecting" class="w-full space-y-3" role="status" aria-live="polite">
+      <div class="w-full h-[72px] bg-slate-50 rounded-xl animate-pulse"></div>
+      <p class="text-xs text-slate-400">Preparando opciones para ti</p>
     </div>
 
-    <div v-else-if="!isDropdownOpen" class="space-y-3">
-      <button
-        type="button"
-        @click="toggleDropdown"
-        class="relative w-full flex items-center gap-3 p-4 pr-12 bg-white border-2 border-cyan-500 rounded-xl text-left transition-all hover:shadow-md focus:outline-none focus-visible:ring-4 focus-visible:ring-cyan-500/30"
-      >
-        <img
-          :src="`https://flagcdn.com/w40/${selectedCountry.flag}.png`"
-          :alt="selectedCountry.name"
-          class="w-8 h-8 rounded-full object-cover ring-2 ring-white shadow-md"
-        />
-        <div class="flex-1 min-w-0">
-          <p class="text-[10px] font-semibold text-cyan-600 uppercase tracking-wider">País de origen detectado</p>
-          <p class="font-semibold text-slate-800 text-lg">{{ selectedCountry.name }}</p>
-        </div>
-        <div class="absolute right-3 top-1/2 -translate-y-1/2 w-7 h-7 rounded-full bg-cyan-500 flex items-center justify-center shadow-sm">
-          <svg class="w-3.5 h-3.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7" />
-          </svg>
-        </div>
-      </button>
-      <p class="text-xs text-slate-500 text-center">
-        Detectamos tu ubicación. Si no es correcta,
-        <button type="button" @click="toggleDropdown" class="text-cyan-600 font-semibold hover:underline focus:outline-none focus-visible:underline focus-visible:rounded">cámbiala aquí</button>.
-      </p>
-    </div>
+    <template v-else>
+      <span class="text-slate-500 text-sm font-medium tracking-wide block">
+        Detectamos tu ubicación automáticamente
+      </span>
 
-    <div v-else class="space-y-3">
-      <div class="relative">
-        <svg class="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-        </svg>
-        <input
-          id="origin-search"
-          v-model="search"
-          type="text"
-          placeholder="Buscar país..."
-          class="w-full h-14 pl-12 pr-12 text-lg bg-white border-2 border-cyan-400 rounded-xl focus:outline-none focus:ring-4 focus:ring-cyan-400/20 transition-all"
-          autocomplete="off"
-        />
-        <button type="button"
-          @click="closeDropdown"
-          class="absolute right-3 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full hover:bg-slate-100 flex items-center justify-center transition-colors"
-          aria-label="Cerrar buscador"
+      <h1 class="text-3xl md:text-4xl font-bold text-slate-900 tracking-tight mb-8 mt-2">
+        ¿Desde dónde viajas?
+      </h1>
+
+      <div v-if="!isDropdownOpen" class="w-full space-y-3">
+        <button
+          type="button"
+          data-testid="origin-trigger"
+          @click="toggleDropdown"
+          class="w-full bg-white border border-slate-200 rounded-xl p-4 flex items-center justify-between hover:border-slate-300 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/20"
         >
-          <svg class="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+          <div class="flex items-center gap-4 min-w-0">
+            <div class="w-8 h-8 rounded-full overflow-hidden bg-slate-100 flex-shrink-0">
+              <img
+                :src="`https://flagcdn.com/w80/${selectedCountry.flag}.png`"
+                :alt="selectedCountry.name"
+                class="w-full h-full object-cover"
+              />
+            </div>
+            <div class="text-left min-w-0">
+              <span class="text-[10px] uppercase tracking-wider text-blue-600 font-bold block">
+                País de origen detectado
+              </span>
+              <span class="text-lg font-semibold text-slate-800 truncate block">{{ selectedCountry.name }}</span>
+            </div>
+          </div>
+          <svg class="w-5 h-5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
           </svg>
         </button>
-      </div>
 
-      <div class="bg-white border-2 border-slate-100 rounded-xl max-h-72 overflow-y-auto">
-        <button type="button"
-          v-for="country in filtered"
-          :key="country.code"
-          @click="selectCountry(country)"
-          class="w-full flex items-center gap-3 p-3 hover:bg-cyan-50 transition-colors text-left border-b border-slate-50 last:border-0"
-          :class="selectedCountry?.code === country.code ? 'bg-cyan-50' : ''"
-        >
-          <img :src="`https://flagcdn.com/w40/${country.flag}.png`" :alt="country.name" class="w-7 h-7 rounded-full object-cover ring-2 ring-white shadow-sm" />
-          <span class="font-medium text-slate-800 flex-1">{{ country.name }}</span>
-          <svg v-if="selectedCountry?.code === country.code" class="w-5 h-5 text-cyan-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" />
-          </svg>
-        </button>
-        <p v-if="filtered.length === 0" class="text-center text-slate-500 py-6 text-sm">
-          No encontramos "{{ search }}"
+        <p class="text-xs text-slate-400">
+          Si no es correcta,
+          <button type="button" @click="toggleDropdown" class="text-blue-600 font-medium hover:underline focus:outline-none focus-visible:underline">cámbiala aquí</button>.
         </p>
       </div>
-    </div>
 
-    <button
-      type="button"
-      @click="handleContinue"
-      :disabled="!selectedCountry || isDetecting"
-      class="w-full sm:w-auto min-w-[250px] px-8 py-3.5 bg-yellow-400 text-slate-900 font-extrabold text-base rounded-xl flex items-center justify-center gap-2 mx-auto disabled:bg-slate-100 disabled:text-slate-400 disabled:cursor-not-allowed disabled:rounded-xl focus:outline-none focus-visible:ring-4 focus-visible:ring-yellow-400/30"
-    >
-      <span>{{ selectedCountry && !isDetecting ? 'Continuar' : 'Selecciona un país' }}</span>
-      <svg v-if="selectedCountry && !isDetecting" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6" />
-      </svg>
-    </button>
+      <div v-else class="w-full space-y-2 text-left">
+        <div class="relative">
+          <svg class="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 pointer-events-none" fill="none" viewBox="0 0 24 24" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+          </svg>
+          <input
+            id="origin-search"
+            v-model="search"
+            type="text"
+            placeholder="Buscar país..."
+            class="w-full h-14 pl-12 pr-12 text-lg bg-white border border-slate-200 rounded-xl focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all"
+            autocomplete="off"
+          />
+          <button type="button"
+            @click="closeDropdown"
+            class="absolute right-3 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full hover:bg-slate-100 flex items-center justify-center transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+            aria-label="Cerrar buscador"
+          >
+            <svg class="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+
+        <div class="bg-white border border-slate-200 rounded-xl max-h-72 overflow-y-auto">
+          <button type="button"
+            v-for="country in filtered"
+            :key="country.code"
+            @click="selectCountry(country)"
+            class="w-full flex items-center gap-3 p-3 hover:bg-slate-50 transition-colors text-left border-b border-slate-50 last:border-0"
+            :class="selectedCountry?.code === country.code ? 'bg-blue-50/50' : ''"
+          >
+            <img :src="`https://flagcdn.com/w40/${country.flag}.png`" :alt="country.name" class="w-7 h-7 rounded-full object-cover" />
+            <span class="font-medium text-slate-800 flex-1">{{ country.name }}</span>
+            <svg v-if="selectedCountry?.code === country.code" class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" />
+            </svg>
+          </button>
+          <p v-if="filtered.length === 0" class="text-center text-slate-500 py-6 text-sm">
+            No encontramos "{{ search }}"
+          </p>
+        </div>
+      </div>
+
+      <button
+        type="button"
+        @click="handleContinue"
+        :disabled="!selectedCountry || isDetecting"
+        class="w-full mt-6 bg-[#FFCC00] hover:bg-[#E6B800] text-slate-900 font-semibold py-4 px-6 rounded-full flex items-center justify-center gap-2 shadow-sm transition-all active:scale-[0.99] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#FFCC00] focus-visible:ring-offset-2 disabled:bg-slate-100 disabled:text-slate-400 disabled:cursor-not-allowed disabled:active:scale-100"
+      >
+        <span>{{ selectedCountry && !isDetecting ? 'Continuar' : 'Selecciona un país' }}</span>
+        <svg v-if="selectedCountry && !isDetecting" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3" />
+        </svg>
+      </button>
+    </template>
   </div>
 </template>

@@ -2,6 +2,116 @@
 @tailwind components;
 @tailwind utilities;
 
+@layer base {
+  /* ============================================================
+   * Design System — Tokens Globales
+   * Lienzo limpio, columna central, tipografía editorial.
+   * ============================================================ */
+
+  :root {
+    /* Acento de marca (CTA principal) */
+    --ds-cta: #FFCC00;
+    --ds-cta-hover: #E6B800;
+
+    /* Acento interactivo (focus ring) */
+    --ds-focus: #3B82F6;
+    --ds-focus-ring: rgba(59, 130, 246, 0.20);
+  }
+
+  html, body {
+    @apply bg-white text-slate-900 antialiased;
+    font-family: 'Galano Grotesque', 'Inter', sans-serif;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Galano Grotesque', 'Inter', sans-serif;
+    @apply font-bold tracking-tight text-slate-900;
+  }
+
+  /* Eliminar el fondo gris por defecto que pueda venir de la app shell */
+  #app {
+    @apply bg-white;
+  }
+}
+
+@layer components {
+  /* ============================================================
+   * Focus Column — columna estructural central
+   * Para steps y formularios: ancho máximo estricto y centrado.
+   * ============================================================ */
+  .ds-focus-column {
+    @apply w-full max-w-md mx-auto flex flex-col items-center text-center;
+  }
+
+  /* ============================================================
+   * Inputs / Selectores — bordes sutiles, esquinas suaves
+   * ============================================================ */
+  .ds-input {
+    @apply w-full bg-white border border-slate-200 rounded-xl text-slate-900 placeholder:text-slate-400 transition-all duration-200 focus:outline-none focus:border-[color:var(--ds-focus)] focus:ring-2 focus:ring-[color:var(--ds-focus-ring)];
+  }
+
+  .ds-input--lg {
+    @apply h-14 px-4 text-base;
+  }
+
+  /* ============================================================
+   * CTA — Botón principal amarillo tipo "Continuar"
+   * ============================================================ */
+  .ds-cta {
+    @apply w-full inline-flex items-center justify-center gap-2 bg-[color:var(--ds-cta)] hover:bg-[color:var(--ds-cta-hover)] active:scale-[0.99] text-slate-900 font-semibold py-4 px-6 rounded-full shadow-sm transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--ds-cta)] focus-visible:ring-offset-2 disabled:bg-slate-100 disabled:text-slate-400 disabled:cursor-not-allowed disabled:active:scale-100 disabled:hover:bg-slate-100;
+  }
+
+  /* ============================================================
+   * Etiquetas de sección (eyebrow) — tracking-wide, gris medio
+   * ============================================================ */
+  .ds-eyebrow {
+    @apply text-slate-500 text-sm font-medium tracking-wide block;
+  }
+
+  /* ============================================================
+   * Título principal — grande, tracking cerrado, font-bold
+   * ============================================================ */
+  .ds-heading-1 {
+    @apply text-3xl md:text-4xl font-bold text-slate-900 tracking-tight;
+  }
+
+  /* ============================================================
+   * Helper text discreto
+   * ============================================================ */
+  .ds-helper {
+    @apply text-xs text-slate-400;
+  }
+
+  /* ============================================================
+   * Bloque selector (estilo tarjeta plana)
+   * ============================================================ */
+  .ds-selector {
+    @apply w-full bg-white border border-slate-200 rounded-xl p-4 flex items-center justify-between transition-colors duration-200 hover:border-slate-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--ds-focus-ring)];
+  }
+
+  /* Compatibilidad con la API previa (no romper si queda algún uso) */
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 font-semibold rounded-full transition-all duration-200;
+  }
+
+  .input {
+    @apply ds-input ds-input--lg;
+  }
+}
+
+@layer utilities {
+  .font-heading {
+    font-family: 'Galano Grotesque', 'Inter', sans-serif;
+  }
+
+  .font-accent {
+    font-family: 'Galano Grotesque', 'Inter', sans-serif;
+  }
+}
+
+/* ============================================================
+ * Font faces
+ * ============================================================ */
 @font-face {
   font-family: 'Galano Grotesque';
   src: url('./assets/font/GalanoGrotesqueLight.otf') format('opentype');
@@ -40,56 +150,4 @@
   font-weight: 700;
   font-style: normal;
   font-display: swap;
-}
-
-@layer base {
-  body {
-    @apply antialiased;
-    font-family: 'Galano Grotesque', 'Inter', sans-serif;
-  }
-
-  h1, h2, h3, h4, h5, h6 {
-    font-family: 'Galano Grotesque', 'Inter', sans-serif;
-    @apply font-semibold;
-  }
-}
-
-@layer components {
-  .btn {
-    @apply inline-flex items-center justify-center gap-2 font-semibold rounded-xl transition-all duration-200;
-  }
-
-  .btn-primary {
-    @apply bg-primary-500 text-white hover:bg-primary-600 shadow-md hover:shadow-lg;
-  }
-
-  .btn-accent {
-    @apply bg-accent-300 text-primary-500 hover:bg-accent-400 shadow-md hover:shadow-lg;
-  }
-
-  .btn-secondary {
-    @apply bg-secondary-300 text-primary-500 hover:bg-secondary-400 shadow-md hover:shadow-lg;
-  }
-
-  .btn-outline {
-    @apply border-2 border-primary-500 text-primary-500 hover:bg-primary-500 hover:text-white;
-  }
-
-  .card {
-    @apply bg-white rounded-2xl shadow-md overflow-hidden;
-  }
-
-  .input {
-    @apply w-full h-14 px-4 text-lg border-2 border-gray-200 rounded-xl focus:border-secondary-300 focus:outline-none focus:ring-4 focus:ring-secondary-300/20 transition-all;
-  }
-}
-
-@layer utilities {
-  .font-heading {
-    font-family: 'Galano Grotesque', 'Inter', sans-serif;
-  }
-
-  .font-accent {
-    font-family: 'Galano Grotesque', 'Inter', sans-serif;
-  }
 }

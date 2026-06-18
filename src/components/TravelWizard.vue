@@ -23,7 +23,7 @@ const isPaymentCompleted = ref(false)
 
 const formData = ref({
   origin: null,
-  destination: null,
+  destination: [],
   dates: { start: null, end: null },
   tripDuration: null,
   travelersCount: 1,
@@ -106,7 +106,7 @@ function restart() {
   currentStep.value = 0
   formData.value = {
     origin: null,
-    destination: null,
+destination: [],
     dates: { start: null, end: null },
     tripDuration: null,
     travelersCount: 1,
@@ -253,15 +253,15 @@ function showTransientNotice(message) {
 </script>
 
 <template>
-  <div class="min-h-screen bg-slate-50">
+  <div class="min-h-screen bg-white">
     <TourOverlay />
     <Transition name="fade">
       <LandingPage v-if="showLanding" @start="handleStart" />
     </Transition>
 
     <Transition name="fade">
-      <div v-if="showWizard" class="min-h-screen flex flex-col">
-        <header class="sticky top-0 z-50 bg-white border-b border-gray-100 px-4 py-4">
+      <div v-if="showWizard" class="min-h-screen flex flex-col bg-white">
+        <header class="sticky top-0 z-50 bg-white border-b border-slate-100 px-4 py-4">
           <div class="max-w-5xl mx-auto">
             <div class="grid grid-cols-3 items-center mb-4">
               <div class="flex items-center gap-3">
@@ -288,7 +288,7 @@ function showTransientNotice(message) {
                   href="https://www.ejemplo.com/ayuda"
                   target="_blank"
                   rel="noopener noreferrer"
-                  class="hidden sm:inline-flex items-center gap-1 text-xs font-medium text-slate-500 hover:text-cyan-600 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-300 rounded px-2 py-1"
+                  class="hidden sm:inline-flex items-center gap-1 text-xs font-medium text-slate-500 hover:text-slate-900 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-300 rounded px-2 py-1"
                 >
                   <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -296,13 +296,13 @@ function showTransientNotice(message) {
                   ¿Necesitas ayuda?
                 </a>
                 <span v-if="currentStep === STEPS.SUCCESS" class="text-sm font-medium text-green-500">¡Completado!</span>
-                <span v-else class="text-xs font-semibold text-[primary-500] bg-slate-100 px-3 py-1.5 rounded-full">
+                <span v-else class="text-xs font-semibold text-slate-700 bg-slate-100 px-3 py-1.5 rounded-full">
                   Paso {{ currentStep + 1 }} de {{ TOTAL_STEPS }}
                 </span>
               </div>
             </div>
             <div
-              class="h-2 bg-gray-200 rounded-full overflow-hidden shadow-inner"
+              class="h-1.5 bg-slate-100 rounded-full overflow-hidden"
               role="progressbar"
               :aria-valuenow="Math.round(progress)"
               aria-valuemin="0"
@@ -310,23 +310,17 @@ function showTransientNotice(message) {
               :aria-label="`Progreso del wizard: paso ${currentStep + 1} de ${TOTAL_STEPS}`"
             >
               <div
-                class="h-full bg-gradient-to-r from-[primary-500] to-[secondary-300] rounded-full transition-all duration-500 ease-out shadow-lg shadow-cyan-500/30"
+                class="h-full bg-slate-900 rounded-full transition-all duration-500 ease-out"
                 :style="{ width: progress + '%' }"
               />
             </div>
           </div>
         </header>
 
-        <main class="flex-1 flex items-start justify-center px-4 py-8">
-          <div class="w-full max-w-5xl">
+        <main class="flex-1 flex items-start justify-center px-4 py-10">
+          <div class="w-full max-w-md">
             <Transition :name="'slide-' + direction" mode="out-in">
-              <div :key="currentStep" class="bg-white rounded-2xl shadow-lg p-6 md:p-8 border border-gray-100">
-                <div v-if="currentStep !== 8" class="text-center mb-8">
-
-                  <h2 class="text-2xl font-semibold text-gray-900 mb-2">{{ stepTitles[currentStep].title }}</h2>
-                  <p class="text-gray-500 text-sm">{{ stepTitles[currentStep].subtitle }}</p>
-                </div>
-
+              <div :key="currentStep">
                 <div v-if="currentStep === 0">
                   <StepOrigin v-model="formData.origin" @next="nextStep" />
                 </div>

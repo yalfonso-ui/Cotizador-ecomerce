@@ -55,28 +55,26 @@ function travelerCount() {
 </script>
 
 <template>
-  <div class="w-full max-w-xl mx-auto bg-white px-6 py-12 sm:py-16">
+  <div class="ds-focus-column space-y-8 py-12 sm:py-16">
 
-    <div class="text-center mb-12">
-      <div class="inline-flex items-center justify-center w-14 h-14 rounded-full border-2 border-cyan-300 mb-6">
-        <svg class="w-7 h-7 text-secondary-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+    <div class="text-center space-y-4">
+      <div class="inline-flex items-center justify-center w-14 h-14 rounded-full border-2 border-slate-900">
+        <svg class="w-7 h-7 text-slate-900" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
         </svg>
       </div>
-      <h1 class="text-3xl sm:text-4xl font-heading font-semibold text-slate-900 tracking-tight mb-3">
-        ¡Tu viaje ya está protegido!
-      </h1>
+      <h1 class="ds-heading-1">¡Tu viaje ya está protegido!</h1>
       <p class="text-base sm:text-lg font-medium text-slate-700 max-w-md mx-auto leading-relaxed">
         Hemos enviado los documentos de tu asistencia a tu correo electrónico.
       </p>
-      <p class="text-xs text-slate-400 mt-2 max-w-md mx-auto">
+      <p class="text-xs text-slate-400 max-w-md mx-auto">
         Revisa tu bandeja de entrada y la carpeta de promociones. Si no los encuentras, contáctanos desde la sección de ayuda.
       </p>
     </div>
 
-    <div class="border border-slate-200 rounded-2xl overflow-hidden">
+    <div class="w-full border border-slate-200 rounded-xl overflow-hidden">
 
-      <div class="px-6 py-6 border-b border-slate-100 flex items-center justify-between gap-3">
+      <div class="px-5 py-5 border-b border-slate-100 flex items-center justify-between gap-3">
         <div class="min-w-0 flex-1">
           <p class="text-[11px] font-medium text-slate-400 tracking-wide mb-2">Código de asistencia</p>
           <p class="font-mono text-xl sm:text-2xl font-bold text-slate-900 tracking-wider truncate">
@@ -86,10 +84,10 @@ function travelerCount() {
         <button
           type="button"
           @click="copyVoucher"
-          class="shrink-0 inline-flex items-center gap-1.5 px-3 py-2 text-xs font-semibold border rounded-lg transition-colors focus:outline-none focus-visible:ring-2"
+          class="shrink-0 inline-flex items-center gap-1.5 px-3 py-2 text-xs font-semibold border rounded-full transition-colors focus:outline-none focus-visible:ring-2"
           :class="copyError
             ? 'text-red-600 border-red-200 hover:bg-red-50 focus-visible:ring-red-300'
-            : 'text-slate-600 hover:text-slate-900 border-slate-200 hover:border-slate-300 focus-visible:ring-slate-300'"
+            : 'text-slate-700 hover:text-slate-900 border-slate-200 hover:border-slate-300 focus-visible:ring-[color:var(--ds-focus)]'"
           :aria-label="copyError ? 'No se pudo copiar. Cópialo manualmente.' : (copied ? 'Código copiado al portapapeles' : 'Copiar código de asistencia')"
         >
           <svg v-if="copyError" class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
@@ -98,7 +96,7 @@ function travelerCount() {
           <svg v-else-if="!copied" class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
           </svg>
-          <svg v-else class="w-3.5 h-3.5 text-secondary-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+          <svg v-else class="w-3.5 h-3.5 text-slate-900" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" />
           </svg>
           <span>{{ copyError ? 'Cópialo manualmente' : (copied ? 'Copiado' : 'Copiar') }}</span>
@@ -107,7 +105,7 @@ function travelerCount() {
 
       <div class="grid grid-cols-1 sm:grid-cols-2 divide-y sm:divide-y-0 sm:divide-x divide-slate-100">
 
-        <div class="px-6 py-6">
+        <div class="px-5 py-5 text-left">
           <p class="text-[11px] font-medium text-slate-400 tracking-wide mb-2">Ruta</p>
           <p class="text-sm font-semibold text-slate-900 leading-snug">
             {{ formatOrigin(formData?.origin) }}
@@ -118,7 +116,7 @@ function travelerCount() {
           </p>
         </div>
 
-        <div class="px-6 py-6 space-y-5">
+        <div class="px-5 py-5 space-y-5 text-left">
           <div>
             <p class="text-[11px] font-medium text-slate-400 tracking-wide mb-2">Fechas</p>
             <p class="text-sm font-semibold text-slate-900">
@@ -135,22 +133,22 @@ function travelerCount() {
         </div>
       </div>
 
-      <div class="px-6 py-6 border-t border-slate-100 flex items-center justify-between gap-3">
-        <div class="min-w-0">
+      <div class="px-5 py-5 border-t border-slate-100 flex items-center justify-between gap-3">
+        <div class="min-w-0 text-left">
           <p class="text-[11px] font-medium text-slate-400 tracking-wide mb-2">Plan</p>
           <p class="text-sm font-semibold text-slate-900 capitalize truncate">
             {{ selectedPlan?.name || 'Asistencia' }}
           </p>
         </div>
-        <span class="inline-flex items-center gap-1.5 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-cyan-700 bg-cyan-50 border border-cyan-100 rounded-full shrink-0">
-          <span class="w-1.5 h-1.5 rounded-full bg-cyan-500"></span>
+        <span class="inline-flex items-center gap-1.5 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-slate-900 bg-slate-100 border border-slate-200 rounded-full shrink-0">
+          <span class="w-1.5 h-1.5 rounded-full bg-slate-900"></span>
           Activo
         </span>
       </div>
 
-      <div class="px-6 py-5 border-t border-slate-100 bg-slate-50/50">
+      <div class="px-5 py-4 border-t border-slate-100 bg-slate-50/50">
         <details class="group">
-          <summary class="flex items-center justify-between gap-2 cursor-pointer list-none focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-300 rounded">
+          <summary class="flex items-center justify-between gap-2 cursor-pointer list-none focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--ds-focus)] rounded">
             <span class="text-[11px] font-medium text-slate-400 tracking-wide">Detalle de la compra</span>
             <svg class="w-4 h-4 text-slate-400 transition-transform group-open:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
@@ -178,7 +176,7 @@ function travelerCount() {
       </div>
     </div>
 
-    <div class="mt-12 flex flex-col items-center gap-4">
+    <div class="w-full flex flex-col items-center gap-4 pt-2">
       <div class="flex items-center gap-2 text-xs text-slate-400">
         <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
@@ -189,7 +187,7 @@ function travelerCount() {
       <button
         type="button"
         @click="$emit('restart-flow')"
-        class="inline-flex items-center justify-center gap-2 px-8 py-3.5 text-sm font-bold text-slate-900 bg-yellow-400 hover:bg-yellow-500 active:scale-[0.99] rounded-xl transition-all shadow-sm hover:shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-yellow-500 focus-visible:ring-offset-2"
+        class="ds-cta max-w-sm"
       >
         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />

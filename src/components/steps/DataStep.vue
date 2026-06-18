@@ -233,18 +233,23 @@ watch(travelers_data, () => {
 </script>
 
 <template>
-  <div class="space-y-5">
-    <div class="bg-gradient-to-r from-cyan-50 to-blue-50 rounded-xl p-4 border border-cyan-100">
-      <p class="text-xs text-cyan-700 flex items-center gap-2">
-        <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+  <div class="ds-focus-column space-y-8">
+    <div class="space-y-2">
+      <span class="ds-eyebrow">Tus datos de contacto</span>
+      <h1 class="ds-heading-1">Cuéntanos de ti</h1>
+    </div>
+
+    <div class="w-full bg-slate-50 border border-slate-100 rounded-xl p-4 text-left">
+      <p class="text-xs text-slate-700 flex items-start gap-2">
+        <svg class="w-4 h-4 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
         </svg>
         Tus datos están seguros. Solo los usaremos para emitir tu asistencia.
       </p>
     </div>
 
-    <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-      <div class="px-6 py-4 border-b border-slate-100">
+    <div class="w-full bg-white border border-slate-200 rounded-xl overflow-hidden">
+      <div class="px-5 py-4 border-b border-slate-100">
         <SubStepIndicator :current-sub-step="activeTab + 1" :steps="tabs" />
       </div>
 
@@ -607,11 +612,11 @@ watch(travelers_data, () => {
     <button type="button"
       @click="handleNext"
       :disabled="activeTab === 0 ? !tab0Valid : !canSubmit"
-      class="w-full sm:w-auto min-w-[250px] px-8 py-3.5 bg-yellow-400 text-slate-900 font-extrabold rounded-xl hover:bg-yellow-500 transition-all shadow-sm mx-auto block disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+      class="ds-cta"
     >
       <span>{{ activeTab === 0 ? 'Siguiente' : 'Ver coberturas opcionales' }}</span>
-      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6" />
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3" />
       </svg>
     </button>
 

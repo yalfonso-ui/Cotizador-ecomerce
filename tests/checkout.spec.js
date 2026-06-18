@@ -10,6 +10,7 @@ test.describe('Flujo Completo de Compra - Continental Assist', () => {
       try {
         localStorage.removeItem('wizard_state');
         localStorage.removeItem('lemonade_tour_seen');
+        localStorage.setItem('lemonade_tour_seen', '1');
       } catch (e) {
         // localStorage may be disabled
       }
@@ -18,6 +19,13 @@ test.describe('Flujo Completo de Compra - Continental Assist', () => {
   });
 
   test('Debería completar exitosamente los 8 pasos del checkout', async ({ page }) => {
+
+    // Salir de la landing
+    const comenzar = page.getByRole('button', { name: /Comenzar ahora/i })
+    if (await comenzar.count() > 0) {
+      await comenzar.click()
+      await page.waitForTimeout(1500)
+    }
 
     // =================================================================
     // PASO 1: País de origen
@@ -34,35 +42,50 @@ test.describe('Flujo Completo de Compra - Continental Assist', () => {
     await test.step('Paso 2: Seleccionar destinos', async () => {
       await expect(page.getByText('¿A dónde viajas?')).toBeVisible();
 
-      const inputDestino = page.getByPlaceholder('Escribe un país o región...');
+      // Nuevo selector: data-testid
+      await page.locator('[data-testid="destination-trigger"]').click();
+      await page.getByRole('button', { name: /España/ }).first().click();
+      await page.getByRole('button', { name: /Hecho/ }).click();
 
-      await inputDestino.fill('España');
-      await page.getByRole('button', { name: 'España' }).click();
+      // Reabrir y buscar Alemania en el catálogo (no está en populares)
+      await page.locator('[data-testid="destination-trigger"]').click();
+      await page.locator('input[placeholder="Busca un país o región"]').fill('alem');
+      await page.getByRole('button', { name: /Alemania/ }).first().click();
+      await page.getByRole('button', { name: /Hecho/ }).click();
 
-      await inputDestino.fill('Alemania');
-      await page.getByRole('button', { name: 'Alemania' }).click();
-
-      await page.getByRole('button', { name: /Continuar \(\d+ destinos\)/ }).click();
+      await page.getByRole('button', { name: /Continuar/i }).click();
     });
 
     // =================================================================
     // PASO 3: Calendario
     // =================================================================
     await test.step('Paso 3: Seleccionar rango de fechas del viaje', async () => {
-      await expect(page.getByText('¿Cuándo es tu aventura?')).toBeVisible();
+      await expect(page.getByText('¿Cuándo viajas?')).toBeVisible();
 
-      // Selector estable de PrimeVue 4: <td class="p-datepicker-day">
-      await page.locator('.p-datepicker-day:not(.p-disabled)').filter({ hasText: /^20$/ }).first().click();
-      await page.locator('.p-datepicker-day:not(.p-disabled)').filter({ hasText: /^27$/ }).first().click();
+      await page.locator('[data-testid="date-from-trigger"]').click();
+      const dayButtons = page.locator('.absolute.z-30 div.grid.grid-cols-7 button:not([disabled])');
+      const totalDays = await dayButtons.count();
+      expect(totalDays).toBeGreaterThan(5);
 
-      await page.getByRole('button', { name: 'Continuar' }).click();
+      const startDay = dayButtons.nth(2);
+      const endDay = dayButtons.nth(6);
+
+      await startDay.click();
+      await page.waitForTimeout(300);
+      await endDay.click();
+      await page.waitForTimeout(300);
+
+      await expect(page.getByText(/Salida/)).toBeVisible();
+      await expect(page.getByText(/Regreso/)).toBeVisible();
+
+      await page.getByRole('button', { name: /Continuar/i }).click();
     });
 
     // =================================================================
     // PASO 4: Fecha de nacimiento (input unificado)
     // =================================================================
     await test.step('Paso 4: Ingresar fecha de nacimiento única', async () => {
-      await expect(page.getByText('Datos de los viajeros')).toBeVisible();
+      await expect(page.getByText('¿Quiénes viajan?')).toBeVisible();
 
       const inputFechaNacimiento = page.getByPlaceholder('DD/MM/AAAA');
       await inputFechaNacimiento.fill('02/05/1980');
@@ -74,7 +97,7 @@ test.describe('Flujo Completo de Compra - Continental Assist', () => {
     // PASO 5: Plan
     // =================================================================
     await test.step('Paso 5: Seleccionar plan de protección', async () => {
-      await expect(page.getByText('Elige tu plan de protección')).toBeVisible();
+      await expect(page.getByText('¿Qué plan necesitas?')).toBeVisible();
 
       // Selector estable: la card de plan es un <article> con el nombre del plan
       const cardEssential = page.locator('article').filter({ hasText: 'Essential' }).first();
@@ -115,6 +138,7 @@ test.describe('Flujo Completo de Compra - Continental Assist', () => {
     // =================================================================
     await test.step('Paso 7: Seleccionar 2 upgrades y validar total en paso 8', async () => {
       await expect(page.getByText('Mejora tu cobertura')).toBeVisible();
+      await expect(page.getByText('Coberturas opcionales')).toBeVisible();
 
       // Constantes de precios declaradas en src/data/upgrades.js
       // Plan seleccionado en paso 5: Essential = $25.00
@@ -150,9 +174,7 @@ test.describe('Flujo Completo de Compra - Continental Assist', () => {
       // =================================================================
       // PASO 8: Validación del total dinámico en el botón de pago
       // =================================================================
-      await expect(page.getByText('Revisa y paga')).toBeVisible();
-
-      // Esperar a que el botón de pago sea visible
+      // Esperar a que el botón de pago sea visible (indica que estamos en Checkout)
       const botonPago = page.locator('button[type="submit"]').filter({ hasText: /Pagar \$/ });
       await expect(botonPago).toBeVisible();
 
@@ -249,9 +271,8 @@ test.describe('Flujo Completo de Compra - Continental Assist', () => {
     });
     await page.reload();
 
-    await expect(page.getByText('Revisa y paga')).toBeVisible();
-
     const botonPago = page.locator('button[type="submit"]').filter({ hasText: /Pagar \$/ });
+    await expect(botonPago).toBeVisible();
     const botonText = await botonPago.textContent();
     const match = botonText.match(/\$(\d+\.\d{2})/);
     expect(match).not.toBeNull();
