@@ -68,6 +68,22 @@ function isInRangeOrHovered(d) {
   return isBetween(d, a, b)
 }
 
+function isRangeStart(d) {
+  if (!startDate.value) return false
+  const end = endDate.value || hoveredDate.value
+  if (!end) return false
+  const a = isBefore(startDate.value, end) ? startDate.value : end
+  return sameDay(d, a)
+}
+
+function isRangeEnd(d) {
+  if (!startDate.value) return false
+  const end = endDate.value || hoveredDate.value
+  if (!end) return false
+  const b = isBefore(startDate.value, end) ? end : startDate.value
+  return sameDay(d, b)
+}
+
 function buildCalendar(month, year) {
   const firstDay = new Date(year, month, 1)
   const lastDay = new Date(year, month + 1, 0)
@@ -114,6 +130,13 @@ const secondMonthLabel = computed(() => {
 })
 
 const firstMonthLabel = computed(() => `${MONTHS_ES[currentMonth.value]} ${currentYear.value}`)
+
+const isMobile = ref(false)
+let mql = null
+
+function updateMobile(e) {
+  isMobile.value = e.matches
+}
 
 function prevMonths() {
   if (currentMonth.value === 0) {
@@ -178,7 +201,7 @@ function onDayLeave() {
 function finalize() {
   emit('update:modelValue', [startDate.value, endDate.value])
   emit('change', { start: startDate.value, end: endDate.value })
-  setTimeout(() => { isOpen.value = false }, 200)
+  setTimeout(() => { isOpen.value = false }, 250)
 }
 
 function close() {
@@ -207,26 +230,49 @@ const tripDays = computed(() => {
   return Math.round(diff / (1000 * 60 * 60 * 24)) + 1
 })
 
-function dayClass(day) {
-  const notCurrentMonth = !day.isCurrentMonth
-  const isStart = sameDay(day.date, startDate.value)
-  const isEnd = sameDay(day.date, endDate.value)
-  const inRange = !isStart && !isEnd && isInRangeOrHovered(day.date)
-  const isPlain = day.isCurrentMonth && !isInRangeOrHovered(day.date) && !isStart && !isEnd
+const previewDays = computed(() => {
+  if (!startDate.value || !hoveredDate.value) return 0
+  const diff = hoveredDate.value.getTime() - startDate.value.getTime()
+  return Math.round(diff / (1000 * 60 * 60 * 24)) + 1
+})
 
-  if (isStart || isEnd) {
-    return 'bg-blue-600 text-white hover:bg-blue-700'
+const hasActiveRange = computed(() => {
+  if (endDate.value) return true
+  if (startDate.value && hoveredDate.value) return true
+  return false
+})
+
+const displayDays = computed(() => {
+  if (tripDays.value > 0) return tripDays.value
+  return previewDays.value
+})
+
+function dayClass(day) {
+  if (!day.isCurrentMonth) {
+    return 'text-slate-300 rounded-full'
+  }
+
+  if (isDisabled(day.date)) {
+    return 'text-slate-300 cursor-not-allowed rounded-full'
+  }
+
+  const isStart = isRangeStart(day.date)
+  const isEnd = isRangeEnd(day.date)
+  const inRange = isInRangeOrHovered(day.date) && !isStart && !isEnd
+
+  if (isStart && isEnd) {
+    return 'bg-blue-600 text-white font-semibold rounded-full hover:bg-blue-700'
+  }
+  if (isStart) {
+    return 'bg-blue-600 text-white font-semibold rounded-l-full hover:bg-blue-700'
+  }
+  if (isEnd) {
+    return 'bg-blue-600 text-white font-semibold rounded-r-full hover:bg-blue-700'
   }
   if (inRange) {
-    return 'bg-blue-50 text-blue-950'
+    return 'bg-blue-100 text-blue-950 rounded-none'
   }
-  if (notCurrentMonth) {
-    return 'text-slate-300'
-  }
-  if (isPlain) {
-    return 'text-slate-700 hover:bg-slate-100'
-  }
-  return 'text-slate-700'
+  return 'text-slate-700 hover:bg-slate-100 rounded-full'
 }
 
 function onContainerClick(e) {
@@ -236,10 +282,20 @@ function onContainerClick(e) {
 }
 
 onMounted(() => {
+  if (typeof window !== 'undefined' && window.matchMedia) {
+    mql = window.matchMedia('(max-width: 767px)')
+    isMobile.value = mql.matches
+    if (mql.addEventListener) mql.addEventListener('change', updateMobile)
+    else mql.addListener(updateMobile)
+  }
   document.addEventListener('mousedown', onContainerClick)
 })
 
 onBeforeUnmount(() => {
+  if (mql) {
+    if (mql.removeEventListener) mql.removeEventListener('change', updateMobile)
+    else mql.removeListener(updateMobile)
+  }
   document.removeEventListener('mousedown', onContainerClick)
 })
 
@@ -267,12 +323,18 @@ initFromModel()
         data-testid="date-from-trigger"
         @click="isOpen = !isOpen"
         :aria-expanded="isOpen"
-        class="flex flex-col items-start px-4 py-3 bg-white border border-slate-200 rounded-xl text-left transition-colors duration-200 hover:border-slate-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/20 focus:border-blue-500"
-        :class="startDate ? 'border-blue-500 ring-2 ring-blue-500/10' : ''"
+        class="flex flex-col items-start px-4 py-3 bg-white border border-slate-200 rounded-xl text-left transition-colors duration-200 hover:border-slate-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/20"
+        :class="[
+          startDate ? 'border-blue-500' : 'border-slate-200',
+          !startDate && isOpen ? 'border-blue-500 ring-2 ring-blue-500/10' : ''
+        ]"
       >
-        <span class="text-xs font-medium text-slate-400 mb-1">Desde</span>
-        <span class="text-base font-semibold text-slate-800">
-          {{ formatDisplay(startDate) }}
+        <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Salida</span>
+        <span
+          class="text-base font-semibold"
+          :class="startDate ? 'text-slate-900' : 'text-slate-400'"
+        >
+          {{ startDate ? formatDisplay(startDate) : '—' }}
         </span>
       </button>
 
@@ -282,12 +344,18 @@ initFromModel()
         @click="isOpen = !isOpen"
         :aria-expanded="isOpen"
         :disabled="!startDate"
-        class="flex flex-col items-start px-4 py-3 bg-white border border-slate-200 rounded-xl text-left transition-colors duration-200 hover:border-slate-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/20 focus:border-blue-500 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:border-slate-200"
-        :class="endDate ? 'border-blue-500 ring-2 ring-blue-500/10' : ''"
+        class="flex flex-col items-start px-4 py-3 bg-white border border-slate-200 rounded-xl text-left transition-colors duration-200 hover:border-slate-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/20 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:border-slate-200"
+        :class="[
+          endDate ? 'border-blue-500' : 'border-slate-200',
+          !endDate && startDate && isOpen ? 'border-blue-500 ring-2 ring-blue-500/10' : ''
+        ]"
       >
-        <span class="text-xs font-medium text-slate-400 mb-1">Hasta</span>
-        <span class="text-base font-semibold text-slate-800">
-          {{ formatDisplay(endDate) }}
+        <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Regreso</span>
+        <span
+          class="text-base font-semibold"
+          :class="endDate ? 'text-slate-900' : 'text-slate-400'"
+        >
+          {{ endDate ? formatDisplay(endDate) : (startDate && isOpen && hoveredDate ? formatDisplay(hoveredDate) : '—') }}
         </span>
       </button>
     </div>
@@ -295,7 +363,7 @@ initFromModel()
     <Transition name="calendar-fade">
       <div
         v-if="isOpen"
-        class="absolute left-0 right-0 top-full mt-2 z-30 bg-white border border-slate-200 rounded-2xl shadow-xl overflow-hidden"
+        class="absolute left-1/2 -translate-x-1/2 top-full mt-2 z-30 w-[680px] max-w-[calc(100vw-2rem)] bg-white border border-slate-200 rounded-2xl shadow-xl overflow-hidden"
       >
         <div class="flex items-center justify-between px-5 py-4 border-b border-slate-100">
           <button
@@ -311,8 +379,8 @@ initFromModel()
 
           <div class="flex items-center gap-2">
             <span class="text-sm font-semibold text-slate-900">{{ firstMonthLabel }}</span>
-            <span class="text-sm text-slate-400">—</span>
-            <span class="text-sm font-semibold text-slate-900">{{ secondMonthLabel }}</span>
+            <span v-if="!isMobile" class="text-sm text-slate-400">—</span>
+            <span v-if="!isMobile" class="text-sm font-semibold text-slate-900">{{ secondMonthLabel }}</span>
           </div>
 
           <button
@@ -327,8 +395,8 @@ initFromModel()
           </button>
         </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 p-5">
-          <div class="space-y-3">
+        <div class="grid grid-cols-1 md:grid-cols-[1fr_1fr_auto] gap-6 p-5">
+          <div class="space-y-3 min-w-0">
             <div class="grid grid-cols-7 gap-1">
               <span
                 v-for="(day, idx) in WEEKDAYS"
@@ -339,7 +407,10 @@ initFromModel()
               </span>
             </div>
 
-            <div class="grid grid-cols-7 gap-1">
+            <div
+              class="grid grid-cols-7"
+              :class="hasActiveRange ? 'gap-0' : 'gap-1'"
+            >
               <button
                 v-for="(day, idx) in firstMonthDays"
                 :key="`m1-${idx}`"
@@ -347,16 +418,16 @@ initFromModel()
                 @click="onDayClick(day.date)"
                 @mouseenter="onDayHover(day.date)"
                 @mouseleave="onDayLeave"
-                :disabled="isDisabled(day.date)"
-                class="relative h-10 flex items-center justify-center text-sm font-medium rounded-full transition-colors duration-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/30 disabled:opacity-30 disabled:cursor-not-allowed"
+                :disabled="isDisabled(day.date) || !day.isCurrentMonth"
+                class="relative h-10 w-full flex items-center justify-center text-sm transition-colors duration-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/30 disabled:cursor-not-allowed"
                 :class="dayClass(day)"
               >
-                {{ day.date.getDate() }}
+                <span class="relative z-10">{{ day.date.getDate() }}</span>
               </button>
             </div>
           </div>
 
-          <div class="space-y-3">
+          <div v-if="!isMobile" class="space-y-3 min-w-0">
             <div class="grid grid-cols-7 gap-1">
               <span
                 v-for="(day, idx) in WEEKDAYS"
@@ -367,7 +438,10 @@ initFromModel()
               </span>
             </div>
 
-            <div class="grid grid-cols-7 gap-1">
+            <div
+              class="grid grid-cols-7"
+              :class="hasActiveRange ? 'gap-0' : 'gap-1'"
+            >
               <button
                 v-for="(day, idx) in secondMonthDays"
                 :key="`m2-${idx}`"
@@ -375,27 +449,53 @@ initFromModel()
                 @click="onDayClick(day.date)"
                 @mouseenter="onDayHover(day.date)"
                 @mouseleave="onDayLeave"
-                :disabled="isDisabled(day.date)"
-                class="relative h-10 flex items-center justify-center text-sm font-medium rounded-full transition-colors duration-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/30 disabled:opacity-30 disabled:cursor-not-allowed"
+                :disabled="isDisabled(day.date) || !day.isCurrentMonth"
+                class="relative h-10 w-full flex items-center justify-center text-sm transition-colors duration-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/30 disabled:cursor-not-allowed"
                 :class="dayClass(day)"
               >
-                {{ day.date.getDate() }}
+                <span class="relative z-10">{{ day.date.getDate() }}</span>
               </button>
+            </div>
+          </div>
+
+          <div
+            v-if="!isMobile"
+            class="flex flex-col items-start justify-center pl-5 border-l border-slate-100 min-w-[140px]"
+          >
+            <div
+              class="text-xs font-semibold text-slate-400 uppercase tracking-wider"
+              :class="displayDays > 0 ? 'text-blue-600' : 'text-slate-400'"
+            >
+              Duración
+            </div>
+            <div class="mt-1 flex items-baseline gap-1">
+              <span
+                class="text-3xl font-black tabular-nums"
+                :class="displayDays > 0 ? 'text-slate-900' : 'text-slate-300'"
+              >
+                {{ displayDays > 0 ? displayDays : '—' }}
+              </span>
+              <span class="text-sm font-medium text-slate-500">
+                {{ displayDays === 1 ? 'día' : 'días' }}
+              </span>
+            </div>
+            <div v-if="displayDays > 0" class="mt-2 text-[11px] text-slate-400 leading-snug">
+              {{ startDate && (endDate || hoveredDate) ? 'Selecciona otro día para ajustar' : 'Toca un día para empezar' }}
             </div>
           </div>
         </div>
 
         <div
-          v-if="startDate && endDate"
-          class="flex items-center justify-between gap-3 px-5 py-4 border-t border-slate-100 bg-slate-50/50"
+          v-if="startDate"
+          class="flex items-center justify-between gap-3 px-5 py-3 border-t border-slate-100 bg-slate-50/50"
         >
-          <div class="flex items-center gap-2 text-sm text-slate-600">
-            <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+          <div class="flex items-center gap-2 text-xs text-slate-500">
+            <svg class="w-3.5 h-3.5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
-            <span>{{ tripDays }} {{ tripDays === 1 ? 'día' : 'días' }} seleccionados</span>
+            <span>{{ tripDays > 0 ? 'Rango completo' : 'Selecciona el día de regreso' }}</span>
           </div>
-          <div class="flex items-center gap-2">
+          <div class="flex items-center gap-3">
             <button
               type="button"
               @click="clearSelection"
@@ -408,7 +508,7 @@ initFromModel()
               @click="close"
               class="text-xs font-semibold text-blue-600 hover:text-blue-700 transition-colors focus:outline-none focus-visible:underline"
             >
-              Cerrar
+              Listo
             </button>
           </div>
         </div>

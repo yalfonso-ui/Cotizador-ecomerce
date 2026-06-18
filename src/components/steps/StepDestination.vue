@@ -249,8 +249,11 @@ watch(
             <button
               type="button"
               @click="handleDone"
-              class="ml-auto px-4 py-1.5 text-sm font-semibold text-slate-700 bg-white border border-slate-200 rounded-full hover:bg-slate-50 hover:border-slate-300 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--ds-focus)]"
+              class="ml-auto px-5 py-2 text-sm font-bold tracking-wide text-white bg-[#00184C] hover:bg-[#002a6e] active:scale-[0.97] active:bg-[#000f33] border border-[#00184C] rounded-full shadow-sm hover:shadow-md transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#00184C] focus-visible:ring-offset-2 flex items-center gap-1.5"
             >
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7" />
+              </svg>
               Hecho
             </button>
           </div>

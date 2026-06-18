@@ -34,30 +34,42 @@ const getTravelerCount = () => resolveCount(props.travelers, props.travelersCoun
 
 const initTravelers = () => {
   const count = getTravelerCount()
-  const existing = travelers_data.value
   const preloaded = props.preloadedBirthdates || []
   const next = []
   for (let i = 0; i < count; i++) {
-    if (existing[i]) {
-      next.push(existing[i])
-    } else {
-      const b = preloaded[i] || {}
-      next.push({
-        id: i + 1,
-        name: '',
-        idNumber: '',
-        email: '',
-        phone: '',
-        day: b.day || '',
-        month: b.month || '',
-        year: b.year || ''
-      })
-    }
+    const b = preloaded[i] || {}
+    next.push({
+      id: i + 1,
+      name: '',
+      idNumber: '',
+      email: '',
+      phone: '',
+      day: b.day || '',
+      month: b.month || '',
+      year: b.year || ''
+    })
   }
   travelers_data.value = next
 }
 
+const resetFormState = () => {
+  travelers_data.value = []
+  emergencyName.value = ''
+  emergencyPhone.value = ''
+  emergencyEmail.value = ''
+  privacyAccepted.value = false
+  touched.value = {}
+  activeTab.value = 0
+  expandedTraveler.value = 1
+}
+
+const FORM_STORAGE_KEY = 'data_step_form_state'
+
 onMounted(() => {
+  try {
+    localStorage.removeItem(FORM_STORAGE_KEY)
+  } catch (e) { /* noop */ }
+  resetFormState()
   initTravelers()
 })
 
@@ -233,7 +245,7 @@ watch(travelers_data, () => {
 </script>
 
 <template>
-  <div class="ds-focus-column space-y-8">
+  <div class="ds-focus-column max-w-5xl mx-auto space-y-8 w-full">
     <div class="space-y-2">
       <span class="ds-eyebrow">Tus datos de contacto</span>
       <h1 class="ds-heading-1">Cuéntanos de ti</h1>
@@ -346,8 +358,8 @@ watch(travelers_data, () => {
                   :id="`traveler-panel-${traveler.id}`"
                   class="px-4 pb-4 pt-2 space-y-3 border-t border-slate-100"
                 >
-                  <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
-                    <div class="sm:col-span-2">
+                  <div class="grid grid-cols-1 md:grid-cols-2 gap-6 pt-2">
+                    <div>
                       <label :for="`name-${traveler.id}`" class="text-xs font-bold text-slate-500 uppercase tracking-wide mb-1.5 block">
                         Nombre completo <span class="text-red-500">*</span>
                       </label>
@@ -358,7 +370,7 @@ watch(travelers_data, () => {
                           type="text"
                           placeholder="María García"
                           @blur="touchField(traveler.id, 'name')"
-                          class="w-full h-11 px-3.5 bg-slate-50 border rounded-xl text-slate-700 placeholder:text-slate-300 transition-all duration-200 focus:bg-white focus:border-cyan-400 focus:ring-4 focus:ring-cyan-50 outline-none pr-9 text-sm"
+                          class="w-full h-12 px-4 bg-slate-50 border rounded-xl text-slate-700 placeholder:text-slate-300 transition-all duration-200 focus:bg-white focus:border-cyan-400 focus:ring-4 focus:ring-cyan-50 outline-none pr-9 text-sm"
                           :class="[isFieldTouched(traveler.id, 'name') && isFieldValid(traveler, 'name') ? 'border-green-300 bg-green-50/30' : 'border-slate-200', isFieldTouched(traveler.id, 'name') && !isFieldValid(traveler, 'name') ? 'border-red-300 ring-4 ring-red-50' : '']"
                         />
                         <div v-if="isFieldTouched(traveler.id, 'name') && isFieldValid(traveler, 'name')" class="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
@@ -383,7 +395,7 @@ watch(travelers_data, () => {
                           type="text"
                           placeholder="12345678 o AB123456"
                           maxlength="20"
-                          class="w-full h-11 px-3.5 bg-slate-50 border rounded-xl text-slate-700 placeholder:text-slate-300 transition-all duration-200 focus:bg-white focus:border-cyan-400 focus:ring-4 focus:ring-cyan-50 outline-none pr-9 text-sm uppercase"
+                          class="w-full h-12 px-4 bg-slate-50 border rounded-xl text-slate-700 placeholder:text-slate-300 transition-all duration-200 focus:bg-white focus:border-cyan-400 focus:ring-4 focus:ring-cyan-50 outline-none pr-9 text-sm uppercase"
                           :class="[isFieldTouched(traveler.id, 'idNumber') && isFieldValid(traveler, 'idNumber') ? 'border-green-300 bg-green-50/30' : 'border-slate-200', isFieldTouched(traveler.id, 'idNumber') && !isFieldValid(traveler, 'idNumber') ? 'border-red-300 ring-4 ring-red-50' : '']"
                         />
                         <div v-if="isFieldTouched(traveler.id, 'idNumber') && isFieldValid(traveler, 'idNumber')" class="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
@@ -406,7 +418,7 @@ watch(travelers_data, () => {
                           type="email"
                           placeholder="maria@email.com"
                           @blur="touchField(traveler.id, 'email')"
-                          class="w-full h-11 px-3.5 bg-slate-50 border rounded-xl text-slate-700 placeholder:text-slate-300 transition-all duration-200 focus:bg-white focus:border-cyan-400 focus:ring-4 focus:ring-cyan-50 outline-none pr-9 text-sm"
+                          class="w-full h-12 px-4 bg-slate-50 border rounded-xl text-slate-700 placeholder:text-slate-300 transition-all duration-200 focus:bg-white focus:border-cyan-400 focus:ring-4 focus:ring-cyan-50 outline-none pr-9 text-sm"
                           :class="[isFieldTouched(traveler.id, 'email') && isFieldValid(traveler, 'email') ? 'border-green-300 bg-green-50/30' : 'border-slate-200', isFieldTouched(traveler.id, 'email') && !isFieldValid(traveler, 'email') ? 'border-red-300 ring-4 ring-red-50' : '']"
                         />
                         <div v-if="isFieldTouched(traveler.id, 'email') && isFieldValid(traveler, 'email')" class="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
@@ -429,7 +441,7 @@ watch(travelers_data, () => {
                           type="tel"
                           placeholder="+52 55 1234 5678"
                           @blur="touchField(traveler.id, 'phone')"
-                          class="w-full h-11 px-3.5 bg-slate-50 border rounded-xl text-slate-700 placeholder:text-slate-300 transition-all duration-200 focus:bg-white focus:border-cyan-400 focus:ring-4 focus:ring-cyan-50 outline-none pr-9 text-sm"
+                          class="w-full h-12 px-4 bg-slate-50 border rounded-xl text-slate-700 placeholder:text-slate-300 transition-all duration-200 focus:bg-white focus:border-cyan-400 focus:ring-4 focus:ring-cyan-50 outline-none pr-9 text-sm"
                           :class="[isFieldTouched(traveler.id, 'phone') && isFieldValid(traveler, 'phone') ? 'border-green-300 bg-green-50/30' : 'border-slate-200', isFieldTouched(traveler.id, 'phone') && !isFieldValid(traveler, 'phone') ? 'border-red-300 ring-4 ring-red-50' : '']"
                         />
                         <div v-if="isFieldTouched(traveler.id, 'phone') && isFieldValid(traveler, 'phone')" class="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
@@ -447,7 +459,7 @@ watch(travelers_data, () => {
                       </label>
                       <div class="relative">
                         <div
-                          class="group w-full h-11 px-3.5 bg-white border border-slate-200 rounded-xl text-slate-400 flex items-center gap-2 text-sm cursor-default transition-colors hover:border-slate-300"
+                          class="group w-full h-12 px-4 bg-white border border-slate-200 rounded-xl text-slate-400 flex items-center gap-2 text-sm cursor-default transition-colors hover:border-slate-300"
                           aria-readonly="true"
                         >
                           <svg
@@ -527,7 +539,7 @@ watch(travelers_data, () => {
                     type="text"
                     placeholder="Juan García"
                     @blur="emergencyNameTouched = true"
-                    class="w-full h-11 px-3.5 bg-slate-50 border rounded-xl text-slate-700 placeholder:text-slate-300 transition-all duration-200 focus:bg-white focus:border-cyan-400 focus:ring-4 focus:ring-cyan-50 outline-none pr-9 text-sm"
+                    class="w-full h-12 px-4 bg-slate-50 border rounded-xl text-slate-700 placeholder:text-slate-300 transition-all duration-200 focus:bg-white focus:border-cyan-400 focus:ring-4 focus:ring-cyan-50 outline-none pr-9 text-sm"
                     :class="[emergencyNameTouched && emergencyNameValid ? 'border-green-300 bg-green-50/30' : 'border-slate-200', emergencyNameTouched && !emergencyNameValid ? 'border-red-300 ring-4 ring-red-50' : '']"
                   />
                   <div v-if="emergencyNameTouched && emergencyNameValid" class="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
@@ -548,7 +560,7 @@ watch(travelers_data, () => {
                     type="tel"
                     placeholder="+52 55 9876 5432"
                     @blur="emergencyPhoneTouched = true"
-                    class="w-full h-11 px-3.5 bg-slate-50 border rounded-xl text-slate-700 placeholder:text-slate-300 transition-all duration-200 focus:bg-white focus:border-cyan-400 focus:ring-4 focus:ring-cyan-50 outline-none pr-9 text-sm"
+                    class="w-full h-12 px-4 bg-slate-50 border rounded-xl text-slate-700 placeholder:text-slate-300 transition-all duration-200 focus:bg-white focus:border-cyan-400 focus:ring-4 focus:ring-cyan-50 outline-none pr-9 text-sm"
                     :class="[emergencyPhoneTouched && emergencyPhoneValid ? 'border-green-300 bg-green-50/30' : 'border-slate-200', emergencyPhoneTouched && !emergencyPhoneValid ? 'border-red-300 ring-4 ring-red-50' : '']"
                   />
                   <div v-if="emergencyPhoneTouched && emergencyPhoneValid" class="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
@@ -566,7 +578,7 @@ watch(travelers_data, () => {
                   v-model="emergencyEmail"
                   type="email"
                   placeholder="contacto@email.com"
-                  class="w-full h-11 px-3.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-700 placeholder:text-slate-300 transition-all focus:bg-white focus:border-cyan-400 focus:ring-4 focus:ring-cyan-50 outline-none text-sm"
+                  class="w-full h-12 px-4 bg-slate-50 border border-slate-200 rounded-xl text-slate-700 placeholder:text-slate-300 transition-all focus:bg-white focus:border-cyan-400 focus:ring-4 focus:ring-cyan-50 outline-none text-sm"
                 />
               </div>
             </div>

@@ -49,30 +49,18 @@ const upgrades = [
     description: 'Coberturas especiales para embarazadas hasta la semana 32.',
     coverage: 'USD 8.000',
     price: 22.00
-  },
-  {
-    id: 'equipaje-extra',
-    icon: '🧳',
-    iconBg: 'bg-amber-100',
-    title: 'Equipaje extra',
-    description: 'Incrementa el límite de indemnización por pérdida o daño.',
-    coverage: 'USD 2.500',
-    price: 9.80
-  },
-  {
-    id: 'cancelacion-flex',
-    icon: '🔄',
-    iconBg: 'bg-violet-100',
-    title: 'Cancelación flexible',
-    description: 'Cancela tu viaje hasta 48h antes sin penalización.',
-    coverage: 'Cobertura total',
-    price: 12.40
   }
 ]
 
 function isSelected(upgradeId) {
   return localSelected.value.includes(upgradeId)
 }
+
+const ALLOWED_UPGRADE_IDS = ['preexistencias', 'deportes', 'futura-mama']
+
+const visibleUpgrades = computed(() =>
+  upgrades.filter(u => ALLOWED_UPGRADE_IDS.includes(u.id))
+)
 
 const totalPrice = computed(() => {
   return localSelected.value.reduce((sum, id) => {
@@ -169,7 +157,7 @@ onUnmounted(() => {
 
           <div class="flex-1 overflow-y-auto p-5 md:p-6 space-y-3">
             <div
-              v-for="upgrade in upgrades"
+              v-for="upgrade in visibleUpgrades"
               :key="upgrade.id"
               class="relative bg-white border-2 rounded-2xl p-4 transition-all duration-200"
               :class="[

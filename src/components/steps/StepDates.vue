@@ -43,25 +43,18 @@ function handleContinue() {
       <h1 class="ds-heading-1">¿Cuándo viajas?</h1>
     </div>
 
-    <div v-if="isValid" class="w-full grid grid-cols-3 gap-4 py-4 border-y border-slate-100">
-      <div class="text-center">
-        <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Salida</p>
-        <p class="text-sm font-semibold text-slate-900">{{ formatDisplayDate(dateRange[0]) }}</p>
-      </div>
-      <div class="text-center border-x border-slate-200">
-        <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Duración</p>
-        <p class="text-2xl font-black text-slate-900">{{ tripDays }} días</p>
-      </div>
-      <div class="text-center">
-        <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Regreso</p>
-        <p class="text-sm font-semibold text-slate-900">{{ formatDisplayDate(dateRange[1]) }}</p>
-      </div>
-    </div>
-
     <DateRangePicker
       :modelValue="dateRange"
       @update:modelValue="onDateChange"
     />
+
+    <div v-if="isValid" class="flex items-center justify-center gap-2 py-3 px-4 bg-slate-50 border border-slate-100 rounded-xl">
+      <svg class="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+      </svg>
+      <span class="text-xs font-semibold text-slate-600 uppercase tracking-wider">Duración total</span>
+      <span class="text-base font-black text-slate-900">{{ tripDays }} días</span>
+    </div>
 
     <button
       type="button"
