@@ -67,14 +67,6 @@ const tripDuration = computed(() => {
 
 const summaryRows = computed(() => [
   {
-    label: 'Origen',
-    value: formatOrigin(props.formData?.origin)
-  },
-  {
-    label: 'Destino',
-    value: formatDestination(props.formData?.destination)
-  },
-  {
     label: 'Fechas',
     value: `${formatDateSafe(props.formData?.dates?.start)} → ${formatDateSafe(props.formData?.dates?.end)}`
   },
@@ -86,7 +78,7 @@ const summaryRows = computed(() => [
 </script>
 
 <template>
-  <div class="max-w-xl mx-auto px-6 py-6 sm:py-8">
+  <div class="max-w-xl mx-auto px-6 py-5 sm:py-6">
 
     <div class="text-center space-y-3 mb-4">
       <div class="inline-flex items-center justify-center">
@@ -113,7 +105,7 @@ const summaryRows = computed(() => [
       :durationDays="tripDuration"
     />
 
-    <div class="space-y-6 mt-6">
+    <div class="space-y-5 mt-5">
 
       <section>
         <div class="bg-slate-50 border border-slate-100 rounded-2xl p-4">
@@ -149,42 +141,21 @@ const summaryRows = computed(() => [
       </section>
 
       <section>
-        <dl class="divide-y divide-slate-100">
-          <div
-            v-for="row in summaryRows"
-            :key="row.label"
-            class="flex items-baseline justify-between gap-4 py-3"
-          >
-            <dt class="text-xs font-medium text-slate-400 uppercase tracking-[0.1em] shrink-0">
-              {{ row.label }}
-            </dt>
-            <dd class="text-sm font-medium text-slate-900 text-right truncate">
-              {{ row.value }}
-            </dd>
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 border-t border-b border-slate-100 py-4 w-full max-w-xl mx-auto">
+          <div v-for="row in summaryRows" :key="row.label">
+            <p class="text-[10px] font-bold tracking-wider text-slate-400 uppercase">{{ row.label }}</p>
+            <p class="text-sm font-semibold text-slate-800 mt-0.5">{{ row.value }}</p>
           </div>
-        </dl>
-      </section>
-
-      <section class="pt-2">
-        <div class="flex items-center justify-between gap-4 py-3 border-t border-slate-100">
-          <div class="min-w-0">
-            <p class="text-[11px] font-medium text-slate-400 uppercase tracking-[0.1em] mb-1.5">
-              Tu plan contratado
-            </p>
-            <p class="text-sm font-semibold text-slate-900 capitalize">
-              {{ selectedPlan?.name || 'Asistencia' }}
-            </p>
-          </div>
-          <div class="inline-flex items-center gap-1.5 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider text-slate-700 bg-slate-50 border border-slate-200 rounded-full shrink-0">
-            <span class="w-1.5 h-1.5 rounded-full" style="background-color: #43D3FF;"></span>
-            Activo
+          <div>
+            <p class="text-[10px] font-bold tracking-wider text-slate-400 uppercase">Tu plan contratado</p>
+            <p class="text-sm font-semibold text-slate-800 mt-0.5 capitalize">{{ selectedPlan?.name || 'Asistencia' }}</p>
           </div>
         </div>
       </section>
 
     </div>
 
-    <div class="mt-8 pt-6 border-t border-slate-100 flex flex-col items-center gap-4">
+    <div class="mt-5 pt-4 border-t border-slate-100 flex flex-col items-center gap-3">
       <div class="flex items-center gap-2 text-xs text-slate-400">
         <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
