@@ -326,17 +326,11 @@ function handleSubmit() {
           type="button"
           @click="handleSubmit"
           :disabled="isProcessing"
-          class="w-full rounded-full py-3.5 bg-[#F9D35A] text-[#00184C] font-bold text-base flex items-center justify-center gap-2 shadow-sm hover:brightness-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus-visible:ring-2 focus-visible:ring-[#43D3FF] focus-visible:ring-offset-2"
+          class="ds-cta w-full justify-center"
         >
-          <svg v-if="isProcessing" class="animate-spin w-5 h-5" fill="none" viewBox="0 0 24 24" aria-hidden="true">
-            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-          </svg>
+          <span v-if="isProcessing" class="animate-spin w-5 h-5 mr-2">⏳</span>
           <span v-if="isProcessing">{{ processingStep }}</span>
           <span v-else>Activa tu cobertura · ${{ finalPrice.toFixed(2) }} USD</span>
-          <span class="w-8 h-8 rounded-full bg-white flex items-center justify-center shrink-0" aria-hidden="true"
-            style="background-image: url(&quot;data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%2300184C' stroke-width='2.5'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='M7 17L17 7M17 7H8M17 7v9'/%3E%3C/svg%3E&quot;); background-size: 16px 16px; background-repeat: no-repeat; background-position: center;"
-          ></span>
         </button>
 
         <div class="flex items-center justify-center gap-2 text-xs pt-2" style="color: #00184C; opacity: 0.5;">
@@ -348,60 +342,84 @@ function handleSubmit() {
       </section>
 
       <aside class="lg:col-span-5 space-y-3 lg:sticky lg:top-20 lg:self-start">
-        <div class="bg-white rounded-2xl border border-slate-100 shadow-sm p-6 md:p-8 space-y-5">
+        <div class="bg-white rounded-2xl border border-slate-100 shadow-sm p-5 md:p-6 space-y-4">
+
           <div class="flex items-center justify-between">
-            <div class="flex items-center gap-2.5">
-              <span class="text-sm font-bold text-slate-800">Tu plan</span>
-              <span class="bg-slate-50 text-slate-700 text-xs px-2.5 py-1 rounded-lg font-medium">
-                {{ travelersLabels[data?.travelers] || data?.travelers || '1 viajero' }}
-              </span>
+            <p class="text-xs font-bold text-slate-400 uppercase tracking-wider">Tu reserva</p>
+            <button type="button" @click="$emit('go-to-step', STEPS.DESTINATION)" class="text-xs font-semibold text-blue-600 hover:text-blue-700 transition-colors">
+              Editar todo
+            </button>
+          </div>
+
+          <div class="flex items-center gap-3 py-3 px-4 rounded-xl" style="background-color: rgba(67, 211, 255, 0.08);">
+            <div class="w-10 h-10 rounded-lg flex items-center justify-center shrink-0" style="background-color: rgba(67, 211, 255, 0.15);">
+              <svg class="w-5 h-5" style="color: #43D3FF;" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
             </div>
-            <button type="button" @click="$emit('go-to-step', STEPS.PLANS)" class="text-xs font-semibold text-blue-600 hover:text-blue-700 transition-colors">
+            <div class="flex-1 min-w-0">
+              <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">Tu ruta</p>
+              <p class="font-semibold text-slate-800 text-sm truncate">
+                {{ data?.origin?.name || data?.origin || '—' }}
+                <span class="text-slate-400 mx-1">→</span>
+                {{ formatDestination(data?.destination) }}
+              </p>
+            </div>
+            <button type="button" @click="$emit('go-to-step', STEPS.DESTINATION)" class="shrink-0 text-xs font-medium text-blue-600 hover:text-blue-700 transition-colors">
               Editar
             </button>
           </div>
 
-          <div>
-            <p class="font-bold text-base text-slate-900">{{ getPlanName() }}</p>
-            <p class="text-xs text-slate-500 mt-0.5">Cobertura hasta {{ getPlanCoverage() }} USD</p>
+          <div class="flex items-center gap-3 py-3 px-4 rounded-xl" style="background-color: rgba(67, 211, 255, 0.08);">
+            <div class="w-10 h-10 rounded-lg flex items-center justify-center shrink-0" style="background-color: rgba(67, 211, 255, 0.15);">
+              <svg class="w-5 h-5" style="color: #43D3FF;" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+              </svg>
+            </div>
+            <div class="flex-1 min-w-0">
+              <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">Fechas del viaje</p>
+              <p class="font-semibold text-slate-800 text-sm">
+                {{ data?.dates?.start ? formatDate(data?.dates?.start) : '—' }}
+                <span class="text-slate-400 mx-1">→</span>
+                {{ data?.dates?.end ? formatDate(data?.dates?.end) : '—' }}
+                <span v-if="tripDays > 0" class="ml-2 text-xs font-medium px-2 py-0.5 rounded-full" style="background-color: rgba(67, 211, 255, 0.15); color: #43D3FF;">
+                  {{ tripDays }} días
+                </span>
+              </p>
+            </div>
+            <button type="button" @click="$emit('go-to-step', STEPS.DATES)" class="shrink-0 text-xs font-medium text-blue-600 hover:text-blue-700 transition-colors">
+              Editar
+            </button>
           </div>
 
-          <hr class="border-slate-100" />
-
-          <div class="space-y-0">
-            <div class="flex items-center gap-3 py-2.5">
-              <div class="w-9 h-9 rounded-xl flex items-center justify-center shrink-0" style="background-color: rgba(67, 211, 255, 0.12);">
-                <svg class="w-5 h-5 text-slate-500 -rotate-45" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M14 5l7 7m0 0l-7 7m7-7H3" />
-                </svg>
-              </div>
-              <div class="flex-1 min-w-0">
-                <p class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Sale de</p>
-                <p class="font-medium text-slate-800 truncate">{{ data?.origin?.name || data?.origin || '—' }}</p>
-              </div>
-              <span class="text-xs text-slate-500 shrink-0">{{ data?.dates?.start ? formatDate(data?.dates?.start) : '—' }}</span>
+          <div class="flex items-center gap-3 py-3 px-4 rounded-xl" style="background-color: rgba(67, 211, 255, 0.08);">
+            <div class="w-10 h-10 rounded-lg flex items-center justify-center shrink-0" style="background-color: rgba(67, 211, 255, 0.15);">
+              <svg class="w-5 h-5" style="color: #43D3FF;" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+              </svg>
             </div>
-
-            <div class="relative border-t border-slate-100 mt-2.5 pt-2.5">
-              <div v-if="tripDays > 0" class="absolute -top-2.5 left-1/2 -translate-x-1/2 text-[10px] font-semibold leading-none px-2.5 py-0.5 rounded-full z-10" style="color: #43D3FF; background-color: white; border: 1px solid rgba(67, 211, 255, 0.25);">
-                {{ tripDays }} días
-              </div>
-              <div class="flex items-center gap-3 py-2.5">
-                <div class="w-9 h-9 rounded-xl flex items-center justify-center shrink-0" style="background-color: rgba(67, 211, 255, 0.12);">
-                  <svg class="w-5 h-5 text-slate-500 rotate-45" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M14 5l7 7m0 0l-7 7m7-7H3" />
-                  </svg>
-                </div>
-                <div class="flex-1 min-w-0">
-                  <p class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Vas hacia</p>
-                  <p class="font-medium text-slate-800 truncate">{{ formatDestination(data?.destination) }}</p>
-                </div>
-                <span class="text-xs text-slate-500 shrink-0">{{ data?.dates?.end ? formatDate(data?.dates?.end) : '—' }}</span>
-              </div>
+            <div class="flex-1 min-w-0">
+              <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">Viajeros</p>
+              <p class="font-semibold text-slate-800 text-sm">{{ travelersLabels[data?.travelers] || data?.travelers || '1 viajero' }}</p>
             </div>
+            <button type="button" @click="$emit('go-to-step', STEPS.TRAVELERS)" class="shrink-0 text-xs font-medium text-blue-600 hover:text-blue-700 transition-colors">
+              Editar
+            </button>
           </div>
 
-          <hr class="border-slate-100" />
+          <div class="flex items-center gap-3 py-3 px-4 rounded-xl border border-slate-100">
+            <div class="w-10 h-10 rounded-lg flex items-center justify-center shrink-0" style="background-color: rgba(249, 211, 90, 0.15);">
+              <span class="text-base" aria-hidden="true">🛡️</span>
+            </div>
+            <div class="flex-1 min-w-0">
+              <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">Tu plan</p>
+              <p class="font-bold text-slate-800 text-sm">{{ getPlanName() }}</p>
+              <p class="text-xs text-slate-500">Cobertura hasta {{ getPlanCoverage() }} USD</p>
+            </div>
+            <button type="button" @click="$emit('go-to-step', STEPS.PLANS)" class="shrink-0 text-xs font-medium text-blue-600 hover:text-blue-700 transition-colors">
+              Editar
+            </button>
+          </div>
 
           <DiscountCodeField
             :modelValue="appliedDiscount"
@@ -409,18 +427,21 @@ function handleSubmit() {
             @remove="handleRemoveDiscount"
           />
 
-          <div class="space-y-1.5 pt-1">
+          <div class="space-y-2 pt-2 border-t border-slate-100">
             <div class="flex items-center justify-between">
-              <span class="text-sm" style="color: #00184C; opacity: 0.7;">Subtotal</span>
+              <span class="text-sm" style="color: #00184C; opacity: 0.7;">Plan base</span>
               <span class="text-sm font-semibold" style="color: #00184C;">${{ getPlanPrice() }} USD</span>
             </div>
-            <div v-if="appliedDiscount" class="flex items-center justify-between">
-              <span class="text-sm" style="color: #00184C; opacity: 0.9;">Descuento ({{ appliedDiscount.discountPercent }}%)</span>
-              <span class="text-sm font-semibold" style="color: #00184C; opacity: 0.9;">-${{ discountAmount.toFixed(2) }} USD</span>
+            <div v-if="upgradesTotal > 0" class="flex items-center justify-between">
+              <span class="text-sm" style="color: #00184C; opacity: 0.7;">Coberturas adicionales</span>
+              <span class="text-sm font-semibold" style="color: #00184C;">+${{ upgradesTotal }} USD</span>
             </div>
-            <div v-if="appliedDiscount" class="h-px" style="background-color: #43D3FF; opacity: 0.3;"></div>
-            <div class="flex items-center justify-between pt-2 border-t border-slate-100">
-              <span class="text-sm font-semibold" style="color: #00184C;">Total a pagar</span>
+            <div v-if="appliedDiscount" class="flex items-center justify-between">
+              <span class="text-sm" style="color: #00184C;">Descuento ({{ appliedDiscount.discountPercent }}%)</span>
+              <span class="text-sm font-semibold" style="color: #00184C;">-${{ discountAmount.toFixed(2) }} USD</span>
+            </div>
+            <div class="flex items-center justify-between pt-2 border-t border-slate-200">
+              <span class="text-base font-bold" style="color: #00184C;">Total a pagar</span>
               <span class="text-xl font-bold" style="color: #00184C;">${{ finalPrice.toFixed(2) }} USD</span>
             </div>
           </div>
