@@ -334,8 +334,12 @@ function showTransientNotice(message) {
                     :selectedPlan="formData.selectedPlan"
                     :travelers="formData.travelers"
                     :travelersCount="formData.travelersCount"
+                    :origin="formData.origin"
+                    :destination="formData.destination"
+                    :dates="formData.dates"
                     :preloadedBirthdates="formData.birthdates"
                     @next="nextStep"
+                    @go-to-step="goToStep"
                   />
                 </div>
                 <div v-else-if="currentStep === 6">

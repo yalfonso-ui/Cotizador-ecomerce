@@ -6,7 +6,7 @@ import { getTravelerCount as resolveCount, calculateAge } from '@/composables/us
 import { formatBirthdate as fmtBirthdate, formatDate } from '@/composables/useDateFormatter.js'
 import { showToast } from '@/composables/useToast.js'
 
-const emit = defineEmits(['next'])
+const emit = defineEmits(['next', 'go-to-step'])
 
 const props = defineProps({
   modelValue: Object,
