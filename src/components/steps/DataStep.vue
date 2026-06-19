@@ -650,7 +650,7 @@ watch(travelers_data, () => {
               </div>
               <div class="flex-1 min-w-0">
                 <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">Tu ruta</p>
-                <p class="font-semibold text-slate-800 text-sm truncate">
+                <p class="font-semibold text-slate-800 text-sm whitespace-nowrap">
                   {{ formatOrigin(props.origin) }}
                   <span class="text-slate-400 mx-1">→</span>
                   {{ formatDestination(props.destination) }}
@@ -671,14 +671,16 @@ watch(travelers_data, () => {
               </div>
               <div class="flex-1 min-w-0">
                 <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">Fechas del viaje</p>
-                <p class="font-semibold text-slate-800 text-sm">
-                  {{ props.dates?.start ? formatDate(props.dates.start) : '—' }}
-                  <span v-if="props.dates?.start && props.dates?.end" class="text-slate-400 mx-1">→</span>
-                  {{ props.dates?.end ? formatDate(props.dates.end) : '' }}
-                  <span v-if="tripDays > 0" class="ml-2 text-xs font-medium px-2 py-0.5 rounded-full" style="background-color: rgba(67, 211, 255, 0.15); color: #43D3FF;">
+                <div class="flex items-center gap-2 flex-wrap">
+                  <p class="font-semibold text-slate-800 text-sm whitespace-nowrap">
+                    {{ props.dates?.start ? formatDate(props.dates.start) : '—' }}
+                    <span v-if="props.dates?.start && props.dates?.end" class="text-slate-400 mx-1">→</span>
+                    {{ props.dates?.end ? formatDate(props.dates.end) : '' }}
+                  </p>
+                  <span v-if="tripDays > 0" class="text-xs font-medium px-2 py-0.5 rounded-full whitespace-nowrap" style="background-color: rgba(67, 211, 255, 0.15); color: #43D3FF;">
                     {{ tripDays }} días
                   </span>
-                </p>
+                </div>
               </div>
               <button type="button" @click="$emit('go-to-step', 2)" class="shrink-0 text-xs font-medium text-blue-600 hover:text-blue-700 transition-colors">
                 Editar
