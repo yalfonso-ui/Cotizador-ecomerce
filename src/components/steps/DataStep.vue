@@ -626,31 +626,31 @@ watch(travelers_data, () => {
       </section>
 
       <aside class="lg:col-span-1 w-full space-y-2 lg:sticky lg:top-20 lg:self-start">
-        <div v-if="props.selectedPlan" class="bg-[#00184C] rounded-2xl p-5 shadow-sm w-full">
-          <div class="flex items-center gap-3 mb-3">
-            <div class="w-10 h-10 rounded-xl flex items-center justify-center shrink-0" style="background-color: rgba(249, 211, 90, 0.20);">
-              <span class="text-lg" aria-hidden="true">🛡️</span>
-            </div>
-            <div class="min-w-0">
-              <p class="text-[10px] text-white/60 font-semibold uppercase tracking-wider mb-0.5">Tu plan elegido</p>
-              <p class="text-white font-bold text-base capitalize truncate">{{ props.selectedPlan }}</p>
-            </div>
-          </div>
-        </div>
-
         <div class="bg-white rounded-2xl border border-slate-200 shadow-sm w-full">
-          <div class="flex items-center gap-3 p-4 border-b border-slate-100">
-            <div class="w-9 h-9 rounded-full flex items-center justify-center shrink-0" style="background-color: rgba(67, 211, 255, 0.12);">
-              <span class="text-base" aria-hidden="true">🌎</span>
+          <div class="flex items-center justify-between p-4 border-b border-slate-100">
+            <p class="text-xs font-bold text-slate-400 uppercase tracking-wider">Tu reserva</p>
+            <button type="button" @click="$emit('go-to-step', 1)" class="text-xs font-semibold text-blue-600 hover:text-blue-700 transition-colors">
+              Editar todo
+            </button>
+          </div>
+
+          <div class="flex items-center gap-3 p-4" style="background-color: rgba(67, 211, 255, 0.08);">
+            <div class="w-10 h-10 rounded-lg flex items-center justify-center shrink-0" style="background-color: rgba(67, 211, 255, 0.15);">
+              <svg class="w-5 h-5" style="color: #43D3FF;" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
             </div>
             <div class="flex-1 min-w-0">
-              <p class="text-[10px] text-slate-500 uppercase tracking-wider mb-0.5">Tu ruta</p>
+              <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">Tu ruta</p>
               <p class="font-semibold text-slate-800 text-sm truncate">
                 {{ formatOrigin(props.origin) }}
                 <span class="text-slate-400 mx-1">→</span>
                 {{ formatDestination(props.destination) }}
               </p>
             </div>
+            <button type="button" @click="$emit('go-to-step', 1)" class="shrink-0 text-xs font-medium text-blue-600 hover:text-blue-700 transition-colors">
+              Editar
+            </button>
           </div>
 
           <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 border-t border-b border-slate-100 py-4 px-4">
@@ -661,14 +661,17 @@ watch(travelers_data, () => {
                 <span v-if="props.dates?.start && props.dates?.end">→</span>
                 {{ props.dates?.end ? formatDate(props.dates.end) : '' }}
               </p>
+              <button type="button" @click="$emit('go-to-step', 2)" class="text-xs font-medium text-blue-600 hover:text-blue-700 transition-colors mt-1">Editar</button>
             </div>
             <div>
               <p class="text-[10px] font-bold tracking-wider text-slate-400 uppercase">Quiénes viajan</p>
               <p class="text-sm font-semibold text-slate-800 mt-0.5">{{ travelersLabels[props.travelers] || props.travelersCount || '—' }} {{ travelersLabels[props.travelers] ? '' : 'personas' }}</p>
+              <button type="button" @click="$emit('go-to-step', 3)" class="text-xs font-medium text-blue-600 hover:text-blue-700 transition-colors mt-1">Editar</button>
             </div>
             <div>
               <p class="text-[10px] font-bold tracking-wider text-slate-400 uppercase">Tu plan</p>
               <p class="text-sm font-semibold text-slate-800 mt-0.5 capitalize">{{ props.selectedPlan || 'Asistencia' }}</p>
+              <button type="button" @click="$emit('go-to-step', 4)" class="text-xs font-medium text-blue-600 hover:text-blue-700 transition-colors mt-1">Editar</button>
             </div>
           </div>
         </div>
