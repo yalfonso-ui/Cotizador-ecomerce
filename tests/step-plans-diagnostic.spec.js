@@ -29,7 +29,8 @@ test('StepPlans: trace DOM changes after click', async ({ page }) => {
     if (btn) btn.click()
   })
 
-  // Dates (panel auto-opens)
+  // Dates: click trigger first, then pick dates
+  await page.click('[data-testid="date-from-trigger"]')
   await page.waitForSelector('.fixed.z-30')
   await page.waitForTimeout(500)
   const calendarButtons = page.locator('.grid.grid-cols-7 button:not([disabled])')

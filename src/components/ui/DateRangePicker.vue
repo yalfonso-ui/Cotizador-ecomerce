@@ -289,7 +289,6 @@ onMounted(() => {
     else mql.addListener(updateMobile)
   }
   document.addEventListener('mousedown', onContainerClick)
-  isOpen.value = true
 })
 
 onBeforeUnmount(() => {

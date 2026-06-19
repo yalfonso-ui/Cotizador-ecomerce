@@ -38,7 +38,8 @@ test('StepPlans: clicking a plan advances to StepData', async ({ page }) => {
     if (btn) btn.click()
   })
 
-  // Dates: panel auto-opens — pick first available day, then second
+  // Dates: click trigger first, then pick dates
+  await page.click('[data-testid="date-from-trigger"]')
   await page.waitForSelector('.fixed.z-30', { timeout: 10000 })
   await page.waitForTimeout(500)
   // Pick today in current month + a day 5 days later
