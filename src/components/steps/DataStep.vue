@@ -625,9 +625,9 @@ watch(travelers_data, () => {
         </button>
       </section>
 
-      <aside class="lg:col-span-1 w-full space-y-3 lg:sticky lg:top-20 lg:self-start">
+      <aside class="lg:col-span-1 w-full space-y-2 lg:sticky lg:top-20 lg:self-start">
         <div v-if="props.selectedPlan" class="bg-[#00184C] rounded-2xl p-5 shadow-sm w-full">
-          <div class="flex items-center gap-3">
+          <div class="flex items-center gap-3 mb-3">
             <div class="w-10 h-10 rounded-xl flex items-center justify-center shrink-0" style="background-color: rgba(249, 211, 90, 0.20);">
               <span class="text-lg" aria-hidden="true">🛡️</span>
             </div>
@@ -638,8 +638,8 @@ watch(travelers_data, () => {
           </div>
         </div>
 
-        <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-5 w-full space-y-4">
-          <div class="flex items-center gap-3 pb-3 border-b border-slate-100">
+        <div class="bg-white rounded-2xl border border-slate-200 shadow-sm w-full">
+          <div class="flex items-center gap-3 p-4 border-b border-slate-100">
             <div class="w-9 h-9 rounded-full flex items-center justify-center shrink-0" style="background-color: rgba(67, 211, 255, 0.12);">
               <span class="text-base" aria-hidden="true">🌎</span>
             </div>
@@ -653,7 +653,7 @@ watch(travelers_data, () => {
             </div>
           </div>
 
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 border-t border-b border-slate-100 py-4 px-4">
             <div>
               <p class="text-[10px] font-bold tracking-wider text-slate-400 uppercase">Fechas</p>
               <p class="text-sm font-semibold text-slate-800 mt-0.5">
@@ -665,6 +665,10 @@ watch(travelers_data, () => {
             <div>
               <p class="text-[10px] font-bold tracking-wider text-slate-400 uppercase">Quiénes viajan</p>
               <p class="text-sm font-semibold text-slate-800 mt-0.5">{{ travelersLabels[props.travelers] || props.travelersCount || '—' }} {{ travelersLabels[props.travelers] ? '' : 'personas' }}</p>
+            </div>
+            <div>
+              <p class="text-[10px] font-bold tracking-wider text-slate-400 uppercase">Tu plan</p>
+              <p class="text-sm font-semibold text-slate-800 mt-0.5 capitalize">{{ props.selectedPlan || 'Asistencia' }}</p>
             </div>
           </div>
         </div>
