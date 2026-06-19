@@ -216,6 +216,13 @@ function formatDestination(dest) {
   return String(dest)
 }
 
+const tripDays = computed(() => {
+  if (!props.dates?.start || !props.dates?.end) return 0
+  const start = new Date(props.dates.start)
+  const end = new Date(props.dates.end)
+  return Math.round((end - start) / (1000 * 60 * 60 * 24)) + 1
+})
+
 function handleNext() {
   if (activeTab.value === 0) {
     travelers_data.value.forEach(t => {
@@ -627,51 +634,72 @@ watch(travelers_data, () => {
 
       <aside class="lg:col-span-1 w-full space-y-2 lg:sticky lg:top-20 lg:self-start">
         <div class="bg-white rounded-2xl border border-slate-200 shadow-sm w-full">
-          <div class="flex items-center justify-between p-4 border-b border-slate-100">
+          <div class="flex items-center justify-between p-4">
             <p class="text-xs font-bold text-slate-400 uppercase tracking-wider">Tu reserva</p>
             <button type="button" @click="$emit('go-to-step', 1)" class="text-xs font-semibold text-blue-600 hover:text-blue-700 transition-colors">
               Editar todo
             </button>
           </div>
 
-          <div class="flex items-center gap-3 p-4" style="background-color: rgba(67, 211, 255, 0.08);">
-            <div class="w-10 h-10 rounded-lg flex items-center justify-center shrink-0" style="background-color: rgba(67, 211, 255, 0.15);">
-              <svg class="w-5 h-5" style="color: #43D3FF;" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
+          <div class="px-4 pb-4">
+            <div class="flex items-center gap-3 p-4 rounded-xl" style="background-color: rgba(67, 211, 255, 0.08);">
+              <div class="w-10 h-10 rounded-lg flex items-center justify-center shrink-0" style="background-color: rgba(67, 211, 255, 0.15);">
+                <svg class="w-5 h-5" style="color: #43D3FF;" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
+              <div class="flex-1 min-w-0">
+                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">Tu ruta</p>
+                <p class="font-semibold text-slate-800 text-sm truncate">
+                  {{ formatOrigin(props.origin) }}
+                  <span class="text-slate-400 mx-1">→</span>
+                  {{ formatDestination(props.destination) }}
+                </p>
+              </div>
+              <button type="button" @click="$emit('go-to-step', 1)" class="shrink-0 text-xs font-medium text-blue-600 hover:text-blue-700 transition-colors">
+                Editar
+              </button>
             </div>
-            <div class="flex-1 min-w-0">
-              <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">Tu ruta</p>
-              <p class="font-semibold text-slate-800 text-sm truncate">
-                {{ formatOrigin(props.origin) }}
-                <span class="text-slate-400 mx-1">→</span>
-                {{ formatDestination(props.destination) }}
-              </p>
-            </div>
-            <button type="button" @click="$emit('go-to-step', 1)" class="shrink-0 text-xs font-medium text-blue-600 hover:text-blue-700 transition-colors">
-              Editar
-            </button>
           </div>
 
-          <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 border-t border-b border-slate-100 py-4 px-4">
-            <div>
-              <p class="text-[10px] font-bold tracking-wider text-slate-400 uppercase">Fechas</p>
-              <p class="text-sm font-semibold text-slate-800 mt-0.5">
-                {{ props.dates?.start ? formatDate(props.dates.start) : '—' }}
-                <span v-if="props.dates?.start && props.dates?.end">→</span>
-                {{ props.dates?.end ? formatDate(props.dates.end) : '' }}
-              </p>
-              <button type="button" @click="$emit('go-to-step', 2)" class="text-xs font-medium text-blue-600 hover:text-blue-700 transition-colors mt-1">Editar</button>
+          <div class="px-4 pb-4">
+            <div class="flex items-center gap-3 p-4 rounded-xl" style="background-color: rgba(67, 211, 255, 0.08);">
+              <div class="w-10 h-10 rounded-lg flex items-center justify-center shrink-0" style="background-color: rgba(67, 211, 255, 0.15);">
+                <svg class="w-5 h-5" style="color: #43D3FF;" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
+              </div>
+              <div class="flex-1 min-w-0">
+                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">Fechas del viaje</p>
+                <p class="font-semibold text-slate-800 text-sm">
+                  {{ props.dates?.start ? formatDate(props.dates.start) : '—' }}
+                  <span v-if="props.dates?.start && props.dates?.end" class="text-slate-400 mx-1">→</span>
+                  {{ props.dates?.end ? formatDate(props.dates.end) : '' }}
+                  <span v-if="tripDays > 0" class="ml-2 text-xs font-medium px-2 py-0.5 rounded-full" style="background-color: rgba(67, 211, 255, 0.15); color: #43D3FF;">
+                    {{ tripDays }} días
+                  </span>
+                </p>
+              </div>
+              <button type="button" @click="$emit('go-to-step', 2)" class="shrink-0 text-xs font-medium text-blue-600 hover:text-blue-700 transition-colors">
+                Editar
+              </button>
             </div>
-            <div>
-              <p class="text-[10px] font-bold tracking-wider text-slate-400 uppercase">Quiénes viajan</p>
-              <p class="text-sm font-semibold text-slate-800 mt-0.5">{{ travelersLabels[props.travelers] || props.travelersCount || '—' }} {{ travelersLabels[props.travelers] ? '' : 'personas' }}</p>
-              <button type="button" @click="$emit('go-to-step', 3)" class="text-xs font-medium text-blue-600 hover:text-blue-700 transition-colors mt-1">Editar</button>
-            </div>
-            <div>
-              <p class="text-[10px] font-bold tracking-wider text-slate-400 uppercase">Tu plan</p>
-              <p class="text-sm font-semibold text-slate-800 mt-0.5 capitalize">{{ props.selectedPlan || 'Asistencia' }}</p>
-              <button type="button" @click="$emit('go-to-step', 4)" class="text-xs font-medium text-blue-600 hover:text-blue-700 transition-colors mt-1">Editar</button>
+          </div>
+
+          <div class="px-4 pb-4">
+            <div class="flex items-center gap-3 p-4 rounded-xl" style="background-color: rgba(67, 211, 255, 0.08);">
+              <div class="w-10 h-10 rounded-lg flex items-center justify-center shrink-0" style="background-color: rgba(67, 211, 255, 0.15);">
+                <svg class="w-5 h-5" style="color: #43D3FF;" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                </svg>
+              </div>
+              <div class="flex-1 min-w-0">
+                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">Viajeros</p>
+                <p class="font-semibold text-slate-800 text-sm">{{ travelersLabels[props.travelers] || props.travelersCount || '—' }} {{ travelersLabels[props.travelers] ? '' : 'personas' }}</p>
+              </div>
+              <button type="button" @click="$emit('go-to-step', 3)" class="shrink-0 text-xs font-medium text-blue-600 hover:text-blue-700 transition-colors">
+                Editar
+              </button>
             </div>
           </div>
         </div>
