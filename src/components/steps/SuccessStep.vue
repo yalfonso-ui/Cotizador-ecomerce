@@ -3,6 +3,7 @@ import { ref, computed } from 'vue'
 import { generateVoucherCode } from '@/utils/voucher.js'
 import { getTravelerCount } from '@/composables/useTravelerInfo.js'
 import { formatDate as fmtDate } from '@/composables/useDateFormatter.js'
+import TripHeroBanner from '@/components/ui/TripHeroBanner.vue'
 
 const props = defineProps({
   formData: { type: Object, default: () => ({}) },
@@ -29,9 +30,9 @@ async function copyVoucher() {
 }
 
 function formatDestination(dest) {
-  if (!dest) return 'Internacional'
+  if (!dest) return 'Destino'
   if (Array.isArray(dest)) {
-    return dest.map(d => d.name || d).join(', ')
+    return dest[0]?.name || dest[0] || 'Destino'
   }
   if (typeof dest === 'object' && dest.name) return dest.name
   return String(dest)
@@ -52,6 +53,17 @@ function travelerCount() {
   if (ages && ages.length > 0) return ages.length
   return getTravelerCount(props.formData?.travelers, props.formData?.travelersCount)
 }
+
+const tripDuration = computed(() => {
+  const start = props.formData?.dates?.start
+  const end = props.formData?.dates?.end
+  if (!start || !end) return 8
+  const startDate = new Date(start)
+  const endDate = new Date(end)
+  const diff = endDate.getTime() - startDate.getTime()
+  if (isNaN(diff)) return 8
+  return Math.max(1, Math.ceil(diff / (1000 * 60 * 60 * 24)) + 1)
+})
 
 const summaryRows = computed(() => [
   {
@@ -74,34 +86,41 @@ const summaryRows = computed(() => [
 </script>
 
 <template>
-  <div class="max-w-xl mx-auto px-6 py-16 sm:py-20">
+  <div class="max-w-xl mx-auto px-6 py-6 sm:py-8">
 
-    <div class="text-center space-y-5 mb-14">
+    <div class="text-center space-y-3 mb-4">
       <div class="inline-flex items-center justify-center">
-        <div class="w-16 h-16 rounded-full border border-slate-200 flex items-center justify-center">
-          <svg class="w-7 h-7 text-slate-900" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+        <div class="w-16 h-16 rounded-full border flex items-center justify-center" style="border-color: rgba(0, 24, 76, 0.15);">
+          <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true" style="color: #00184C;">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M5 13l4 4L19 7" />
           </svg>
         </div>
       </div>
-      <div class="space-y-3">
-        <h1 class="text-3xl sm:text-4xl font-semibold text-slate-900 tracking-tight leading-tight">
-          ¡Tu viaje ya está protegido!
+      <div class="space-y-2">
+        <span class="ds-eyebrow">Compra exitosa</span>
+        <h1 class="ds-heading-1">
+          Listo. <span style="color: #43D3FF;">Tu viaje</span> ya está protegido.
         </h1>
-        <p class="text-base text-slate-500 max-w-sm mx-auto leading-relaxed">
-          Hemos enviado los documentos de tu asistencia a tu correo electrónico.
+        <p class="ds-helper max-w-sm mx-auto">
+          Te enviamos tus documentos de asistencia al correo. Estamos contigo de principio a fin.
         </p>
       </div>
     </div>
 
-    <div class="space-y-10">
+    <TripHeroBanner
+      :origin="formatOrigin(props.formData?.origin)"
+      :destination="formatDestination(props.formData?.destination)"
+      :durationDays="tripDuration"
+    />
+
+    <div class="space-y-6 mt-6">
 
       <section>
-        <div class="bg-slate-50 border border-slate-100 rounded-2xl p-6">
+        <div class="bg-slate-50 border border-slate-100 rounded-2xl p-4">
           <div class="flex items-center justify-between gap-4">
             <div class="min-w-0 flex-1">
               <p class="text-[11px] font-medium text-slate-400 uppercase tracking-[0.15em] mb-3">
-                Código de asistencia
+                Tu código de asistencia
               </p>
               <p class="font-mono text-2xl sm:text-[28px] font-semibold text-slate-900 tracking-wider truncate">
                 {{ voucherCode }}
@@ -120,10 +139,10 @@ const summaryRows = computed(() => [
               <svg v-else-if="!copied" class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
               </svg>
-              <svg v-else class="w-3.5 h-3.5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <svg v-else class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true" style="color: #43D3FF;">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" />
               </svg>
-              <span>{{ copyError ? 'Cópialo' : (copied ? 'Copiado' : 'Copiar') }}</span>
+              <span>{{ copyError ? 'Cópialo' : (copied ? 'Listo, copiado' : 'Cópialo') }}</span>
             </button>
           </div>
         </div>
@@ -134,7 +153,7 @@ const summaryRows = computed(() => [
           <div
             v-for="row in summaryRows"
             :key="row.label"
-            class="flex items-baseline justify-between gap-4 py-4"
+            class="flex items-baseline justify-between gap-4 py-3"
           >
             <dt class="text-xs font-medium text-slate-400 uppercase tracking-[0.1em] shrink-0">
               {{ row.label }}
@@ -147,17 +166,17 @@ const summaryRows = computed(() => [
       </section>
 
       <section class="pt-2">
-        <div class="flex items-center justify-between gap-4 py-4 border-t border-slate-100">
+        <div class="flex items-center justify-between gap-4 py-3 border-t border-slate-100">
           <div class="min-w-0">
             <p class="text-[11px] font-medium text-slate-400 uppercase tracking-[0.1em] mb-1.5">
-              Plan contratado
+              Tu plan contratado
             </p>
             <p class="text-sm font-semibold text-slate-900 capitalize">
               {{ selectedPlan?.name || 'Asistencia' }}
             </p>
           </div>
           <div class="inline-flex items-center gap-1.5 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider text-slate-700 bg-slate-50 border border-slate-200 rounded-full shrink-0">
-            <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+            <span class="w-1.5 h-1.5 rounded-full" style="background-color: #43D3FF;"></span>
             Activo
           </div>
         </div>
@@ -165,23 +184,20 @@ const summaryRows = computed(() => [
 
     </div>
 
-    <div class="mt-16 pt-10 border-t border-slate-100 flex flex-col items-center gap-6">
+    <div class="mt-8 pt-6 border-t border-slate-100 flex flex-col items-center gap-4">
       <div class="flex items-center gap-2 text-xs text-slate-400">
         <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
         </svg>
-        <span>Documentos enviados a tu correo</span>
+        <span>Tus documentos ya están en tu correo</span>
       </div>
 
       <button
         type="button"
         @click="$emit('restart-flow')"
-        class="inline-flex items-center gap-2 px-7 py-3 bg-[#00184C] hover:bg-[#002a6e] active:scale-[0.98] active:bg-[#000f33] text-white text-sm font-semibold rounded-full transition-all duration-200 shadow-sm hover:shadow focus:outline-none focus-visible:ring-2 focus-visible:ring-[#00184C] focus-visible:ring-offset-2"
+        class="ds-cta"
       >
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
-        </svg>
-        Volver al inicio
+        Empieza otra compra
       </button>
     </div>
 

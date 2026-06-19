@@ -8,5 +8,11 @@ export default defineConfig({
     alias: {
       '@': path.resolve(__dirname, './src')
     }
+  },
+  server: {
+    allowedHosts: [
+      'hopefully-fix-version-fairfield.trycloudflare.com',
+      /^.*\.trycloudflare\.com$/
+    ]
   }
 })

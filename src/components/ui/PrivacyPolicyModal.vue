@@ -54,7 +54,7 @@ onUnmounted(() => {
           <header class="flex items-center justify-between p-5 md:p-6 border-b border-slate-100 flex-shrink-0">
             <div>
               <h2 id="privacy-title" class="text-xl md:text-2xl font-bold text-slate-900">
-                Políticas de Privacidad
+                Tu tranquilidad, nuestra prioridad.
               </h2>
               <p class="text-sm text-slate-500 mt-1">
                 Última actualización: Enero 2026
@@ -74,82 +74,83 @@ onUnmounted(() => {
 
           <div class="flex-1 overflow-y-auto p-5 md:p-6 space-y-4 text-sm text-slate-600 leading-relaxed">
             <section>
-              <h3 class="text-base font-bold text-slate-900 mb-2">1. Responsable del Tratamiento</h3>
+              <h3 class="text-base font-bold text-slate-900 mb-2">Quién cuida tus datos</h3>
               <p>
-                Continental Assist es el responsable del tratamiento de los datos personales que usted nos proporciona
-                a través de este sitio web y durante el proceso de cotización y contratación de nuestros servicios.
+                Continental Assist es quien resguarda tus datos personales. Los usamos solo para
+                acompañarte en tu viaje, de principio a fin.
               </p>
             </section>
 
             <section>
-              <h3 class="text-base font-bold text-slate-900 mb-2">2. Datos que Recopilamos</h3>
-              <p>Para为您提供適切なサービスを提供するため、以下の個人情報を収集します：</p>
+              <h3 class="text-base font-bold text-slate-900 mb-2">Qué información nos confías</h3>
+              <p>Para emitir tu asistencia y estar contigo cuando lo necesites, recopilamos:</p>
               <ul class="list-disc list-inside mt-2 space-y-1">
-                <li>Nombre completo y datos de identificación (DNI/Pasaporte)</li>
+                <li>Tu nombre completo y documento de identidad</li>
                 <li>Fecha de nacimiento y edad</li>
-                <li>Correo electrónico y número de teléfono</li>
-                <li>Información de contacto de emergencia</li>
-                <li>Datos del viaje (origen, destino, fechas)</li>
+                <li>Correo electrónico y teléfono de contacto</li>
+                <li>Persona de contacto en caso de emergencia</li>
+                <li>Datos del viaje (origen, destino y fechas)</li>
               </ul>
             </section>
 
             <section>
-              <h3 class="text-base font-bold text-slate-900 mb-2">3. Finalidad del Tratamiento</h3>
-              <p>Sus datos personales serán utilizados para:</p>
+              <h3 class="text-base font-bold text-slate-900 mb-2">Para qué los usamos</h3>
+              <p>Tus datos nos sirven únicamente para:</p>
               <ul class="list-disc list-inside mt-2 space-y-1">
-                <li>Procesar la cotización y emisión de su póliza de seguro de viaje</li>
-                <li>Gestionar la asistencia durante su viaje</li>
-                <li>Cumplir con obligaciones legales y regulatorsias</li>
-                <li>Enviar comunicaciones relacionadas con su seguro</li>
+                <li>Emitir tu póliza y gestionar tu asistencia</li>
+                <li>Acompañarte durante tu viaje, estés donde estés</li>
+                <li>Cumplir con las obligaciones legales aplicables</li>
+                <li>Mantenerte informado sobre tu cobertura</li>
               </ul>
             </section>
 
             <section>
-              <h3 class="text-base font-bold text-slate-900 mb-2">4. Conservación de los Datos</h3>
+              <h3 class="text-base font-bold text-slate-900 mb-2">Cuánto tiempo los guardamos</h3>
               <p>
-                Conservaremos sus datos personales durante el tiempo necesario para cumplir con las finalidades
-                para las que fueron recabados y, posteriormente, durante el plazo legal de prescripción de las
-                obligaciones que puedan derivarse de la relación contractual.
+                Conservamos tus datos el tiempo necesario para brindarte el servicio y,
+                luego, durante el plazo legal que correspondan a tus viajes contratados.
               </p>
             </section>
 
             <section>
-              <h3 class="text-base font-bold text-slate-900 mb-2">5. Sus Derechos</h3>
-              <p>Usted tiene derecho a:</p>
+              <h3 class="text-base font-bold text-slate-900 mb-2">Tus derechos</h3>
+              <p>Cuando quieras, puedes:</p>
               <ul class="list-disc list-inside mt-2 space-y-1">
-                <li>Acceder a sus datos personales</li>
-                <li>Rectificar datos inexactos</li>
-                <li>Solicitar la supresión de sus datos</li>
-                <li>Oponerse al tratamiento</li>
-                <li>Solicitar la portabilidad de sus datos</li>
+                <li>Acceder a tu información</li>
+                <li>Corregir datos inexactos</li>
+                <li>Solicitar la eliminación de tus datos</li>
+                <li>Oponerte a un uso específico</li>
+                <li>Llevar tus datos a otro proveedor</li>
               </ul>
             </section>
 
             <section>
-              <h3 class="text-base font-bold text-slate-900 mb-2">6. Seguridad</h3>
+              <h3 class="text-base font-bold text-slate-900 mb-2">Cómo los protegemos</h3>
               <p>
-                Implementamos medidas técnicas y organizativas apropiadas para proteger sus datos personales
-                contra el acceso no autorizado, la alteración, divulgación o destrucción.
+                Aplicamos medidas técnicas y organizativas para que tu información esté siempre
+                resguardada contra accesos no autorizados.
               </p>
             </section>
 
             <section>
-              <h3 class="text-base font-bold text-slate-900 mb-2">7. Contacto</h3>
+              <h3 class="text-base font-bold text-slate-900 mb-2">¿Tienes preguntas?</h3>
               <p>
-                Para cualquier consulta sobre el tratamiento de sus datos personales, puede contactarnos a través
-                de: <a href="mailto:privacidad@continental-assist.com" class="text-cyan-600 font-semibold hover:underline">privacidad@continental-assist.com</a>
+                Escríbenos a
+                <a href="mailto:privacidad@continental-assist.com" class="font-semibold hover:underline" style="color: #00184C;">privacidad@continental-assist.com</a>
+                y te respondemos a la brevedad.
               </p>
             </section>
           </div>
 
-          <footer class="flex items-center justify-between gap-3 p-4 md:p-5 border-t border-slate-100 flex-shrink-0 bg-slate-50">
+          <footer class="flex items-center justify-between gap-3 p-4 md:p-5 border-t border-slate-100 flex-shrink-0" style="background-color: #EDF4F9;">
             <a
               href="https://www.ejemplo.com/politica-de-privacidad"
               target="_blank"
               rel="noopener noreferrer"
-              class="text-xs font-semibold text-cyan-700 hover:text-cyan-800 underline underline-offset-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500 focus-visible:ring-offset-2 rounded"
+              class="text-xs font-semibold underline underline-offset-2 hover:opacity-80 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#43D3FF] focus-visible:ring-offset-2 rounded"
+              style="color: #00184C;"
             >
-              Ver política completa
+              Lee la política completa
               <svg class="w-3 h-3 inline-block ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
               </svg>
@@ -157,9 +158,15 @@ onUnmounted(() => {
             <button
               type="button"
               @click="close"
-              class="px-5 py-2.5 text-sm font-semibold text-white bg-cyan-500 hover:bg-cyan-600 active:scale-[0.98] rounded-xl transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500 focus-visible:ring-offset-2"
+              class="relative inline-flex items-center justify-between gap-2 px-5 py-2.5 text-sm font-bold rounded-full shadow-sm transition-all active:scale-[0.98] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#43D3FF] focus-visible:ring-offset-2"
+              style="background-color: #F9D35A; color: #00184C;"
             >
-              Entendido
+              <span>Perfecto, gracias</span>
+              <span
+                class="w-6 h-6 rounded-full bg-white flex items-center justify-center shrink-0 ml-1"
+                aria-hidden="true"
+                style="background-image: url(&quot;data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%2300184C' stroke-width='3'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='M7 17L17 7M17 7H8M17 7v9'/%3E%3C/svg%3E&quot;); background-size: 12px 12px; background-repeat: no-repeat; background-position: center;"
+              ></span>
             </button>
           </footer>
         </div>

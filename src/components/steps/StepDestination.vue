@@ -156,8 +156,11 @@ watch(
 
 <template>
   <div class="ds-focus-column space-y-6" data-destination-root>
-    <span class="ds-eyebrow">Selecciona tus destinos</span>
-    <h1 class="ds-heading-1">¿A dónde viajas?</h1>
+    <span class="ds-eyebrow">Tu próxima aventura</span>
+    <h1 class="ds-heading-1">¿Hacia dónde <span style="color: #43D3FF;">viajas</span>?</h1>
+    <p class="ds-helper text-center max-w-sm">
+      Selecciona hasta {{ MAX_DESTINATIONS }} destinos. Así de simple.
+    </p>
 
     <div class="w-full space-y-2">
       <div class="relative">
@@ -186,7 +189,7 @@ watch(
               ref="searchInputRef"
               v-model="searchQuery"
               type="text"
-              :placeholder="selectedCountries.length === 0 ? 'Selecciona un país o región' : 'Añade otro destino'"
+              :placeholder="selectedCountries.length === 0 ? 'Busca tu primer destino' : 'Añade otra parada a tu viaje'"
               class="w-full text-base text-slate-900 placeholder:text-slate-400 bg-transparent border-0 outline-none focus:ring-0 p-0"
               autocomplete="off"
             />
@@ -262,7 +265,7 @@ watch(
             <input
               v-model="searchQuery"
               type="text"
-              placeholder="Busca un país o región"
+              placeholder="Escribe el país o región que buscas"
               class="w-full h-10 px-3 text-sm text-slate-900 placeholder:text-slate-400 bg-slate-50 border border-transparent rounded-lg focus:bg-white focus:border-[color:var(--ds-focus)] focus:outline-none transition-colors duration-150"
               autocomplete="off"
             />
@@ -284,8 +287,9 @@ watch(
                 <span
                   class="w-5 h-5 rounded-md border-2 flex items-center justify-center transition-all duration-150 shrink-0"
                   :class="isSelected(country)
-                    ? 'bg-slate-900 border-slate-900'
+                    ? ''
                     : 'bg-white border-slate-300'"
+                  :style="isSelected(country) ? { backgroundColor: '#00184C', borderColor: '#00184C' } : {}"
                 >
                   <svg
                     v-if="isSelected(country)"
@@ -325,8 +329,9 @@ watch(
                 <span
                   class="w-5 h-5 rounded-md border-2 flex items-center justify-center transition-all duration-150 shrink-0"
                   :class="isSelected(country)
-                    ? 'bg-slate-900 border-slate-900'
+                    ? ''
                     : 'bg-white border-slate-300'"
+                  :style="isSelected(country) ? { backgroundColor: '#00184C', borderColor: '#00184C' } : {}"
                 >
                   <svg
                     v-if="isSelected(country)"
@@ -363,7 +368,7 @@ watch(
         v-if="!isOpen && selectedCountries.length === 0"
         class="ds-helper text-center"
       >
-        Selecciona hasta {{ MAX_DESTINATIONS }} destinos para tu viaje.
+        Toca el buscador y elige tu primer destino.
       </p>
     </div>
 
@@ -374,12 +379,12 @@ watch(
       class="ds-cta"
     >
       <span v-if="selectedCountries.length > 0">
-        Continuar
+        Confirma tus destinos
         <span v-if="selectedCountries.length > 1" class="text-sm font-medium opacity-80 ml-1">
-          ({{ selectedCountries.length }} destinos)
+          ({{ selectedCountries.length }})
         </span>
       </span>
-      <span v-else>Selecciona un destino</span>
+      <span v-else>Elige al menos un destino</span>
       <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3" />
       </svg>

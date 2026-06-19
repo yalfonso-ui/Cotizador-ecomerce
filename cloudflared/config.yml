@@ -1,0 +1,29 @@
+# Cloudflare Tunnel — Configuración declarativa
+# Documentación: https://developers.cloudflare.com/cloudflare-one/networks/connectors/cloudflare-tunnel/
+#
+# Este archivo es declarativo y SE COMMITEAR al repo.
+# Las credenciales (tunnel-credentials.json, cert.pem) NO se commitean — ver .gitignore.
+
+tunnel: <REEMPLAZAR_CON_TUNNEL_ID_O_NOMBRE>
+credentials-file: cloudflared/<TUNNEL_ID>.json
+
+# Orígenes que este tunnel expone al exterior.
+# Ajusta el puerto si Vite cambia de 5173.
+ingress:
+  # Dominio público → Vite dev server
+  - hostname: <REEMPLAZAR_CON_TU_DOMINIO_O_SUBDOMINIO>
+    service: http://localhost:5173
+  # Catch-all obligatorio: responde 404 para cualquier otro host
+  - service: http_status:404
+
+# Reintentos automáticos con backoff exponencial
+retries: 5
+
+# Logs legibles por defecto
+loglevel: info
+
+# Heartbeat para mantener la conexión activa y reportar salud al dashboard
+heartbeat-interval: 30s
+
+# Descomentar y ajustar si se quiere autoactualización de cloudflared
+# autoupdate-frequency: 24h

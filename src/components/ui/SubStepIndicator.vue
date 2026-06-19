@@ -27,10 +27,11 @@ function isActive(idx) {
         <span
           class="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold shrink-0 transition-all duration-300"
           :class="isCompleted(index)
-            ? 'bg-emerald-500 text-white'
+            ? ''
             : isActive(index)
-              ? 'bg-cyan-500 text-white ring-2 ring-cyan-100'
+              ? 'ring-2'
               : 'bg-slate-200 text-gray-400'"
+          :style="isCompleted(index) ? { backgroundColor: '#00184C', color: 'white' } : isActive(index) ? { backgroundColor: '#43D3FF', color: '#00184C', ringColor: 'rgba(67, 211, 255, 0.3)' } : {}"
         >
           <svg v-if="isCompleted(index)" class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7" />

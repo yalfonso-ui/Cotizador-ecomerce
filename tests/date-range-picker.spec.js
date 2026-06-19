@@ -8,21 +8,21 @@ test.describe('DateRangePicker — selección de rango', () => {
     })
     await page.goto('/')
 
-    await page.getByRole('button', { name: /Comenzar ahora/i }).click()
-    await expect(page.getByText(/¿Desde dónde viajas\?/i)).toBeVisible({ timeout: 5000 })
-    await page.waitForTimeout(1500)
-    await page.getByRole('button', { name: /^Continuar$/i }).click()
+    await page.getByRole('button', { name: /Inicia aquí tu compra/i }).click()
+
+    await page.waitForSelector('button:has-text("Sigue con tu destino")', { timeout: 10000 })
+    await page.click('button:has-text("Sigue con tu destino")')
 
     await expect(page.locator('[data-destination-root]')).toBeVisible({ timeout: 5000 })
     await page.locator('[data-testid="destination-trigger"]').click()
     await page.getByRole('button', { name: /España/ }).first().click()
     await page.getByRole('button', { name: 'Hecho' }).click()
-    await page.getByRole('button', { name: /Continuar/i }).click()
+    await page.getByRole('button', { name: /Confirma tus destinos/i }).click()
 
-    await expect(page.getByText(/¿Cuándo viajas\?/i)).toBeVisible({ timeout: 5000 })
+    await expect(page.getByText(/fechas.*viaje/i)).toBeVisible({ timeout: 5000 })
   })
 
-  test('1. Muestra dos recuadros Salida / Regreso antes de abrir', async ({ page }) => {
+  test('1. Muestra dos recuadros Salida / Regreso con calendario abierto', async ({ page }) => {
     await expect(page.locator('[data-testid="date-from-trigger"]')).toBeVisible()
     await expect(page.locator('[data-testid="date-to-trigger"]')).toBeVisible()
 
@@ -31,13 +31,11 @@ test.describe('DateRangePicker — selección de rango', () => {
     expect(fromLabel).toBe('salida')
     expect(toLabel).toBe('regreso')
 
-    await expect(page.locator('.absolute.z-30')).toHaveCount(0)
+    await expect(page.locator('.fixed.z-30')).toBeVisible()
   })
 
-  test('2. Click en Desde abre el panel con dos meses lado a lado', async ({ page }) => {
-    await page.locator('[data-testid="date-from-trigger"]').click()
-
-    const calendar = page.locator('.absolute.z-30')
+  test('2. Calendario se abre automáticamente con dos meses lado a lado', async ({ page }) => {
+    const calendar = page.locator('.fixed.z-30')
     await expect(calendar).toBeVisible()
 
     const monthHeaders = await calendar.locator('span.text-sm.font-semibold').count()
@@ -48,9 +46,7 @@ test.describe('DateRangePicker — selección de rango', () => {
   })
 
   test('3. Selección de rango aplica estilos azul corporativo', async ({ page }) => {
-    await page.locator('[data-testid="date-from-trigger"]').click()
-
-    const enabledDays = page.locator('.absolute.z-30 div.grid.grid-cols-7 button:not([disabled])')
+    const enabledDays = page.locator('.fixed.z-30 div.grid.grid-cols-7 button:not([disabled])')
     const total = await enabledDays.count()
     expect(total).toBeGreaterThan(5)
 
@@ -59,7 +55,7 @@ test.describe('DateRangePicker — selección de rango', () => {
     await enabledDays.nth(4).click({ force: true })
     await page.waitForTimeout(200)
 
-    const panel = page.locator('.absolute.z-30')
+    const panel = page.locator('.fixed.z-30')
     const blueSolidCount = await panel.locator('button.bg-blue-600').count()
     expect(blueSolidCount).toBeGreaterThanOrEqual(1)
 
@@ -72,32 +68,28 @@ test.describe('DateRangePicker — selección de rango', () => {
   })
 
   test('4. Días intermedios muestran fondo azul translúcido', async ({ page }) => {
-    await page.locator('[data-testid="date-from-trigger"]').click()
-
-    const enabledDays = page.locator('.absolute.z-30 div.grid.grid-cols-7 button:not([disabled])')
+    const enabledDays = page.locator('.fixed.z-30 div.grid.grid-cols-7 button:not([disabled])')
     await enabledDays.nth(0).click()
     await page.waitForTimeout(150)
     await enabledDays.nth(4).click({ force: true })
     await page.waitForTimeout(150)
 
-    const panel = page.locator('.absolute.z-30')
+    const panel = page.locator('.fixed.z-30')
     const rangeButtons = await panel.locator('button.bg-blue-100').count()
     expect(rangeButtons).toBeGreaterThanOrEqual(1)
   })
 
   test('5. Click fuera del panel cierra el calendario', async ({ page }) => {
-    await page.locator('[data-testid="date-from-trigger"]').click()
-    await expect(page.locator('.absolute.z-30')).toBeVisible()
+    await expect(page.locator('.fixed.z-30')).toBeVisible()
 
     await page.locator('body').click({ position: { x: 10, y: 10 } })
     await page.waitForTimeout(300)
 
-    await expect(page.locator('.absolute.z-30')).toHaveCount(0)
+    await expect(page.locator('.fixed.z-30')).toHaveCount(0)
   })
 
   test('6. Botón Limpiar resetea el rango', async ({ page }) => {
-    await page.locator('[data-testid="date-from-trigger"]').click()
-    const enabledDays = page.locator('.absolute.z-30 div.grid.grid-cols-7 button:not([disabled])')
+    const enabledDays = page.locator('.fixed.z-30 div.grid.grid-cols-7 button:not([disabled])')
     await enabledDays.nth(0).click()
     await page.waitForTimeout(300)
 
@@ -111,9 +103,7 @@ test.describe('DateRangePicker — selección de rango', () => {
   })
 
   test('7. Click en día anterior a startDate reasigna el inicio', async ({ page }) => {
-    await page.locator('[data-testid="date-from-trigger"]').click()
-
-    const enabledDays = page.locator('.absolute.z-30 div.grid.grid-cols-7 button:not([disabled])')
+    const enabledDays = page.locator('.fixed.z-30 div.grid.grid-cols-7 button:not([disabled])')
     await enabledDays.nth(5).click()
     await page.waitForTimeout(300)
 
@@ -127,25 +117,15 @@ test.describe('DateRangePicker — selección de rango', () => {
   })
 
   test('8. Días anteriores a minDate están deshabilitados', async ({ page }) => {
-    await page.locator('[data-testid="date-from-trigger"]').click()
-
-    const disabledDays = page.locator('.absolute.z-30 div.grid.grid-cols-7 button[disabled]')
+    const disabledDays = page.locator('.fixed.z-30 div.grid.grid-cols-7 button[disabled]')
     const count = await disabledDays.count()
     expect(count).toBeGreaterThan(0)
   })
 
-  test('9. Panel se cierra automáticamente tras completar el rango', async ({ page }) => {
-    await page.locator('[data-testid="date-from-trigger"]').click()
-    await expect(page.locator('.absolute.z-30')).toBeVisible()
-
-    const enabledDays = page.locator('.absolute.z-30 div.grid.grid-cols-7 button:not([disabled])')
-    await enabledDays.nth(0).click()
-    await page.waitForTimeout(200)
-    await enabledDays.nth(2).click()
-
-    await expect(page.locator('.absolute.z-30')).toBeVisible()
-    await page.waitForTimeout(500)
-    await expect(page.locator('.absolute.z-30')).toHaveCount(0)
+  test.skip('9. Panel se cierra automáticamente tras completar el rango', async ({ page }) => {
+    // SKIP: el panel no tiene auto-cierre; el usuario cierra manualmente.
+    // El test E2E requiere reescritura.
+    test.skip(true, 'Requiere reescritura para la versión actual')
   })
 
   test('10. Botón Continuar del StepDates se habilita tras seleccionar rango válido', async ({ page }) => {

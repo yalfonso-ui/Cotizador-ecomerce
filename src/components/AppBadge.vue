@@ -10,13 +10,9 @@ const props = defineProps({
 
 <template>
   <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-semibold"
-    :class="{
-      'bg-primary-100 text-primary-500': variant === 'primary',
-      'bg-secondary-100 text-secondary-500': variant === 'secondary',
-      'bg-accent-100 text-accent-500': variant === 'accent',
-      'bg-green-100 text-green-600': variant === 'success',
-      'bg-red-100 text-red-600': variant === 'error',
-      'bg-yellow-100 text-yellow-600': variant === 'warning'
+    :style="{
+      backgroundColor: variant === 'primary' ? '#00184C' : variant === 'secondary' ? 'rgba(67, 211, 255, 0.12)' : variant === 'accent' ? 'rgba(249, 211, 90, 0.15)' : variant === 'success' ? 'rgba(67, 211, 255, 0.12)' : variant === 'error' ? 'rgba(239, 68, 68, 0.1)' : 'rgba(249, 211, 90, 0.15)',
+      color: variant === 'primary' ? 'white' : variant === 'secondary' ? '#00184C' : variant === 'accent' ? '#00184C' : variant === 'success' ? '#00184C' : variant === 'error' ? '#dc2626' : '#00184C'
     }"
   >
     <slot></slot>

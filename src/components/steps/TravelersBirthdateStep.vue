@@ -109,9 +109,9 @@ initTravelers(travelersCount.value)
 <template>
   <div class="ds-focus-column space-y-8">
     <div class="space-y-2">
-      <span class="ds-eyebrow">Datos de los viajeros</span>
-      <h1 class="ds-heading-1">¿Quiénes viajan?</h1>
-      <p class="ds-helper">Ingresa la fecha de nacimiento de cada viajero.</p>
+      <span class="ds-eyebrow">Tu equipo de viaje</span>
+      <h1 class="ds-heading-1">¿Quiénes <span style="color: #43D3FF;">viajan</span> contigo?</h1>
+      <p class="ds-helper max-w-sm">Ingresa la fecha de nacimiento de cada viajero.</p>
     </div>
 
     <div
@@ -123,7 +123,7 @@ initTravelers(travelersCount.value)
         <svg class="w-4 h-4 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
         </svg>
-        <span><span class="font-bold">Plan Familiar:</span> con 2 adultos, hasta 2 menores de edad quedan cubiertos sin costo adicional.</span>
+        <span><span class="font-bold">Buena noticia:</span> con 2 adultos, hasta 2 menores de edad quedan cubiertos sin costo adicional.</span>
       </p>
     </div>
 
@@ -135,7 +135,7 @@ initTravelers(travelersCount.value)
       >
         <div class="flex items-center justify-between">
           <div class="flex items-center gap-2.5">
-            <div class="w-8 h-8 rounded-full bg-slate-900 flex items-center justify-center shrink-0">
+            <div class="w-8 h-8 rounded-full flex items-center justify-center shrink-0" style="background-color: #00184C;">
               <span class="text-sm font-bold text-white">{{ index + 1 }}</span>
             </div>
             <div>
@@ -194,7 +194,7 @@ initTravelers(travelersCount.value)
         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
         </svg>
-        Agregar otro viajero
+        Sumar otro viajero
       </button>
     </div>
 
@@ -203,7 +203,7 @@ initTravelers(travelersCount.value)
       :disabled="!allValid"
       class="ds-cta"
     >
-      <span v-if="allValid">Continuar con {{ travelersCount }} viajero{{ travelersCount > 1 ? 's' : '' }}</span>
+      <span v-if="allValid">Sigue con tus coberturas</span>
       <span v-else>Completa las fechas de nacimiento</span>
       <svg v-if="allValid" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3" />

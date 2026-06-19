@@ -39,10 +39,10 @@ function finish() {
 }
 
 const steps = [
-  { icon: 'M9 20l-5.447-5.482A1 1 0 013 13.554V5a2 2 0 012-2h14a2 2 0 012 2v8.554a1 1 0 01-.293.707L15 20l-3-3-3 3z', title: 'Confirma tu origen', desc: 'Detectamos tu país automáticamente. Puedes cambiarlo si no es correcto.' },
-  { icon: 'M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z', title: 'Elige tu destino', desc: 'Selecciona uno o más países. Puedes agregar hasta 5 destinos.' },
-  { icon: 'M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z', title: 'Paga seguro', desc: 'Tu pago se procesa de forma segura. Te enviaremos la póliza por correo.' }
-]
+  { icon: 'M9 20l-5.447-5.482A1 1 0 013 13.554V5a2 2 0 012-2h14a2 2 0 012 2v8.554a1 1 0 01-.293.707L15 20l-3-3-3 3z', title: 'Confirma desde dónde sales', desc: 'Detectamos tu país. Puedes ajustarlo en un toque.' },
+  { icon: 'M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z', title: 'Elige hacia dónde viajas', desc: 'Hasta 5 destinos. Así de simple.' },
+  { icon: 'M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z', title: 'Activa tu cobertura', desc: 'Tu pago viaja seguro. Te enviamos todo a tu correo.' }
+]  
 </script>
 
 <template>
@@ -58,17 +58,17 @@ const steps = [
       >
         <div class="bg-white rounded-2xl max-w-md w-full shadow-2xl overflow-hidden">
           <div class="p-6 text-center">
-            <div class="inline-flex items-center justify-center w-14 h-14 rounded-full bg-cyan-100 mb-4">
-              <svg class="w-7 h-7 text-cyan-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <div class="inline-flex items-center justify-center w-14 h-14 rounded-full mb-4" style="background-color: rgba(67, 211, 255, 0.12);">
+              <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true" style="color: #43D3FF;">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
               </svg>
             </div>
-            <h2 id="tour-title" class="text-2xl font-heading font-bold text-slate-900 mb-2">¡Bienvenido a Continental Assist!</h2>
-            <p class="text-sm text-slate-500 mb-6">En 3 pasos simples tendrás tu asistencia de viaje activa.</p>
+            <h2 id="tour-title" class="text-2xl font-heading font-bold text-slate-900 mb-2">Bienvenido. Estamos contigo.</h2>
+            <p class="text-sm text-slate-500 mb-6">En 3 pasos tienes tu cobertura lista. Así de simple. Así de rápido.</p>
 
             <div class="space-y-3 text-left">
               <div v-for="(s, idx) in steps" :key="idx" class="flex items-start gap-3 p-3 rounded-xl bg-slate-50">
-                <div class="w-8 h-8 rounded-full bg-cyan-500 text-white flex items-center justify-center text-sm font-bold shrink-0">
+                <div class="w-8 h-8 rounded-full text-white flex items-center justify-center text-sm font-bold shrink-0" style="background-color: #00184C;">
                   {{ idx + 1 }}
                 </div>
                 <div class="min-w-0">
@@ -81,15 +81,21 @@ const steps = [
 
           <div class="p-4 bg-slate-50 border-t border-slate-100 flex items-center justify-between">
             <label class="flex items-center gap-2 text-xs text-slate-500 cursor-pointer">
-              <input type="checkbox" class="w-3.5 h-3.5 rounded text-cyan-500" />
-              No mostrar de nuevo
+              <input type="checkbox" class="w-3.5 h-3.5 rounded" style="color: #43D3FF;" />
+              No lo vuelvas a mostrar
             </label>
             <button
               type="button"
               @click="finish"
-              class="px-5 py-2 text-sm font-bold text-white bg-cyan-500 hover:bg-cyan-600 active:scale-95 rounded-xl transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-300"
+              class="relative inline-flex items-center justify-between gap-2 px-5 py-2 text-sm font-bold rounded-full shadow-sm transition-all active:scale-95 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#43D3FF] focus-visible:ring-offset-2"
+              style="background-color: #F9D35A; color: #00184C;"
             >
-              Comenzar
+              <span>Inicia aquí</span>
+              <span
+                class="w-6 h-6 rounded-full bg-white flex items-center justify-center shrink-0 ml-1"
+                aria-hidden="true"
+                style="background-image: url(&quot;data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%2300184C' stroke-width='3'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='M7 17L17 7M17 7H8M17 7v9'/%3E%3C/svg%3E&quot;); background-size: 12px 12px; background-repeat: no-repeat; background-position: center;"
+              ></span>
             </button>
           </div>
         </div>

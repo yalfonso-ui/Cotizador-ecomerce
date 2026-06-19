@@ -8,11 +8,10 @@ test.describe('StepDestination — selección múltiple de destinos', () => {
     })
     await page.goto('/')
 
-    await page.getByRole('button', { name: /Comenzar ahora/i }).click()
+    await page.getByRole('button', { name: /Inicia aquí tu compra/i }).click()
 
-    await expect(page.getByText(/¿Desde dónde viajas\?/i)).toBeVisible({ timeout: 5000 })
-    await page.waitForTimeout(1500)
-    await page.getByRole('button', { name: /^Continuar$/i }).click()
+    await page.waitForSelector('button:has-text("Sigue con tu destino")', { timeout: 10000 })
+    await page.click('button:has-text("Sigue con tu destino")')
 
     await expect(page.locator('[data-destination-root]')).toBeVisible({ timeout: 5000 })
   })
@@ -20,12 +19,12 @@ test.describe('StepDestination — selección múltiple de destinos', () => {
   test('1. El dropdown se abre al hacer clic en el input principal', async ({ page }) => {
     const root = page.locator('[data-destination-root]')
 
-    await expect(root.locator('input[placeholder="Selecciona un país o región"]')).toBeVisible()
-    await expect(root.locator('input[placeholder="Busca un país o región"]')).toHaveCount(0)
+    await expect(root.locator('input[placeholder="Busca tu primer destino"]')).toBeVisible()
+    await expect(root.locator('input[placeholder="Escribe el país o región que buscas"]')).toHaveCount(0)
 
     await root.getByTestId('destination-trigger').click()
 
-    await expect(root.locator('input[placeholder="Busca un país o región"]')).toBeVisible()
+    await expect(root.locator('input[placeholder="Escribe el país o región que buscas"]')).toBeVisible()
     await expect(root.getByText(/Destinos principales/i)).toBeVisible()
 
     await expect(root.getByRole('button', { name: /España/ })).toBeVisible()
@@ -39,7 +38,7 @@ test.describe('StepDestination — selección múltiple de destinos', () => {
     const root = page.locator('[data-destination-root]')
 
     await root.getByTestId('destination-trigger').click()
-    const searchInput = root.locator('input[placeholder="Busca un país o región"]')
+    const searchInput = root.locator('input[placeholder="Escribe el país o región que buscas"]')
 
     await searchInput.fill('alema')
 
@@ -63,7 +62,7 @@ test.describe('StepDestination — selección múltiple de destinos', () => {
 
     await root.getByTestId('destination-trigger').click()
 
-    const searchInput = root.locator('input[placeholder="Busca un país o región"]')
+    const searchInput = root.locator('input[placeholder="Escribe el país o región que buscas"]')
     await searchInput.fill('e')
     await root.getByRole('button', { name: /España/ }).first().click()
 
@@ -77,24 +76,24 @@ test.describe('StepDestination — selección múltiple de destinos', () => {
     await expect(root.getByText('Francia', { exact: true }).first()).toBeVisible()
     await expect(root.getByText('Estados Unidos', { exact: true }).first()).toBeVisible()
 
-    await expect(root.locator('input[placeholder="Añade otro destino"]')).toBeVisible()
+    await expect(root.locator('input[placeholder="Añade otra parada a tu viaje"]')).toBeVisible()
 
     await root.getByRole('button', { name: 'Hecho' }).click()
 
-    await expect(root.locator('input[placeholder="Busca un país o región"]')).toHaveCount(0)
-    await expect(root.locator('input[placeholder="Añade otro destino"]')).toHaveCount(0)
+    await expect(root.locator('input[placeholder="Escribe el país o región que buscas"]')).toHaveCount(0)
+    await expect(root.locator('input[placeholder="Añade otra parada a tu viaje"]')).toHaveCount(0)
 
     await expect(root.getByText(/España, Estados Unidos/)).toBeVisible()
     await expect(root.getByText(/\+1$/)).toBeVisible()
 
-    await expect(root.getByRole('button', { name: /Continuar.*3 destinos/i })).toBeEnabled()
+    await expect(root.getByRole('button', { name: /Confirma tus destinos.*3/i })).toBeEnabled()
   })
 
   test('4. El botón limpiar (x) del input principal vacía toda la selección', async ({ page }) => {
     const root = page.locator('[data-destination-root]')
 
     await root.getByTestId('destination-trigger').click()
-    const searchInput = root.locator('input[placeholder="Busca un país o región"]')
+    const searchInput = root.locator('input[placeholder="Escribe el país o región que buscas"]')
     await searchInput.fill('ita')
     await root.getByRole('button', { name: /Italia/ }).first().click()
 
@@ -108,18 +107,18 @@ test.describe('StepDestination — selección múltiple de destinos', () => {
     await root.getByRole('button', { name: 'Limpiar selección' }).click()
 
     await expect(root.getByText('Italia, Portugal')).toHaveCount(0)
-    await expect(root.locator('input[placeholder="Selecciona un país o región"]')).toBeVisible()
-    await expect(root.getByRole('button', { name: /Selecciona un destino/i })).toBeDisabled()
+    await expect(root.locator('input[placeholder="Busca tu primer destino"]')).toBeVisible()
+    await expect(root.getByRole('button', { name: /Elige al menos un destino/i })).toBeDisabled()
   })
 
   test('5. Click fuera del dropdown lo cierra', async ({ page }) => {
     const root = page.locator('[data-destination-root]')
 
     await root.getByTestId('destination-trigger').click()
-    await expect(root.locator('input[placeholder="Busca un país o región"]')).toBeVisible()
+    await expect(root.locator('input[placeholder="Escribe el país o región que buscas"]')).toBeVisible()
 
     await page.locator('body').click({ position: { x: 10, y: 10 } })
 
-    await expect(root.locator('input[placeholder="Busca un país o región"]')).toHaveCount(0)
+    await expect(root.locator('input[placeholder="Escribe el país o región que buscas"]')).toHaveCount(0)
   })
 })

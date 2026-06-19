@@ -39,8 +39,8 @@ watch(travelersUpgrades, (val) => {
 const allUpgradeOptions = [
   {
     id: 'preexistencias',
-    title: 'Preexistencias médicas',
-    description: 'Cobertura para condiciones médicas preexistentes declaradas.',
+    title: 'Preexistencias',
+    description: 'Atención para condiciones médicas que ya tienes declaradas.',
     coverage: 'USD 5,000',
     price: 18.20,
     color: 'rose',
@@ -49,8 +49,8 @@ const allUpgradeOptions = [
   },
   {
     id: 'deportes',
-    title: 'Práctica deportiva',
-    description: 'Actividades deportivas recreativas y de aventura.',
+    title: 'Deportes y aventura',
+    description: 'Respaldo para滑雪, surf, trekking y más actividades outdoor.',
     coverage: 'USD 10,000',
     price: 14.50,
     color: 'sky',
@@ -60,7 +60,7 @@ const allUpgradeOptions = [
   {
     id: 'futura-mama',
     title: 'Futura mamá',
-    description: 'Coberturas especiales para embarazadas hasta semana 32.',
+    description: 'Acompañamiento médico especializado hasta la semana 32.',
     coverage: 'USD 8,000',
     price: 22.00,
     color: 'pink',
@@ -72,11 +72,11 @@ const allUpgradeOptions = [
 const upgradeOptions = allUpgradeOptions
 
 const colorMap = {
-  rose: { selected: 'border-rose-400 bg-rose-50/40', toggle: 'bg-rose-500', dot: 'bg-rose-500' },
-  sky: { selected: 'border-sky-400 bg-sky-50/40', toggle: 'bg-sky-500', dot: 'bg-sky-500' },
-  pink: { selected: 'border-pink-400 bg-pink-50/40', toggle: 'bg-pink-500', dot: 'bg-pink-500' },
-  amber: { selected: 'border-amber-400 bg-amber-50/40', toggle: 'bg-amber-500', dot: 'bg-amber-500' },
-  violet: { selected: 'border-violet-400 bg-violet-50/40', toggle: 'bg-violet-500', dot: 'bg-violet-500' }
+  rose: { selected: 'border-cyan-500 bg-cyan-50/50', toggle: 'bg-cyan-500', dot: 'bg-cyan-500' },
+  sky: { selected: 'border-cyan-500 bg-cyan-50/50', toggle: 'bg-cyan-500', dot: 'bg-cyan-500' },
+  pink: { selected: 'border-cyan-500 bg-cyan-50/50', toggle: 'bg-cyan-500', dot: 'bg-cyan-500' },
+  amber: { selected: 'border-cyan-500 bg-cyan-50/50', toggle: 'bg-cyan-500', dot: 'bg-cyan-500' },
+  violet: { selected: 'border-cyan-500 bg-cyan-50/50', toggle: 'bg-cyan-500', dot: 'bg-cyan-500' }
 }
 
 function toggleUpgrade(travelerId, upgradeId) {
@@ -130,9 +130,9 @@ function handleNext() {
 <template>
   <div class="ds-focus-column max-w-5xl mx-auto space-y-8 w-full">
     <div class="space-y-2">
-      <span class="ds-eyebrow">Coberturas opcionales</span>
-      <h1 class="ds-heading-1">Mejora tu cobertura</h1>
-      <p class="ds-helper">Selecciona las coberturas adicionales para cada viajero.</p>
+      <span class="ds-eyebrow">Un paso más para tu tranquilidad</span>
+      <h1 class="ds-heading-1">Lleva tu <span style="color: #43D3FF;">cobertura</span> mucho más lejos</h1>
+      <p class="ds-helper max-w-md">Activa los respaldos adicionales según el viaje de cada viajero.</p>
     </div>
 
     <div
@@ -141,7 +141,7 @@ function handleNext() {
       class="w-full space-y-3 text-left"
     >
       <div class="flex items-center gap-2.5">
-        <div class="w-7 h-7 rounded-lg bg-slate-900 flex items-center justify-center shrink-0">
+        <div class="w-7 h-7 rounded-lg flex items-center justify-center shrink-0" style="background-color: #00184C;">
           <svg class="w-3.5 h-3.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
           </svg>
@@ -160,8 +160,11 @@ function handleNext() {
           :key="upgrade.id"
           class="relative border rounded-xl p-3.5 transition-colors duration-200 cursor-pointer bg-white"
           :class="isSelected(travelerId, upgrade.id)
-            ? 'border-slate-900 ring-2 ring-slate-900/10'
+            ? 'ring-2'
             : 'border-slate-200 hover:border-slate-400'"
+          :style="isSelected(travelerId, upgrade.id)
+            ? { borderColor: '#43D3FF', backgroundColor: 'rgba(67, 211, 255, 0.06)', boxShadow: '0 0 0 4px rgba(67, 211, 255, 0.15)' }
+            : {}"
           @click="toggleUpgrade(travelerId, upgrade.id)"
           role="checkbox"
           :aria-checked="isSelected(travelerId, upgrade.id)"
@@ -204,8 +207,9 @@ function handleNext() {
                   <div
                     class="relative inline-flex items-center w-11 h-6 rounded-full transition-colors duration-200"
                     :class="isSelected(travelerId, upgrade.id)
-                      ? [colorMap[upgrade.color]?.toggle || 'bg-slate-900']
+                      ? [colorMap[upgrade.color]?.toggle]
                       : 'bg-slate-200 hover:bg-slate-300'"
+                    :style="isSelected(travelerId, upgrade.id) && !colorMap[upgrade.color]?.toggle ? { backgroundColor: '#00184C' } : {}"
                     :aria-hidden="true"
                   >
                     <div
@@ -235,7 +239,8 @@ function handleNext() {
 
           <div
             v-if="isSelected(travelerId, upgrade.id)"
-            class="absolute -top-1.5 -right-1.5 w-6 h-6 rounded-full flex items-center justify-center bg-slate-900"
+            class="absolute -top-1.5 -right-1.5 w-6 h-6 rounded-full flex items-center justify-center"
+            style="background-color: #00184C;"
             aria-hidden="true"
           >
             <svg class="w-3.5 h-3.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -262,16 +267,17 @@ function handleNext() {
       <button
         type="button"
         @click="$emit('next', { upgrades: {} })"
-        class="text-sm font-semibold text-slate-500 hover:text-slate-900 transition-colors px-4 py-2 rounded-full hover:bg-slate-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--ds-focus)]"
+        class="text-sm font-semibold transition-colors px-4 py-2 rounded-full hover:opacity-80 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#43D3FF]"
+        style="color: #00184C; opacity: 0.5;"
       >
-        Omitir y continuar
+        Sigue sin extras
       </button>
 
       <button type="button"
         @click="handleNext"
         class="ds-cta w-auto px-6 py-2.5 text-sm whitespace-nowrap"
       >
-        <span>Continuar</span>
+        <span>Continúa al pago</span>
         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3" />
         </svg>

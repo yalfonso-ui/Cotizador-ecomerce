@@ -27,8 +27,8 @@ const upgrades = [
     id: 'preexistencias',
     icon: '🏥',
     iconBg: 'bg-rose-100',
-    title: 'Preexistencias médicas',
-    description: 'Cobertura para condiciones médicas preexistentes declaradas.',
+    title: 'Preexistencias',
+    description: 'Atención para condiciones médicas que ya tienes declaradas.',
     coverage: 'USD 5.000',
     price: 18.20
   },
@@ -36,8 +36,8 @@ const upgrades = [
     id: 'deportes',
     icon: '⛷️',
     iconBg: 'bg-sky-100',
-    title: 'Práctica deportiva',
-    description: 'Asistencia para actividades deportivas recreativas y aventura.',
+    title: 'Deportes y aventura',
+    description: 'Respaldo para滑雪, surf, trekking y más actividades outdoor.',
     coverage: 'USD 10.000',
     price: 14.50
   },
@@ -46,11 +46,11 @@ const upgrades = [
     icon: '🤰',
     iconBg: 'bg-pink-100',
     title: 'Futura mamá',
-    description: 'Coberturas especiales para embarazadas hasta la semana 32.',
+    description: 'Acompañamiento médico especializado hasta la semana 32.',
     coverage: 'USD 8.000',
     price: 22.00
   }
-]
+]  
 
 const visibleUpgrades = upgrades
 
@@ -130,14 +130,15 @@ onUnmounted(() => {
           <header class="flex items-center justify-between p-5 md:p-6 border-b border-slate-100 flex-shrink-0">
             <div class="min-w-0 flex-1 pr-3">
               <div class="flex items-center gap-2 mb-1">
-                <span class="inline-flex items-center justify-center w-7 h-7 rounded-full bg-cyan-100 text-cyan-700 text-xs font-bold">
+                <span class="inline-flex items-center justify-center w-7 h-7 rounded-full text-xs font-bold"
+                  style="background-color: #43D3FF; color: #00184C;">
                   {{ travelerId }}
                 </span>
                 <h2 :id="`upgrades-title-${travelerId}`" class="text-lg md:text-xl font-bold text-slate-900 truncate">
                   {{ travelerLabel }}
                 </h2>
               </div>
-              <p class="text-sm text-slate-500">Coberturas Adicionales</p>
+              <p class="text-sm text-slate-500">Lleva tu cobertura mucho más lejos</p>
             </div>
             <button
               type="button"
@@ -158,14 +159,16 @@ onUnmounted(() => {
               class="relative bg-white border-2 rounded-2xl p-4 transition-all duration-200"
               :class="[
                 isSelected(upgrade.id)
-                  ? 'border-emerald-500 bg-emerald-50/30 shadow-md'
-                  : 'border-slate-200 hover:border-cyan-300 hover:shadow-sm',
+                  ? 'shadow-md'
+                  : 'border-slate-200 hover:shadow-sm',
                 recentlyToggled === upgrade.id ? 'animate-pulse-once' : ''
               ]"
+              :style="isSelected(upgrade.id) ? { borderColor: '#43D3FF', backgroundColor: 'rgba(67, 211, 255, 0.06)' } : {}"
             >
               <div
                 v-if="isSelected(upgrade.id)"
-                class="absolute -top-2 -right-2 w-7 h-7 rounded-full bg-emerald-500 flex items-center justify-center shadow-md transition-transform"
+                class="absolute -top-2 -right-2 w-7 h-7 rounded-full flex items-center justify-center shadow-md transition-transform"
+                style="background-color: #43D3FF;"
                 :class="recentlyToggled === upgrade.id ? 'scale-125' : 'scale-100'"
                 aria-label="Beneficio agregado"
               >
@@ -191,14 +194,15 @@ onUnmounted(() => {
               <div class="flex items-center justify-between gap-3 pt-3 border-t border-slate-100">
                 <div class="flex items-center gap-4">
                   <div>
-                    <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Cobertura</p>
+                    <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Tu respaldo</p>
                     <p class="text-sm font-bold text-slate-700">{{ upgrade.coverage }}</p>
                   </div>
                   <div>
-                    <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Precio</p>
+                    <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Por día</p>
                     <p
                       class="text-sm font-bold transition-colors"
-                      :class="isSelected(upgrade.id) ? 'text-emerald-600' : 'text-cyan-600'"
+                      :class="isSelected(upgrade.id) ? '' : ''"
+                      :style="{ color: '#00184C', opacity: isSelected(upgrade.id) ? '1' : '0.6' }"
                     >
                       ${{ upgrade.price.toFixed(2) }} USD
                     </p>
@@ -211,7 +215,8 @@ onUnmounted(() => {
                   class="relative overflow-hidden transition-all duration-200 active:scale-95 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 rounded-lg font-bold text-sm"
                   :class="isSelected(upgrade.id)
                     ? 'px-3 py-2 text-slate-500 hover:text-red-600 hover:bg-red-50 focus-visible:ring-red-400'
-                    : 'px-4 py-2 text-slate-900 bg-yellow-400 hover:bg-yellow-500 focus-visible:ring-yellow-500 shadow-sm'"
+                    : 'px-4 py-2 focus-visible:ring-[#43D3FF] shadow-sm'"
+                  :style="!isSelected(upgrade.id) ? { backgroundColor: '#F9D35A', color: '#00184C' } : {}"
                   :aria-pressed="isSelected(upgrade.id)"
                   :aria-label="isSelected(upgrade.id) ? `Quitar ${upgrade.title}` : `Agregar ${upgrade.title}`"
                 >
@@ -222,35 +227,42 @@ onUnmounted(() => {
                     <svg v-else class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12" />
                     </svg>
-                    <span>{{ isSelected(upgrade.id) ? 'Quitar' : 'Agregar' }}</span>
+                    <span>{{ isSelected(upgrade.id) ? 'Quitar' : 'Sumar' }}</span>
                   </span>
                 </button>
               </div>
             </div>
           </div>
 
-          <footer class="flex items-center justify-between gap-3 p-4 md:p-5 border-t border-slate-100 flex-shrink-0 bg-gradient-to-r from-slate-50 to-cyan-50/50">
+          <footer class="flex items-center justify-between gap-3 p-4 md:p-5 border-t border-slate-100 flex-shrink-0" style="background-color: #EDF4F9;">
             <div class="flex flex-col">
               <div class="flex items-baseline gap-1.5">
                 <span
                   class="text-2xl font-black transition-colors"
-                  :class="localSelected.length > 0 ? 'text-cyan-600' : 'text-slate-400'"
+                  :class="localSelected.length > 0 ? '' : ''"
+                  :style="{ color: '#00184C', opacity: localSelected.length > 0 ? '1' : '0.5' }"
                 >
                   ${{ totalPrice.toFixed(2) }}
                 </span>
                 <span class="text-xs font-semibold text-slate-500">USD</span>
               </div>
               <p class="text-[11px] text-slate-500 font-medium">
-                <span v-if="localSelected.length === 0">Sin coberturas adicionales</span>
-                <span v-else>{{ localSelected.length }} cobertura{{ localSelected.length === 1 ? '' : 's' }} · Total por día</span>
+                <span v-if="localSelected.length === 0">Sin extras aún</span>
+                <span v-else>{{ localSelected.length }} respaldo{{ localSelected.length === 1 ? '' : 's' }} para tu viaje</span>
               </p>
             </div>
             <button
               type="button"
               @click="close"
-              class="px-5 py-2.5 text-sm font-bold text-white bg-cyan-500 hover:bg-cyan-600 active:scale-[0.98] rounded-xl transition-all shadow-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500 focus-visible:ring-offset-2"
+              class="relative inline-flex items-center justify-between gap-2 px-5 py-2.5 text-sm font-bold rounded-full shadow-sm transition-all active:scale-[0.98] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#43D3FF] focus-visible:ring-offset-2"
+              style="background-color: #F9D35A; color: #00184C;"
             >
-              {{ localSelected.length > 0 ? `Aplicar ($${totalPrice.toFixed(2)})` : 'Cerrar' }}
+              <span>{{ localSelected.length > 0 ? `Listo, aplica tus extras` : 'Cerrar' }}</span>
+              <span
+                class="w-6 h-6 rounded-full bg-white flex items-center justify-center shrink-0 ml-1"
+                aria-hidden="true"
+                style="background-image: url(&quot;data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%2300184C' stroke-width='3'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='M7 17L17 7M17 7H8M17 7v9'/%3E%3C/svg%3E&quot;); background-size: 12px 12px; background-repeat: no-repeat; background-position: center;"
+              ></span>
             </button>
           </footer>
         </div>

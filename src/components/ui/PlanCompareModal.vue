@@ -21,30 +21,30 @@ const buildComparisonData = (ids) => [
   {
     category: 'Salud y emergencias',
     benefits: [
-      { name: 'Emergencias médicas', values: { lite: 'USD 10.000', essential: 'USD 15.000', explorer: 'USD 50.000', premium: 'USD 100.000', elite: 'USD 250.000' }, ids },
-      { name: 'Repatriación', values: { lite: 'check', essential: 'check', explorer: 'check', premium: 'check', elite: 'check' }, ids },
-      { name: 'Teleconsulta 24/7', values: { lite: 'dash', essential: 'check', explorer: 'check', premium: 'check', elite: 'check' }, ids },
-      { name: 'COVID-19', values: { lite: 'dash', essential: 'check', explorer: 'check', premium: 'check', elite: 'check' }, ids },
-      { name: 'Asistencia de actividades', values: { lite: 'dash', essential: 'dash', explorer: 'dash', premium: 'check', elite: 'check' }, ids }
+      { name: 'Atención médica de urgencia', values: { lite: 'USD 10.000', essential: 'USD 15.000', explorer: 'USD 50.000', premium: 'USD 100.000', elite: 'USD 250.000' }, ids },
+      { name: 'Repatriación a casa', values: { lite: 'check', essential: 'check', explorer: 'check', premium: 'check', elite: 'check' }, ids },
+      { name: 'Teleconsulta cuando la necesites', values: { lite: 'dash', essential: 'check', explorer: 'check', premium: 'check', elite: 'check' }, ids },
+      { name: 'Cobertura COVID-19', values: { lite: 'dash', essential: 'check', explorer: 'check', premium: 'check', elite: 'check' }, ids },
+      { name: 'Actividades deportivas', values: { lite: 'dash', essential: 'dash', explorer: 'dash', premium: 'check', elite: 'check' }, ids }
     ]
   },
   {
-    category: 'Viaje, equipajes y cancelaciones',
+    category: 'Tu viaje y tus pertenencias',
     benefits: [
       { name: 'Cancelación de viaje', values: { lite: 'dash', essential: 'dash', explorer: 'check', premium: 'check', elite: 'check' }, ids },
       { name: 'Equipaje protegido', values: { lite: 'USD 500', essential: 'USD 1.000', explorer: 'USD 1.500', premium: 'USD 3.000', elite: 'USD 5.000' }, ids },
       { name: 'Concierge personal', values: { lite: 'dash', essential: 'dash', explorer: 'dash', premium: 'check', elite: 'check' }, ids },
-      { name: 'Asistencia premium 24/7', values: { lite: 'check', essential: 'check', explorer: 'check', premium: 'check', elite: 'check' }, ids }
+      { name: 'Acompañamiento 24/7', values: { lite: 'check', essential: 'check', explorer: 'check', premium: 'check', elite: 'check' }, ids }
     ]
   },
   {
-    category: 'Límites',
+    category: 'Límites de tu cobertura',
     benefits: [
-      { name: 'Límite de edad', values: { lite: '70 años', essential: '70 años', explorer: '75 años', premium: '80 años', elite: 'Sin límite' }, ids },
+      { name: 'Edad máxima', values: { lite: '70 años', essential: '70 años', explorer: '75 años', premium: '80 años', elite: 'Sin límite' }, ids },
       { name: 'Duración del viaje', values: { lite: '30 días', essential: '60 días', explorer: '180 días', premium: '365 días', elite: 'Sin límite' }, ids }
     ]
   }
-]
+]  
 
 const comparisonData = computed(() => buildComparisonData(planIds.value))
 
@@ -88,18 +88,19 @@ onUnmounted(() => {
         >
           <header class="flex items-center justify-between px-8 pt-8 pb-6 flex-shrink-0">
             <div>
-              <p class="text-[11px] font-semibold text-slate-500 uppercase tracking-[0.15em] mb-1">Comparativa</p>
+              <p class="text-[11px] font-semibold text-slate-500 uppercase tracking-[0.15em] mb-1">Compara sin compromiso</p>
               <h2 id="compare-title" class="text-2xl md:text-3xl font-semibold text-slate-900 tracking-tight">
-                Detalle de coberturas
+                Lo que te cubre cada plan
               </h2>
             </div>
             <button
               type="button"
               @click="close"
-              class="flex items-center justify-center w-10 h-10 rounded-full bg-slate-50 hover:bg-slate-100 active:scale-95 transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-300 focus-visible:ring-offset-2"
+              class="flex items-center justify-center w-10 h-10 rounded-full active:scale-95 transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-[#43D3FF] focus-visible:ring-offset-2"
+              style="background-color: #EDF4F9;"
               aria-label="Cerrar modal"
             >
-              <svg class="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <svg class="w-4 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true" style="color: #00184C;">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
               </svg>
             </button>
@@ -113,7 +114,7 @@ onUnmounted(() => {
                     scope="col"
                     class="sticky left-0 z-30 backdrop-blur-md bg-white/80 text-left pl-8 pr-6 py-4 font-medium text-[13px] text-slate-500 min-w-[180px]"
                   >
-                    Beneficios
+                    Tu respaldo
                   </th>
                   <th
                     v-for="plan in plans"
@@ -131,7 +132,8 @@ onUnmounted(() => {
                       <span class="text-[11px] text-slate-400">USD</span>
                       <span
                         v-if="plan.id === selectedPlanId"
-                        class="inline-block mt-1 px-2 py-0.5 rounded-full bg-slate-900 text-[10px] font-medium text-white uppercase tracking-wider"
+                        class="inline-block mt-1 px-2 py-0.5 rounded-full text-[10px] font-medium uppercase tracking-wider"
+                        style="background-color: #43D3FF; color: #00184C;"
                       >
                         Tu plan
                       </span>
@@ -168,7 +170,7 @@ onUnmounted(() => {
                       :class="plan.id === selectedPlanId ? 'bg-slate-50/40' : ''"
                     >
                       <template v-if="benefit.values[plan.id] === 'check'">
-                        <svg class="w-5 h-5 text-cyan-600 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-label="Incluido">
+                        <svg class="w-5 h-5 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-label="Incluido" style="color: #00184C;">
                           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
                         </svg>
                       </template>
@@ -185,16 +187,22 @@ onUnmounted(() => {
             </table>
           </div>
 
-          <footer class="flex items-center justify-between gap-3 px-8 py-5 border-t border-slate-100 flex-shrink-0 bg-slate-50/50">
-            <p class="text-xs text-slate-500">
-              Los precios están expresados en dólares estadounidenses.
+          <footer class="flex items-center justify-between gap-3 px-8 py-5 border-t border-slate-100 flex-shrink-0" style="background-color: #EDF4F9;">
+            <p class="text-xs" style="color: #00184C; opacity: 0.6;">
+              Precios en dólares estadounidenses. Así de simple.
             </p>
             <button
               type="button"
               @click="close"
-              class="px-5 py-2.5 text-sm font-semibold text-white bg-slate-900 hover:bg-slate-800 active:scale-[0.98] rounded-full transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-700 focus-visible:ring-offset-2"
+              class="relative inline-flex items-center justify-between gap-2 px-5 py-2.5 text-sm font-bold rounded-full shadow-sm transition-all active:scale-[0.98] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#43D3FF] focus-visible:ring-offset-2"
+              style="background-color: #F9D35A; color: #00184C;"
             >
-              Cerrar
+              <span>Listo, gracias</span>
+              <span
+                class="w-6 h-6 rounded-full bg-white flex items-center justify-center shrink-0 ml-1"
+                aria-hidden="true"
+                style="background-image: url(&quot;data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%2300184C' stroke-width='3'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='M7 17L17 7M17 7H8M17 7v9'/%3E%3C/svg%3E&quot;); background-size: 12px 12px; background-repeat: no-repeat; background-position: center;"
+              ></span>
             </button>
           </footer>
         </div>

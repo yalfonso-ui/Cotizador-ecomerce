@@ -289,6 +289,7 @@ onMounted(() => {
     else mql.addListener(updateMobile)
   }
   document.addEventListener('mousedown', onContainerClick)
+  isOpen.value = true
 })
 
 onBeforeUnmount(() => {
@@ -317,19 +318,26 @@ initFromModel()
 
 <template>
   <div ref="containerRef" class="relative w-full">
+    <Transition name="calendar-fade">
+      <div v-if="isOpen" class="fixed inset-0 z-20 bg-black/5 backdrop-blur-[1px]" @click="close" aria-hidden="true"></div>
+    </Transition>
+
     <div class="grid grid-cols-2 gap-3 w-full">
       <button
         type="button"
         data-testid="date-from-trigger"
         @click="isOpen = !isOpen"
         :aria-expanded="isOpen"
-        class="flex flex-col items-start px-4 py-3 bg-white border border-slate-200 rounded-xl text-left transition-colors duration-200 hover:border-slate-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/20"
+        class="flex flex-col items-start px-4 py-3 bg-white border rounded-xl text-left transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/20"
         :class="[
-          startDate ? 'border-blue-500' : 'border-slate-200',
-          !startDate && isOpen ? 'border-blue-500 ring-2 ring-blue-500/10' : ''
+          startDate
+            ? 'border-blue-600 bg-blue-50/40'
+            : isOpen
+              ? 'border-blue-500 ring-2 ring-blue-500/10 bg-white'
+              : 'border-slate-200 hover:border-slate-300 bg-white'
         ]"
       >
-        <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Salida</span>
+        <span class="text-[10px] font-bold uppercase tracking-wider mb-1" :class="startDate ? 'text-blue-600' : 'text-slate-400'">Salida</span>
         <span
           class="text-base font-semibold"
           :class="startDate ? 'text-slate-900' : 'text-slate-400'"
@@ -344,13 +352,18 @@ initFromModel()
         @click="isOpen = !isOpen"
         :aria-expanded="isOpen"
         :disabled="!startDate"
-        class="flex flex-col items-start px-4 py-3 bg-white border border-slate-200 rounded-xl text-left transition-colors duration-200 hover:border-slate-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/20 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:border-slate-200"
+        class="flex flex-col items-start px-4 py-3 bg-white border rounded-xl text-left transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/20"
         :class="[
-          endDate ? 'border-blue-500' : 'border-slate-200',
-          !endDate && startDate && isOpen ? 'border-blue-500 ring-2 ring-blue-500/10' : ''
+          endDate
+            ? 'border-blue-600 bg-blue-50/40'
+            : startDate && isOpen
+              ? 'border-blue-500 ring-2 ring-blue-500/10 bg-white'
+              : startDate
+                ? 'border-slate-300 bg-white'
+                : 'border-slate-200 bg-slate-50/50'
         ]"
       >
-        <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Regreso</span>
+        <span class="text-[10px] font-bold uppercase tracking-wider mb-1" :class="endDate ? 'text-blue-600' : (startDate ? 'text-slate-500' : 'text-slate-300')">Regreso</span>
         <span
           class="text-base font-semibold"
           :class="endDate ? 'text-slate-900' : 'text-slate-400'"
@@ -362,9 +375,9 @@ initFromModel()
 
     <Transition name="calendar-fade">
       <div
-        v-if="isOpen"
-        class="absolute left-1/2 -translate-x-1/2 top-full mt-2 z-30 w-[680px] max-w-[calc(100vw-2rem)] bg-white border border-slate-200 rounded-2xl shadow-xl overflow-hidden"
-      >
+           v-if="isOpen"
+            class="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-30 w-[680px] max-w-none max-h-none bg-white border border-slate-200 rounded-2xl shadow-xl overflow-visible"
+          >
         <div class="flex items-center justify-between px-5 py-4 border-b border-slate-100">
           <button
             type="button"

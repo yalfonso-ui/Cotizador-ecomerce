@@ -79,20 +79,24 @@ function handleContinue() {
 </script>
 
 <template>
-  <div class="flex flex-col items-center justify-center min-h-[60vh] w-full max-w-md mx-auto text-center">
+  <div class="ds-focus-column" data-origin-root>
     <div v-if="isDetecting" class="w-full space-y-3" role="status" aria-live="polite">
       <div class="w-full h-[72px] bg-slate-50 rounded-xl animate-pulse"></div>
-      <p class="text-xs text-slate-400">Preparando opciones para ti</p>
+      <p class="text-xs text-slate-400">Solo un instante, te llevamos al siguiente paso</p>
     </div>
 
     <template v-else>
-      <span class="text-slate-500 text-sm font-medium tracking-wide block">
-        Detectamos tu ubicación automáticamente
+      <span class="ds-eyebrow">
+        Ya casi empezamos
       </span>
 
-      <h1 class="text-3xl md:text-4xl font-bold text-slate-900 tracking-tight mb-8 mt-2">
-        ¿Desde dónde viajas?
+      <h1 class="ds-heading-1">
+        Cuéntanos, <span style="color: #43D3FF;">¿desde dónde viajas?</span>
       </h1>
+
+      <p class="ds-helper max-w-sm">
+        Esto nos permite ajustar tu cobertura al país correcto.
+      </p>
 
       <div v-if="!isDropdownOpen" class="w-full space-y-3">
         <button
@@ -110,8 +114,8 @@ function handleContinue() {
               />
             </div>
             <div class="text-left min-w-0">
-              <span class="text-[10px] uppercase tracking-wider text-blue-600 font-bold block">
-                País de origen detectado
+              <span class="text-[10px] uppercase tracking-wider font-bold block" style="color: #00184C;">
+                Tu punto de partida
               </span>
               <span class="text-lg font-semibold text-slate-800 truncate block">{{ selectedCountry.name }}</span>
             </div>
@@ -122,8 +126,8 @@ function handleContinue() {
         </button>
 
         <p class="text-xs text-slate-400">
-          Si no es correcta,
-          <button type="button" @click="toggleDropdown" class="text-blue-600 font-medium hover:underline focus:outline-none focus-visible:underline">cámbiala aquí</button>.
+          ¿Necesitas ajustarla?
+          <button type="button" @click="toggleDropdown" class="font-medium hover:opacity-80 focus:outline-none focus-visible:underline" style="color: #43D3FF;">Cámbiala aquí</button>.
         </p>
       </div>
 
@@ -136,7 +140,7 @@ function handleContinue() {
             id="origin-search"
             v-model="search"
             type="text"
-            placeholder="Buscar país..."
+            placeholder="Escribe tu país..."
             class="w-full h-14 pl-12 pr-12 text-lg bg-white border border-slate-200 rounded-xl focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all"
             autocomplete="off"
           />
@@ -166,7 +170,7 @@ function handleContinue() {
             </svg>
           </button>
           <p v-if="filtered.length === 0" class="text-center text-slate-500 py-6 text-sm">
-            No encontramos "{{ search }}"
+            Aún no llegamos a "{{ search }}". Prueba con otro nombre.
           </p>
         </div>
       </div>
@@ -177,7 +181,7 @@ function handleContinue() {
         :disabled="!selectedCountry || isDetecting"
         class="w-full mt-6 bg-[#FFCC00] hover:bg-[#E6B800] text-slate-900 font-semibold py-4 px-6 rounded-full flex items-center justify-center gap-2 shadow-sm transition-all active:scale-[0.99] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#FFCC00] focus-visible:ring-offset-2 disabled:bg-slate-100 disabled:text-slate-400 disabled:cursor-not-allowed disabled:active:scale-100"
       >
-        <span>{{ selectedCountry && !isDetecting ? 'Continuar' : 'Selecciona un país' }}</span>
+        <span>{{ selectedCountry && !isDetecting ? 'Sigue con tu destino' : 'Confirma tu país de origen' }}</span>
         <svg v-if="selectedCountry && !isDetecting" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3" />
         </svg>

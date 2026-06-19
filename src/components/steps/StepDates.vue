@@ -39,8 +39,11 @@ function handleContinue() {
 <template>
   <div class="ds-focus-column space-y-8">
     <div class="space-y-2">
-      <span class="ds-eyebrow">Define tu ventana de viaje</span>
-      <h1 class="ds-heading-1">¿Cuándo viajas?</h1>
+      <span class="ds-eyebrow">Tu ventana de viaje</span>
+      <h1 class="ds-heading-1">Marca las <span style="color: #43D3FF;">fechas</span> de tu viaje</h1>
+      <p class="ds-helper text-center max-w-sm">
+        Selecciona el día de salida y el de regreso.
+      </p>
     </div>
 
     <DateRangePicker
@@ -52,7 +55,7 @@ function handleContinue() {
       <svg class="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
       </svg>
-      <span class="text-xs font-semibold text-slate-600 uppercase tracking-wider">Duración total</span>
+      <span class="text-xs font-semibold text-slate-600 uppercase tracking-wider">Vas a estar cubierto por</span>
       <span class="text-base font-black text-slate-900">{{ tripDays }} días</span>
     </div>
 
@@ -62,14 +65,14 @@ function handleContinue() {
       :disabled="!isValid"
       class="ds-cta"
     >
-      Continuar
+      Confirma tus fechas
       <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3" />
       </svg>
     </button>
 
     <p v-if="!isValid" class="ds-helper text-center">
-      Selecciona una fecha de inicio y fin para continuar
+      Elige tu salida y regreso para continuar.
     </p>
   </div>
 </template>

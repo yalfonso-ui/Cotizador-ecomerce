@@ -66,7 +66,7 @@ test.describe('Flujo Completo de Compra - Continental Assist', () => {
       await expect(page.getByText('¿Cuándo viajas?')).toBeVisible();
 
       await page.locator('[data-testid="date-from-trigger"]').click();
-      const dayButtons = page.locator('.absolute.z-30 div.grid.grid-cols-7 button:not([disabled])');
+      const dayButtons = page.locator('.fixed.z-30 div.grid.grid-cols-7 button:not([disabled])');
       const totalDays = await dayButtons.count();
       expect(totalDays).toBeGreaterThan(5);
 

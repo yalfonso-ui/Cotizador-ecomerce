@@ -3,7 +3,7 @@ import { ref, computed, watch, onMounted } from 'vue'
 import PrivacyPolicyModal from '@/components/ui/PrivacyPolicyModal.vue'
 import SubStepIndicator from '@/components/ui/SubStepIndicator.vue'
 import { getTravelerCount as resolveCount, calculateAge } from '@/composables/useTravelerInfo.js'
-import { formatBirthdate as fmtBirthdate } from '@/composables/useDateFormatter.js'
+import { formatBirthdate as fmtBirthdate, formatDate } from '@/composables/useDateFormatter.js'
 import { showToast } from '@/composables/useToast.js'
 
 const emit = defineEmits(['next'])
@@ -11,13 +11,16 @@ const emit = defineEmits(['next'])
 const props = defineProps({
   modelValue: Object,
   selectedPlan: { type: String, default: null },
-  travelers: { type: [String, Number], default: 'solo' },
+  travelers: { type: [String, Number], default: () => 'solo' },
   travelersCount: { type: Number, default: 1 },
-  preloadedBirthdates: { type: Array, default: () => [] }
+  preloadedBirthdates: { type: Array, default: () => [] },
+  origin: { type: [Object, String], default: null },
+  destination: { type: [Object, Array, String], default: null },
+  dates: { type: Object, default: null }
 })
 
 const activeTab = ref(0)
-const tabs = ['Titular', 'Emergencia']
+const tabs = ['Datos del titular', 'Contacto de emergencia']  
 const isDev = import.meta.env.DEV
 
 const travelers_data = ref([])
@@ -29,6 +32,8 @@ const privacyAccepted = ref(false)
 
 const touched = ref({})
 const isPrivacyModalOpen = ref(false)
+
+const travelersLabels = { solo: '1 viajero', pareja: '2 viajeros', familia: '4 viajeros', grupo: '6+ viajeros' }
 
 const getTravelerCount = () => resolveCount(props.travelers, props.travelersCount)
 
@@ -198,6 +203,19 @@ function getAge(traveler) {
   return calculateAge(traveler.day, traveler.month, traveler.year)
 }
 
+function formatOrigin(origin) {
+  if (!origin) return 'Origen'
+  if (typeof origin === 'object' && origin.name) return origin.name
+  return String(origin)
+}
+
+function formatDestination(dest) {
+  if (!dest) return 'Destino'
+  if (Array.isArray(dest)) return dest[0]?.name || dest[0] || 'Destino'
+  if (typeof dest === 'object' && dest.name) return dest.name
+  return String(dest)
+}
+
 function handleNext() {
   if (activeTab.value === 0) {
     travelers_data.value.forEach(t => {
@@ -245,27 +263,30 @@ watch(travelers_data, () => {
 </script>
 
 <template>
-  <div class="ds-focus-column max-w-5xl mx-auto space-y-6 w-full">
-    <header class="space-y-2 text-center">
-      <span class="ds-eyebrow">Tus datos de contacto</span>
-      <h1 class="ds-heading-1">Cuéntanos de ti</h1>
+  <div class="w-full max-w-5xl mx-auto px-4 md:px-8">
+    <header class="space-y-2 text-center mb-6">
+      <span class="ds-eyebrow">Casi listos para protegerte</span>
+      <h1 class="ds-heading-1">Cuéntanos de <span style="color: #43D3FF;">ti</span></h1>
+      <p class="ds-helper max-w-md mx-auto">Así de simple. Así de rápido.</p>
     </header>
 
-    <p class="flex items-start gap-2 text-xs text-slate-600 px-1">
+    <p class="flex items-start gap-2 text-xs text-slate-600 px-1 max-w-md mx-auto mb-6">
       <svg class="w-4 h-4 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
       </svg>
-      Tus datos están seguros. Solo los usaremos para emitir tu asistencia.
+      Tus datos están seguros con nosotros. Los usamos solo para emitir tu asistencia.
     </p>
 
-    <div class="bg-white border border-slate-200 rounded-2xl overflow-hidden">
-      <div class="px-5 pt-5 border-b border-slate-100">
-        <SubStepIndicator :current-sub-step="activeTab + 1" :steps="tabs" />
-      </div>
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <section class="lg:col-span-2 w-full space-y-4">
+        <div class="bg-white border border-slate-200 rounded-2xl overflow-hidden w-full">
+          <div class="px-5 pt-5 border-b border-slate-100">
+            <SubStepIndicator :current-sub-step="activeTab + 1" :steps="tabs" />
+          </div>
 
-      <div class="p-5">
-        <transition name="fade" mode="out-in">
-          <div v-if="activeTab === 0" key="titular" class="space-y-4">
+          <div class="p-5">
+            <transition name="fade" mode="out-in">
+              <div v-if="activeTab === 0" key="titular" class="space-y-4">
             <p
               v-if="titulErrorsCount > 0"
               class="bg-red-50 border border-red-200 rounded-xl p-3 flex items-start gap-2.5 text-sm text-red-700"
@@ -275,90 +296,64 @@ watch(travelers_data, () => {
               <svg class="w-4 h-4 text-red-500 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01M5 19h14a2 2 0 001.84-2.75L13.74 4a2 2 0 00-3.48 0L3.16 16.25A2 2 0 005 19z" />
               </svg>
-              Tienes {{ titulErrorsCount }} {{ titulErrorsCount === 1 ? 'campo por completar' : 'campos por completar' }} en este formulario.
+              Aún te faltan {{ titulErrorsCount }} {{ titulErrorsCount === 1 ? 'dato por completar' : 'datos por completar' }}.
             </p>
 
             <article
               v-for="traveler in travelers_data"
               :key="traveler.id"
-              class="rounded-xl border-2 transition-colors"
-              :class="[
-                expandedTraveler === traveler.id
-                  ? 'bg-white border-cyan-400'
-                  : isTravelerComplete(traveler)
-                    ? 'bg-emerald-50/40 border-emerald-200'
-                    : 'bg-slate-50 border-slate-200'
-              ]"
+              class="transition-colors"
             >
-              <div class="flex items-center justify-between gap-3 px-4 py-3">
-                <button
-                  type="button"
-                  @click="toggleTravelerAccordion(traveler.id)"
-                  class="flex items-center gap-3 min-w-0 flex-1 text-left"
-                  :aria-expanded="expandedTraveler === traveler.id"
-                  :aria-controls="`traveler-panel-${traveler.id}`"
+              <div
+                class="flex items-center gap-2.5 mb-5 pb-4 border-b border-slate-100 cursor-pointer text-left"
+                role="button"
+                tabindex="0"
+                @click="toggleTravelerAccordion(traveler.id)"
+                @keydown.space.prevent="toggleTravelerAccordion(traveler.id)"
+                @keydown.enter.prevent="toggleTravelerAccordion(traveler.id)"
+                :aria-expanded="expandedTraveler === traveler.id"
+                :aria-controls="`traveler-panel-${traveler.id}`"
+              >
+                <div
+                  class="w-8 h-8 rounded-lg flex items-center justify-center shrink-0"
+                  style="background-color: rgba(67, 211, 255, 0.12);"
                 >
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="color: #43D3FF;">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                  </svg>
+                </div>
+                <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider text-left">
+                  Viajero {{ traveler.id }} · {{ traveler.id === 1 ? 'Titular' : 'Acompañante' }}
+                  <span v-if="getAge(traveler) !== null" class="text-slate-300"> · {{ getAge(traveler) }} años</span>
                   <span
-                    class="w-8 h-8 rounded-full flex items-center justify-center shrink-0 text-sm font-bold text-white transition-colors"
-                    :class="isTravelerComplete(traveler)
-                      ? 'bg-emerald-500'
-                      : expandedTraveler === traveler.id
-                        ? 'bg-cyan-500'
-                        : 'bg-slate-300'"
+                    v-if="isTravelerComplete(traveler)"
+                    class="inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full ml-2 align-middle"
+                    style="background-color: rgba(67, 211, 255, 0.12); color: #00184C;"
                   >
-                    <svg v-if="isTravelerComplete(traveler)" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="color: #43D3FF;">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7" />
                     </svg>
-                    <span v-else>{{ traveler.id }}</span>
+                    Listo
                   </span>
-                  <span class="min-w-0 flex-1">
-                    <span class="block text-sm font-bold text-slate-800 truncate">
-                      Viajero {{ traveler.id }} — {{ traveler.id === 1 ? 'Titular' : 'Acompañante' }}
-                      <span v-if="getAge(traveler) !== null" class="text-xs font-medium text-slate-400 ml-1">
-                        ({{ getAge(traveler) }} años)
-                      </span>
-                    </span>
-                    <span v-if="expandedTraveler !== traveler.id && traveler.name" class="block text-xs text-slate-500 truncate">
-                      {{ traveler.name }}
-                    </span>
-                    <span v-else-if="expandedTraveler !== traveler.id" class="block text-xs text-slate-400 truncate">
-                      Pendiente
-                    </span>
-                  </span>
-                  <svg
-                    class="w-4 h-4 text-slate-400 shrink-0 transition-transform"
-                    :class="expandedTraveler === traveler.id ? 'rotate-180' : ''"
-                    fill="none" stroke="currentColor" viewBox="0 0 24 24"
-                    aria-hidden="true"
-                  >
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-                  </svg>
-                </button>
-                <button
-                  v-if="traveler.id > 1 && expandedTraveler === traveler.id && travelers_data[0]"
-                  type="button"
-                  @click.stop="copyFromTitular(traveler)"
-                  class="shrink-0 inline-flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-semibold text-cyan-700 bg-cyan-50 hover:bg-cyan-100 border border-cyan-200 rounded-lg transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500"
-                  :aria-label="`Usar los mismos datos del titular para el viajero ${traveler.id}`"
-                  title="Copia nombre, identificación, email y teléfono del titular"
+                </h3>
+                <svg
+                  class="w-4 h-4 text-slate-400 shrink-0 ml-auto transition-transform"
+                  :class="expandedTraveler === traveler.id ? 'rotate-180' : ''"
+                  fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                  aria-hidden="true"
                 >
-                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                  </svg>
-                  <span class="hidden sm:inline">Usar datos del titular</span>
-                  <span class="sm:hidden">Copiar</span>
-                </button>
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                </svg>
               </div>
 
               <transition name="accordion">
                 <div
                   v-if="expandedTraveler === traveler.id"
                   :id="`traveler-panel-${traveler.id}`"
-                  class="px-4 pb-4 pt-2 space-y-4 border-t border-slate-100"
                 >
-                  <div class="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
+                  <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                      <label :for="`name-${traveler.id}`" class="text-xs font-bold text-slate-500 uppercase tracking-wide mb-1.5 block">
+                      <label :for="`name-${traveler.id}`" class="text-xs font-bold text-slate-500 uppercase tracking-wide mb-1.5 block text-left">
                         Nombre completo <span class="text-red-500">*</span>
                       </label>
                       <div class="relative">
@@ -368,7 +363,7 @@ watch(travelers_data, () => {
                           type="text"
                           placeholder="María García"
                           @blur="touchField(traveler.id, 'name')"
-                          class="w-full h-12 px-4 bg-slate-50 border rounded-xl text-slate-700 placeholder:text-slate-300 transition-all duration-200 focus:bg-white focus:border-cyan-400 focus:ring-4 focus:ring-cyan-50 outline-none pr-9 text-sm"
+                          class="w-full h-12 px-4 bg-slate-50 border border-slate-200 rounded-xl text-slate-700 placeholder:text-slate-300 transition-all duration-200 focus:bg-white focus:border-[#43D3FF] focus:ring-4 focus:ring-[#43D3FF]/15 outline-none pr-9 text-sm"
                           :class="[isFieldTouched(traveler.id, 'name') && isFieldValid(traveler, 'name') ? 'border-green-300 bg-green-50/30' : 'border-slate-200', isFieldTouched(traveler.id, 'name') && !isFieldValid(traveler, 'name') ? 'border-red-300 ring-4 ring-red-50' : '']"
                         />
                         <svg v-if="isFieldTouched(traveler.id, 'name') && isFieldValid(traveler, 'name')" class="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-green-400 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
@@ -379,7 +374,7 @@ watch(travelers_data, () => {
                     </div>
 
                     <div>
-                      <label :for="`id-${traveler.id}`" class="text-xs font-bold text-slate-500 uppercase tracking-wide mb-1.5 block">
+                      <label :for="`id-${traveler.id}`" class="text-xs font-bold text-slate-500 uppercase tracking-wide mb-1.5 block text-left">
                         Identificación / Pasaporte <span class="text-red-500">*</span>
                       </label>
                       <div class="relative">
@@ -391,7 +386,7 @@ watch(travelers_data, () => {
                           type="text"
                           placeholder="12345678 o AB123456"
                           maxlength="20"
-                          class="w-full h-12 px-4 bg-slate-50 border rounded-xl text-slate-700 placeholder:text-slate-300 transition-all duration-200 focus:bg-white focus:border-cyan-400 focus:ring-4 focus:ring-cyan-50 outline-none pr-9 text-sm uppercase"
+                          class="w-full h-12 px-4 bg-slate-50 border border-slate-200 rounded-xl text-slate-700 placeholder:text-slate-300 transition-all duration-200 focus:bg-white focus:border-[#43D3FF] focus:ring-4 focus:ring-[#43D3FF]/15 outline-none pr-9 text-sm uppercase"
                           :class="[isFieldTouched(traveler.id, 'idNumber') && isFieldValid(traveler, 'idNumber') ? 'border-green-300 bg-green-50/30' : 'border-slate-200', isFieldTouched(traveler.id, 'idNumber') && !isFieldValid(traveler, 'idNumber') ? 'border-red-300 ring-4 ring-red-50' : '']"
                         />
                         <svg v-if="isFieldTouched(traveler.id, 'idNumber') && isFieldValid(traveler, 'idNumber')" class="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-green-400 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
@@ -402,7 +397,7 @@ watch(travelers_data, () => {
                     </div>
 
                     <div>
-                      <label :for="`email-${traveler.id}`" class="text-xs font-bold text-slate-500 uppercase tracking-wide mb-1.5 block">
+                      <label :for="`email-${traveler.id}`" class="text-xs font-bold text-slate-500 uppercase tracking-wide mb-1.5 block text-left">
                         Correo electrónico <span class="text-red-500">*</span>
                       </label>
                       <div class="relative">
@@ -412,7 +407,7 @@ watch(travelers_data, () => {
                           type="email"
                           placeholder="maria@email.com"
                           @blur="touchField(traveler.id, 'email')"
-                          class="w-full h-12 px-4 bg-slate-50 border rounded-xl text-slate-700 placeholder:text-slate-300 transition-all duration-200 focus:bg-white focus:border-cyan-400 focus:ring-4 focus:ring-cyan-50 outline-none pr-9 text-sm"
+                          class="w-full h-12 px-4 bg-slate-50 border border-slate-200 rounded-xl text-slate-700 placeholder:text-slate-300 transition-all duration-200 focus:bg-white focus:border-[#43D3FF] focus:ring-4 focus:ring-[#43D3FF]/15 outline-none pr-9 text-sm"
                           :class="[isFieldTouched(traveler.id, 'email') && isFieldValid(traveler, 'email') ? 'border-green-300 bg-green-50/30' : 'border-slate-200', isFieldTouched(traveler.id, 'email') && !isFieldValid(traveler, 'email') ? 'border-red-300 ring-4 ring-red-50' : '']"
                         />
                         <svg v-if="isFieldTouched(traveler.id, 'email') && isFieldValid(traveler, 'email')" class="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-green-400 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
@@ -423,7 +418,7 @@ watch(travelers_data, () => {
                     </div>
 
                     <div>
-                      <label :for="`phone-${traveler.id}`" class="text-xs font-bold text-slate-500 uppercase tracking-wide mb-1.5 block">
+                      <label :for="`phone-${traveler.id}`" class="text-xs font-bold text-slate-500 uppercase tracking-wide mb-1.5 block text-left">
                         Teléfono <span class="text-red-500">*</span>
                       </label>
                       <div class="relative">
@@ -433,7 +428,7 @@ watch(travelers_data, () => {
                           type="tel"
                           placeholder="+52 55 1234 5678"
                           @blur="touchField(traveler.id, 'phone')"
-                          class="w-full h-12 px-4 bg-slate-50 border rounded-xl text-slate-700 placeholder:text-slate-300 transition-all duration-200 focus:bg-white focus:border-cyan-400 focus:ring-4 focus:ring-cyan-50 outline-none pr-9 text-sm"
+                          class="w-full h-12 px-4 bg-slate-50 border border-slate-200 rounded-xl text-slate-700 placeholder:text-slate-300 transition-all duration-200 focus:bg-white focus:border-[#43D3FF] focus:ring-4 focus:ring-[#43D3FF]/15 outline-none pr-9 text-sm"
                           :class="[isFieldTouched(traveler.id, 'phone') && isFieldValid(traveler, 'phone') ? 'border-green-300 bg-green-50/30' : 'border-slate-200', isFieldTouched(traveler.id, 'phone') && !isFieldValid(traveler, 'phone') ? 'border-red-300 ring-4 ring-red-50' : '']"
                         />
                         <svg v-if="isFieldTouched(traveler.id, 'phone') && isFieldValid(traveler, 'phone')" class="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-green-400 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
@@ -444,7 +439,7 @@ watch(travelers_data, () => {
                     </div>
 
                     <div>
-                      <label class="text-xs font-bold text-slate-500 uppercase tracking-wide mb-1.5 block">
+                      <label class="text-xs font-bold text-slate-500 uppercase tracking-wide mb-1.5 block text-left">
                         Fecha de nacimiento
                       </label>
                       <div class="relative">
@@ -506,22 +501,22 @@ watch(travelers_data, () => {
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01M5 19h14a2 2 0 001.84-2.75L13.74 4a2 2 0 00-3.48 0L3.16 16.25A2 2 0 005 19z" />
               </svg>
               <p class="text-sm text-red-700">
-                Tienes {{ emergenciaErrorsCount }} {{ emergenciaErrorsCount === 1 ? 'campo por completar' : 'campos por completar' }} en este formulario.
+                Aún te faltan {{ emergenciaErrorsCount }} {{ emergenciaErrorsCount === 1 ? 'dato' : 'datos' }} para completar.
               </p>
             </div>
 
-            <div class="flex items-center gap-2.5 mb-5 pb-4 border-b border-slate-100">
-              <div class="w-8 h-8 rounded-lg bg-cyan-50 flex items-center justify-center">
-                <svg class="w-4 h-4 text-cyan-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div class="flex items-center gap-2.5 mb-5 pb-4 border-b border-slate-100 text-left">
+              <div class="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" style="background-color: rgba(67, 211, 255, 0.12);">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="color: #43D3FF;">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 5.636l-3.536 3.536m0 5.656l3.536 3.536M9.172 9.172L5.636 5.636m3.536 9.192l-3.536 3.536M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-5 0a4 4 0 11-8 0 4 4 0 018 0z" />
                 </svg>
               </div>
-              <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider">Contacto de emergencia</h3>
+              <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider">¿A quién llamamos si lo necesitas?</h3>
             </div>
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label for="emergency-name" class="text-xs font-bold text-slate-500 uppercase tracking-wide mb-1.5 block">Nombre completo</label>
+                <label for="emergency-name" class="text-xs font-bold text-slate-500 uppercase tracking-wide mb-1.5 block text-left">Nombre completo</label>
                 <div class="relative">
                   <input
                     id="emergency-name"
@@ -529,7 +524,7 @@ watch(travelers_data, () => {
                     type="text"
                     placeholder="Juan García"
                     @blur="emergencyNameTouched = true"
-                    class="w-full h-12 px-4 bg-slate-50 border rounded-xl text-slate-700 placeholder:text-slate-300 transition-all duration-200 focus:bg-white focus:border-cyan-400 focus:ring-4 focus:ring-cyan-50 outline-none pr-9 text-sm"
+                    class="w-full h-12 px-4 bg-slate-50 border border-slate-200 rounded-xl text-slate-700 placeholder:text-slate-300 transition-all duration-200 focus:bg-white focus:border-[#43D3FF] focus:ring-4 focus:ring-[#43D3FF]/15 outline-none pr-9 text-sm"
                     :class="[emergencyNameTouched && emergencyNameValid ? 'border-green-300 bg-green-50/30' : 'border-slate-200', emergencyNameTouched && !emergencyNameValid ? 'border-red-300 ring-4 ring-red-50' : '']"
                   />
                   <svg v-if="emergencyNameTouched && emergencyNameValid" class="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-green-400 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
@@ -540,7 +535,7 @@ watch(travelers_data, () => {
               </div>
 
               <div>
-                <label for="emergency-phone" class="text-xs font-bold text-slate-500 uppercase tracking-wide mb-1.5 block">Teléfono</label>
+                <label for="emergency-phone" class="text-xs font-bold text-slate-500 uppercase tracking-wide mb-1.5 block text-left">Teléfono</label>
                 <div class="relative">
                   <input
                     id="emergency-phone"
@@ -548,7 +543,7 @@ watch(travelers_data, () => {
                     type="tel"
                     placeholder="+52 55 9876 5432"
                     @blur="emergencyPhoneTouched = true"
-                    class="w-full h-12 px-4 bg-slate-50 border rounded-xl text-slate-700 placeholder:text-slate-300 transition-all duration-200 focus:bg-white focus:border-cyan-400 focus:ring-4 focus:ring-cyan-50 outline-none pr-9 text-sm"
+                    class="w-full h-12 px-4 bg-slate-50 border border-slate-200 rounded-xl text-slate-700 placeholder:text-slate-300 transition-all duration-200 focus:bg-white focus:border-[#43D3FF] focus:ring-4 focus:ring-[#43D3FF]/15 outline-none pr-9 text-sm"
                     :class="[emergencyPhoneTouched && emergencyPhoneValid ? 'border-green-300 bg-green-50/30' : 'border-slate-200', emergencyPhoneTouched && !emergencyPhoneValid ? 'border-red-300 ring-4 ring-red-50' : '']"
                   />
                   <svg v-if="emergencyPhoneTouched && emergencyPhoneValid" class="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-green-400 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
@@ -559,12 +554,12 @@ watch(travelers_data, () => {
               </div>
 
               <div class="md:col-span-2">
-                <label class="text-xs font-bold text-slate-500 uppercase tracking-wide mb-1.5 block">Correo electrónico (opcional)</label>
+                <label class="text-xs font-bold text-slate-500 uppercase tracking-wide mb-1.5 block text-left">Correo electrónico (opcional)</label>
                 <input
                   v-model="emergencyEmail"
                   type="email"
                   placeholder="contacto@email.com"
-                  class="w-full h-12 px-4 bg-slate-50 border border-slate-200 rounded-xl text-slate-700 placeholder:text-slate-300 transition-all focus:bg-white focus:border-cyan-400 focus:ring-4 focus:ring-cyan-50 outline-none text-sm"
+                  class="w-full h-12 px-4 bg-slate-50 border border-slate-200 rounded-xl text-slate-700 placeholder:text-slate-300 transition-all focus:bg-white focus:border-[#43D3FF] focus:ring-4 focus:ring-[#43D3FF]/15 outline-none text-sm"
                 />
               </div>
             </div>
@@ -579,7 +574,8 @@ watch(travelers_data, () => {
                   />
                   <div
                     class="w-5 h-5 rounded border-2 transition-all flex items-center justify-center"
-                    :class="privacyAccepted ? 'bg-cyan-500 border-cyan-500' : 'bg-white border-slate-300 group-hover:border-cyan-400'"
+                    :class="privacyAccepted ? '' : 'bg-white border-slate-300 group-hover:border-[#43D3FF]'"
+                    :style="privacyAccepted ? { backgroundColor: '#43D3FF', borderColor: '#43D3FF' } : {}"
                   >
                     <svg v-if="privacyAccepted" class="w-3.5 h-3.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7" />
@@ -588,15 +584,16 @@ watch(travelers_data, () => {
                 </div>
                 <div class="flex-1">
                   <p class="text-sm text-slate-700 leading-relaxed">
-                    Acepto las
+                    Confirmo que he leído las
                     <button
                       type="button"
                       @click.stop="openPrivacyPolicy"
-                      class="text-cyan-600 font-semibold underline underline-offset-2 hover:text-cyan-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500 focus-visible:ring-offset-1 rounded"
+                      class="font-semibold underline underline-offset-2 hover:opacity-80 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#43D3FF] focus-visible:ring-offset-1 rounded"
+                      style="color: #00184C;"
                     >
                       políticas de privacidad
                     </button>
-                    y el tratamiento de mis datos personales.
+                    y autorizo el uso de mis datos para gestionar mi asistencia.
                     <span class="text-red-500">*</span>
                   </p>
                 </div>
@@ -605,27 +602,83 @@ watch(travelers_data, () => {
           </div>
         </transition>
       </div>
+        </div>
+
+        <button type="button"
+          @click="handleNext"
+          :disabled="activeTab === 0 ? !tab0Valid : !canSubmit"
+          class="ds-cta w-auto sm:w-auto min-w-0 px-6 py-2.5 text-sm mx-auto"
+        >
+          <span>{{ activeTab === 0 ? 'Sigue con tu contacto de emergencia' : 'Continúa a tus coberturas opcionales' }}</span>
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3" />
+          </svg>
+        </button>
+
+        <button
+          v-if="isDev"
+          type="button"
+          @click="fillTestData"
+          class="text-xs font-medium text-slate-400 hover:text-slate-600 transition-colors px-2 py-1 mx-auto block"
+        >
+          [Dev] Llenar datos de prueba
+        </button>
+      </section>
+
+      <aside class="lg:col-span-1 w-full space-y-2 lg:sticky lg:top-20 lg:self-start">
+        <div v-if="props.selectedPlan" class="bg-[#00184C] rounded-2xl p-5 shadow-sm w-full">
+          <div class="flex items-center gap-3 mb-3">
+            <div class="w-10 h-10 rounded-xl flex items-center justify-center shrink-0" style="background-color: rgba(249, 211, 90, 0.20);">
+              <span class="text-lg" aria-hidden="true">🛡️</span>
+            </div>
+            <div class="min-w-0">
+              <p class="text-[10px] text-white/60 font-semibold uppercase tracking-wider mb-0.5">Tu plan elegido</p>
+              <p class="text-white font-bold text-base capitalize truncate">{{ props.selectedPlan }}</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="bg-white rounded-2xl border border-slate-200 shadow-sm divide-y divide-slate-100 w-full">
+          <div class="p-4 flex items-center gap-3">
+            <div class="w-9 h-9 rounded-full flex items-center justify-center shrink-0" style="background-color: rgba(67, 211, 255, 0.12);">
+              <span class="text-base" aria-hidden="true">🌎</span>
+            </div>
+            <div class="flex-1 min-w-0">
+              <p class="text-[10px] text-slate-500 uppercase tracking-wider mb-0.5">Tu ruta</p>
+              <p class="font-semibold text-slate-800 text-sm truncate">
+                {{ formatOrigin(props.origin) }}
+                <span class="text-slate-400 mx-1">→</span>
+                {{ formatDestination(props.destination) }}
+              </p>
+            </div>
+          </div>
+
+          <div class="p-4 flex items-center gap-3">
+            <div class="w-9 h-9 rounded-full flex items-center justify-center shrink-0" style="background-color: rgba(67, 211, 255, 0.12);">
+              <span class="text-base" aria-hidden="true">📅</span>
+            </div>
+            <div class="flex-1 min-w-0">
+              <p class="text-[10px] text-slate-500 uppercase tracking-wider mb-0.5">Tus fechas</p>
+              <p class="font-semibold text-slate-800 text-sm truncate">
+                {{ props.dates?.start ? formatDate(props.dates.start) : '—' }}
+                <span v-if="props.dates?.start && props.dates?.end">—</span>
+                {{ props.dates?.end ? formatDate(props.dates.end) : '' }}
+              </p>
+            </div>
+          </div>
+
+          <div class="p-4 flex items-center gap-3">
+            <div class="w-9 h-9 rounded-full flex items-center justify-center shrink-0" style="background-color: rgba(67, 211, 255, 0.12);">
+              <span class="text-base" aria-hidden="true">👥</span>
+            </div>
+            <div class="flex-1 min-w-0">
+              <p class="text-[10px] text-slate-500 uppercase tracking-wider mb-0.5">Quiénes viajan</p>
+              <p class="font-semibold text-slate-800 text-sm">{{ travelersLabels[props.travelers] || props.travelersCount || '—' }} {{ travelersLabels[props.travelers] ? '' : 'personas' }}</p>
+            </div>
+          </div>
+        </div>
+      </aside>
     </div>
-
-    <button type="button"
-      @click="handleNext"
-      :disabled="activeTab === 0 ? !tab0Valid : !canSubmit"
-      class="ds-cta w-auto sm:w-auto min-w-0 px-6 py-2.5 text-sm mx-auto"
-    >
-      <span>{{ activeTab === 0 ? 'Siguiente' : 'Ver coberturas opcionales' }}</span>
-      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3" />
-      </svg>
-    </button>
-
-    <button
-      v-if="isDev"
-      type="button"
-      @click="fillTestData"
-      class="text-xs font-medium text-slate-400 hover:text-slate-600 transition-colors px-2 py-1 mx-auto block"
-    >
-      [Dev] Llenar datos de prueba
-    </button>
 
     <PrivacyPolicyModal v-model="isPrivacyModalOpen" />
   </div>

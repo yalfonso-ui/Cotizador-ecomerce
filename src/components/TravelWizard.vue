@@ -274,7 +274,7 @@ function showTransientNotice(message) {
                   <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
                   </svg>
-                  <span class="hidden sm:inline">Volver</span>
+                  <span class="hidden sm:inline">Atrás</span>
                 </button>
               </div>
 
@@ -283,7 +283,7 @@ function showTransientNotice(message) {
               </div>
 
               <div class="flex items-center justify-end gap-2">
-                <span v-if="currentStep === STEPS.SUCCESS" class="text-xs font-medium text-green-500">¡Completado!</span>
+                <span v-if="currentStep === STEPS.SUCCESS" class="text-xs font-bold" style="color: #43D3FF;">¡Listo!</span>
                 <span v-else class="text-[11px] font-medium text-slate-500 tabular-nums">
                   Paso {{ currentStep + 1 }} de {{ TOTAL_STEPS }}
                 </span>
@@ -300,11 +300,11 @@ function showTransientNotice(message) {
               :aria-valuenow="Math.round(progress)"
               aria-valuemin="0"
               aria-valuemax="100"
-              :aria-label="`Progreso del wizard: paso ${currentStep + 1} de ${TOTAL_STEPS}`"
+              :aria-label="`Vas en el paso ${currentStep + 1} de ${TOTAL_STEPS}`"
             >
               <div
-                class="h-full bg-slate-900 rounded-full transition-all duration-500 ease-out"
-                :style="{ width: progress + '%' }"
+                class="h-full rounded-full transition-all duration-500 ease-out"
+                :style="{ width: progress + '%', background: 'linear-gradient(90deg, #00184C 0%, #43D3FF 100%)' }"
               />
             </div>
           </div>
