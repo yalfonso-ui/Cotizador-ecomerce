@@ -30,21 +30,48 @@ function initTravelers(count) {
   ages.value = agesNext
 }
 
-function handleBirthdateInput(index, event) {
-  const digits = event.target.value.replace(/\D/g, '').slice(0, 8)
+function formatBirthdateFromDigits(digits) {
   const d = digits.slice(0, 2)
   const m = digits.slice(2, 4)
   const y = digits.slice(4, 8)
-  birthdates.value[index].day = d
-  birthdates.value[index].month = m
-  birthdates.value[index].year = y
-  let formatted = ''
-  if (d) formatted += d
-  if (d.length === 2) formatted += '/'
-  if (m) formatted += m
-  if (m.length === 2) formatted += '/'
-  if (y) formatted += y
+  let out = d
+  if (digits.length > 2) out += '/' + m
+  if (digits.length > 4) out += '/' + y
+  return out
+}
+
+function handleBirthdateInput(index, event) {
+  const raw = event.target.value
+  const prev = formatBirthdateField(birthdates.value[index])
+
+  const prevDigits = prev.replace(/\D/g, '')
+  let rawDigits = raw.replace(/\D/g, '')
+
+  if (rawDigits.length > 8) rawDigits = rawDigits.slice(0, 8)
+
+  const slashCountPrev = (prev.match(/\//g) || []).length
+  const slashCountRaw = (raw.match(/\//g) || []).length
+  const lostSlashes = Math.max(0, slashCountPrev - slashCountRaw)
+
+  if (lostSlashes > 0) {
+    rawDigits = rawDigits.slice(0, Math.max(0, rawDigits.length - lostSlashes))
+  }
+
+  birthdates.value[index].day = rawDigits.slice(0, 2)
+  birthdates.value[index].month = rawDigits.slice(2, 4)
+  birthdates.value[index].year = rawDigits.slice(4, 8)
+
+  const formatted = formatBirthdateFromDigits(rawDigits)
+
   event.target.value = formatted
+
+  requestAnimationFrame(() => {
+    if (event.target && document.activeElement === event.target) {
+      const len = formatted.length
+      event.target.setSelectionRange(len, len)
+    }
+  })
+
   updateAge(index)
 }
 
@@ -110,13 +137,12 @@ initTravelers(travelersCount.value)
   <div class="ds-focus-column space-y-8">
     <div class="space-y-2">
       <span class="ds-eyebrow">Tu equipo de viaje</span>
-      <h1 class="ds-heading-1">¿Quiénes <span style="color: #43D3FF;">viajan</span> contigo?</h1>
-      <p class="ds-helper max-w-sm">Ingresa la fecha de nacimiento de cada viajero.</p>
+      <h1 class="ds-heading-1">¿Quiénes viajan<span style="color: #43D3FF;"> contigo</span>? </h1>
     </div>
 
     <div
       v-if="hasMinorsWithAdults"
-      class="w-full bg-slate-50 border border-slate-100 rounded-xl p-4 text-left"
+      class="w-full bg-slate-50 border-2 border-slate-100 rounded-xl p-4 text-left"
       role="note"
     >
       <p class="text-xs text-slate-700 flex items-start gap-2">
@@ -131,7 +157,7 @@ initTravelers(travelersCount.value)
       <div
         v-for="(b, index) in birthdates"
         :key="index"
-        class="w-full bg-white border border-slate-200 rounded-xl p-4 space-y-3"
+        class="w-full bg-white border-2 border-slate-200 rounded-xl p-4 space-y-3"
       >
         <div class="flex items-center justify-between">
           <div class="flex items-center gap-2.5">
@@ -170,7 +196,7 @@ initTravelers(travelersCount.value)
             @input="handleBirthdateInput(index, $event)"
             @blur="updateAge(index)"
             :aria-label="`Fecha de nacimiento del viajero ${index + 1} en formato DD/MM/AAAA`"
-            class="w-full h-12 px-3.5 bg-white border border-slate-200 rounded-xl text-slate-900 placeholder:text-slate-300 transition-all focus:border-[color:var(--ds-focus)] focus:ring-2 focus:ring-[color:var(--ds-focus-ring)] focus:outline-none text-sm font-semibold tracking-wider"
+            class="w-full h-12 px-3.5 bg-white border-2 border-slate-200 rounded-xl text-slate-900 text-base placeholder:text-slate-300 transition-all focus:border-[color:var(--ds-focus)] focus:ring-2 focus:ring-[color:var(--ds-focus-ring)] focus:outline-none font-semibold tracking-wider"
           />
         </div>
 
@@ -189,7 +215,7 @@ initTravelers(travelersCount.value)
       <button type="button"
         v-if="travelersCount < 10"
         @click="addTraveler"
-        class="w-full inline-flex items-center justify-center gap-2 py-3 bg-white hover:bg-slate-50 border border-dashed border-slate-300 text-slate-700 font-semibold text-sm rounded-xl transition-colors"
+        class="w-full inline-flex items-center justify-center gap-2 py-3 bg-white hover:bg-slate-50 border-2 border-dashed border-slate-300 text-slate-700 font-semibold text-sm rounded-xl transition-colors"
       >
         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
@@ -198,15 +224,21 @@ initTravelers(travelersCount.value)
       </button>
     </div>
 
-    <button type="button"
+<button type="button"
       @click="handleContinue"
       :disabled="!allValid"
-      class="ds-cta"
+        class="bg-[#F9D35A] text-[#00184C] font-bold text-base flex items-center justify-center gap-2.5 px-8 py-3.5 rounded-full transition-all hover:brightness-95 shadow-sm w-full max-w-md mx-auto disabled:bg-slate-200 disabled:text-slate-400"
     >
-      <span v-if="allValid">Sigue con tus coberturas</span>
-      <span v-else>Completa las fechas de nacimiento</span>
-      <svg v-if="allValid" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3" />
+      <span v-if="allValid">
+        <span class="hidden md:inline">Sigue con tus coberturas</span>
+        <span class="md:hidden">Ver coberturas</span>
+      </span>
+      <span v-else>
+        <span class="hidden md:inline">Completa las fechas de nacimiento</span>
+        <span class="md:hidden">Completa las fechas</span>
+      </span>
+      <svg v-if="allValid" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-5 h-5 text-white transform rotate-45">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 19.5l15-15m0 0H8.25m11.25 0v11.25" />
       </svg>
     </button>
   </div>

@@ -12,6 +12,7 @@ export default defineConfig({
   server: {
     allowedHosts: [
       'hopefully-fix-version-fairfield.trycloudflare.com',
+      'updates-shut-hour-shoe.trycloudflare.com',
       /^.*\.trycloudflare\.com$/
     ]
   }

@@ -2,6 +2,7 @@
 import { ref, computed, onMounted, onUnmounted, nextTick } from 'vue'
 import PlanCompareModal from '@/components/ui/PlanCompareModal.vue'
 import MultitripInfoModal from '@/components/ui/MultitripInfoModal.vue'
+import QuoteEmailModal from '@/components/ui/QuoteEmailModal.vue'
 import { PLANS as allPlans } from '@/data/plans.js'
 import { showToast } from '@/composables/useToast.js'
 
@@ -14,10 +15,19 @@ const props = defineProps({
 const selectedPlan = ref(null)
 const isCompareModalOpen = ref(false)
 const isMultitripModalOpen = ref(false)
+const isQuoteEmailModalOpen = ref(false)
 const carouselRef = ref(null)
 const canScrollLeft = ref(false)
 const canScrollRight = ref(true)
 const currentCarouselIndex = ref(0)
+
+const destinationLabel = computed(() => {
+  const dests = Array.isArray(props.destination) ? props.destination : [props.destination]
+  const first = dests.find(Boolean)
+  if (!first) return 'tu destino'
+  if (typeof first === 'string') return first
+  return first.name || 'tu destino'
+})
 
 const recommendedPlanId = computed(() => {
   const dests = Array.isArray(props.destination) ? props.destination : [props.destination]
@@ -52,9 +62,10 @@ function openMultitripInfo() {
 
 function scrollCarousel(direction) {
   if (!carouselRef.value) return
-  const scrollAmount = 320
+  const cardWidth = carouselRef.value.firstElementChild?.offsetWidth || 280
+  const gap = 16
   carouselRef.value.scrollBy({
-    left: direction === 'left' ? -scrollAmount : scrollAmount,
+    left: direction === 'left' ? -(cardWidth + gap) : (cardWidth + gap),
     behavior: 'smooth'
   })
 }
@@ -78,7 +89,15 @@ function scrollToPlan(index) {
 }
 
 function handleSaveQuote() {
-  showToast('Cotización enviada a tu correo. Revisa tu bandeja de entrada.', { variant: 'success', duration: 8000 })
+  isQuoteEmailModalOpen.value = true
+}
+
+function handleQuoteSubmit({ email }) {
+  showToast(`Cotización enviada a ${email}. Revisa tu bandeja de entrada.`, { variant: 'success', duration: 8000 })
+}
+
+function handleQuoteDownload() {
+  showToast('Generando PDF…', { variant: 'info', duration: 4000 })
 }
 
 onMounted(() => {
@@ -101,11 +120,10 @@ onUnmounted(() => {
   <div class="w-full max-w-6xl mx-auto px-4 sm:px-6 space-y-6">
     <div class="space-y-2 text-center">
       <span class="ds-eyebrow">Tu respaldo, a tu medida</span>
-      <h1 class="ds-heading-1">Elige la <span style="color: #43D3FF;">cobertura</span> ideal para ti</h1>
-      <p class="ds-helper max-w-md mx-auto">Así de simple. Así de rápido.</p>
+      <h1 class="ds-heading-1">Elige la cobertura<span style="color: #43D3FF;"> ideal para ti</span> </h1>
     </div>
 
-    <div class="w-full">
+    <div class="max-w-4xl mx-auto">
       <p class="text-sm text-slate-600 text-center mb-4">
         ¿Vas a viajar varias veces al año?
         <button type="button"
@@ -117,30 +135,56 @@ onUnmounted(() => {
         </button>
       </p>
 
-      <div>
+      <div class="relative">
+        <button
+          type="button"
+          @click="scrollCarousel('left')"
+          :disabled="!canScrollLeft"
+          class="hidden md:flex absolute left-0 top-1/2 -translate-y-1/2 -translate-x-1/2 z-10 w-10 h-10 rounded-full bg-white border border-slate-200 shadow-md items-center justify-center hover:bg-slate-50 hover:border-slate-300 transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-[#43D3FF] disabled:opacity-0 disabled:pointer-events-none"
+          aria-label="Planes anteriores"
+        >
+          <svg class="w-5 h-5" style="color: #00184C;" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+          </svg>
+        </button>
+
+        <button
+          type="button"
+          @click="scrollCarousel('right')"
+          :disabled="!canScrollRight"
+          class="hidden md:flex absolute right-0 top-1/2 -translate-y-1/2 translate-x-1/2 z-10 w-10 h-10 rounded-full bg-white border border-slate-200 shadow-md items-center justify-center hover:bg-slate-50 hover:border-slate-300 transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-[#43D3FF] disabled:opacity-0 disabled:pointer-events-none"
+          aria-label="Siguientes planes"
+        >
+          <svg class="w-5 h-5" style="color: #00184C;" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+          </svg>
+        </button>
+
         <div
           ref="carouselRef"
-          class="flex gap-3 overflow-x-auto snap-x snap-mandatory scroll-smooth scrollbar-hide pb-2 sm:grid sm:grid-cols-3 lg:grid-cols-5 sm:overflow-visible sm:snap-none sm:gap-4"
-          style="scrollbar-width: none; -ms-overflow-style: none;"
+          class="flex gap-4 overflow-x-auto snap-x snap-mandatory scroll-smooth scrollbar-hide pb-2 px-4 md:px-6"
+          style="scrollbar-width: none; -ms-overflow-style: none; -webkit-overflow-scrolling: touch; touch-action: pan-x;"
         >
           <article
             v-for="plan in plans"
             :key="plan.id"
             @click="selectPlan(plan)"
-            class="snap-start shrink-0 relative w-[260px] sm:w-auto min-w-[260px] sm:min-w-0 border rounded-xl p-3 transition-colors duration-200 cursor-pointer bg-white flex flex-col gap-2"
+            class="snap-start shrink-0 relative border rounded-xl p-4 sm:p-3 transition-colors duration-200 cursor-pointer bg-white flex flex-col gap-2 sm:gap-1.5 sm:w-[40%] md:w-[33.80%] lg:w-[33.80%]"
             :class="[
               selectedPlan === plan.id
                 ? 'border-slate-900 ring-2 ring-slate-900/10'
                 : 'border-slate-200 hover:border-slate-400'
             ]"
           >
-            <span
-              v-if="plan.recommended"
-              class="inline-block self-start mb-2 px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider"
-              style="background-color: #43D3FF; color: #00184C;"
-            >
-              Recomendado
-            </span>
+            <div class="h-5 flex items-start">
+              <span
+                v-if="plan.recommended"
+                class="inline-block self-start px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider"
+                style="background-color: #43D3FF; color: #00184C;"
+              >
+                Recomendado
+              </span>
+            </div>
 
             <div
               v-if="selectedPlan === plan.id"
@@ -154,34 +198,34 @@ onUnmounted(() => {
             </div>
 
             <div class="text-center">
-              <h3 class="text-base font-bold text-slate-900">{{ plan.name }}</h3>
-              <p class="text-[11px] text-slate-500 mt-1 leading-snug min-h-[2rem]">{{ plan.description }}</p>
+              <h3 class="text-base font-bold text-slate-900 leading-tight">{{ plan.name }}</h3>
+              <p class="text-sm sm:text-[11px] text-slate-500 mt-1 sm:mt-0.5 leading-relaxed sm:leading-snug min-h-[1.75rem]">{{ plan.description }}</p>
             </div>
 
-            <div class="text-center mt-3 pt-3 border-t border-slate-100">
+            <div class="text-center pt-3 sm:pt-2 border-t border-slate-100">
               <div class="flex items-baseline justify-center gap-1">
                 <span class="text-3xl font-black text-slate-900">${{ plan.price }}</span>
                 <span class="text-xs font-semibold text-slate-500">{{ plan.currency }}</span>
               </div>
-              <p v-if="plan.anchorPrice" class="text-[11px] text-slate-400 mt-1">
+              <p v-if="plan.anchorPrice" class="text-sm sm:text-[11px] text-slate-400 mt-1 sm:mt-0.5 leading-relaxed sm:leading-tight">
                 <span class="line-through">${{ plan.anchorPrice }}</span>
                 <span class="ml-1 font-semibold" style="color: #43D3FF;">Ahorras ${{ plan.anchorPrice - plan.price }}</span>
               </p>
-              <p class="text-[10px] text-slate-500 mt-1.5">
+              <p class="text-sm sm:text-[10px] text-slate-500 mt-1.5 sm:mt-1 leading-relaxed sm:leading-tight">
                 Cobertura <span class="font-semibold text-slate-700">${{ plan.coverage }} {{ plan.currency }}</span>
               </p>
             </div>
 
-            <ul class="space-y-1 mt-3 mb-3 text-left flex-1">
+            <ul class="space-y-1.5 sm:space-y-0.5 mt-3 sm:mt-2 text-left flex-1">
               <li
                 v-for="feature in plan.features"
                 :key="feature"
-                class="flex items-start gap-1.5 text-[11px] text-slate-600"
+                class="flex items-start gap-2 sm:gap-1.5 text-sm sm:text-[11px] text-slate-600"
               >
-                <svg class="w-3 h-3 text-slate-900 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <svg class="w-3.5 h-3.5 sm:w-3 sm:h-3 text-slate-900 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7" />
                 </svg>
-                <span class="leading-tight">{{ feature }}</span>
+                <span class="leading-relaxed sm:leading-tight">{{ feature }}</span>
               </li>
             </ul>
 
@@ -189,7 +233,7 @@ onUnmounted(() => {
               v-if="selectedPlan === plan.id"
               type="button"
               @click.stop="selectPlan(plan)"
-              class="w-full mt-auto inline-flex items-center justify-center gap-1.5 py-2 rounded-full text-xs font-bold bg-[color:var(--ds-primary)] text-white"
+              class="w-full mt-2 inline-flex items-center justify-center gap-1.5 py-1.5 rounded-full text-xs font-bold bg-[color:var(--ds-primary)] text-white"
             >
               <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" />
@@ -200,15 +244,13 @@ onUnmounted(() => {
               v-else
               type="button"
               @click.stop="selectPlan(plan)"
-              class="relative w-full mt-auto inline-flex items-center justify-between gap-2 py-2 pl-3.5 pr-1.5 rounded-full text-xs font-bold transition-all hover:bg-[#e6c14d] focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--ds-secondary)]"
+              class="w-full mt-2 inline-flex items-center justify-center gap-1.5 py-1.5 px-4 rounded-full text-xs font-bold transition-all hover:brightness-95 focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--ds-secondary)]"
               style="background-color: #F9D35A; color: #00184C;"
             >
-              <span class="flex-1 text-center">Elegir</span>
-              <span
-                class="w-6 h-6 rounded-full bg-white flex items-center justify-center shrink-0"
-                aria-hidden="true"
-                style="background-image: url(&quot;data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%2300184C' stroke-width='3'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='M7 17L17 7M17 7H8M17 7v9'/%3E%3C/svg%3E&quot;); background-size: 12px 12px; background-repeat: no-repeat; background-position: center;"
-              ></span>
+              <span>Elegir</span>
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-3.5 h-3.5 text-white transform rotate-45">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 19.5l15-15m0 0H8.25m11.25 0v11.25" />
+              </svg>
             </button>
           </article>
         </div>
@@ -265,6 +307,13 @@ onUnmounted(() => {
     />
 
     <MultitripInfoModal v-model="isMultitripModalOpen" />
+
+    <QuoteEmailModal
+      v-model="isQuoteEmailModalOpen"
+      :destinationName="destinationLabel"
+      @submit="handleQuoteSubmit"
+      @download-pdf="handleQuoteDownload"
+    />
   </div>
 </template>
 

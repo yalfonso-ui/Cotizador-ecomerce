@@ -74,20 +74,12 @@
 
   /* ============================================================
    * CTA — Botón principal amarillo (píldora perfecta)
-   * Estructura: [Texto Bold] [Círculo blanco con flecha ↗]
+   * Estructura unificada: [Texto Bold] [Flecha blanca inline]
+   * Ya no se usa el círculo blanco con flecha — la flecha va
+   * inline en SVG (`text-white`, `stroke-2.5`, `rotate-45`).
    * ============================================================ */
   .ds-cta {
-    @apply relative inline-flex items-center justify-between gap-3 bg-[color:var(--ds-cta)] hover:bg-[color:var(--ds-cta-hover)] active:scale-[0.99] text-[color:var(--ds-primary)] font-bold py-3.5 pl-6 pr-3 rounded-full shadow-sm transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--ds-secondary)] focus-visible:ring-offset-2 disabled:bg-slate-100 disabled:text-slate-400 disabled:cursor-not-allowed disabled:active:scale-100;
-  }
-
-  /* Círculo blanco interno con flecha */
-  .ds-cta::after {
-    content: '';
-    @apply w-9 h-9 rounded-full bg-white flex items-center justify-center shrink-0 ml-2;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%2300184C' stroke-width='2.5'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='M7 17L17 7M17 7H8M17 7v9'/%3E%3C/svg%3E");
-    background-size: 18px 18px;
-    background-repeat: no-repeat;
-    background-position: center;
+    @apply inline-flex items-center justify-center gap-2.5 bg-[color:var(--ds-cta)] hover:bg-[color:var(--ds-cta-hover)] active:scale-[0.99] text-[color:var(--ds-primary)] font-bold text-base px-8 py-3.5 rounded-full shadow-sm transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--ds-secondary)] focus-visible:ring-offset-2 disabled:bg-slate-200 disabled:text-slate-400 disabled:cursor-not-allowed disabled:active:scale-100;
   }
 
   /* ============================================================

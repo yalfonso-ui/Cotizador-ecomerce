@@ -71,7 +71,10 @@ function nextStep(data = {}) {
   if (data.dates?.start && data.dates?.end) {
     const start = new Date(data.dates.start)
     const end = new Date(data.dates.end)
-    const days = Math.ceil((end - start) / (1000 * 60 * 60 * 24)) + 1
+    start.setHours(0, 0, 0, 0)
+    end.setHours(0, 0, 0, 0)
+    const diffTime = Math.abs(end.getTime() - start.getTime())
+    const days = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
     nextData.tripDuration = days
   }
   formData.value = { ...formData.value, ...nextData }
@@ -125,8 +128,9 @@ destination: [],
 }
 
 watch(currentStep, () => {
-  window.scrollTo({ top: 0, behavior: 'smooth' })
-})
+  if (typeof window === 'undefined') return
+  window.scrollTo({ top: 0, left: 0, behavior: 'instant' })
+}, { flush: 'post' })
 
 const STORAGE_KEY = 'wizard_state'
 const STATE_TTL_DAYS = 7
@@ -172,6 +176,11 @@ watch([formData, currentStep], () => {
 }, { deep: true })
 
 onMounted(() => {
+  if ('scrollRestoration' in window.history) {
+    window.history.scrollRestoration = 'manual'
+  }
+  window.scrollTo({ top: 0, left: 0, behavior: 'instant' })
+
   const urlParams = new URLSearchParams(window.location.search)
   const resumeToken = urlParams.get('resume')
 
@@ -338,6 +347,7 @@ function showTransientNotice(message) {
                     :destination="formData.destination"
                     :dates="formData.dates"
                     :preloadedBirthdates="formData.birthdates"
+                    :personalData="formData.travelersInfo"
                     @next="nextStep"
                     @go-to-step="goToStep"
                   />

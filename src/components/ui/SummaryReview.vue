@@ -155,7 +155,7 @@ const samplePlanData = ref({
                 v-model="testField"
                 type="text"
                 placeholder="Ej: Necesito atención especial"
-                class="w-full h-12 px-4 bg-white border-2 border-gray-200 rounded-xl focus:border-cyan-400 focus:ring-4 focus:ring-cyan-400/20 transition-all placeholder:text-gray-400"
+                class="w-full h-12 px-4 bg-white border-2 border-slate-200 rounded-xl text-base focus:border-[#43D3FF] focus:ring-4 focus:ring-[#43D3FF]/20 transition-all placeholder:text-slate-400"
               />
               <p v-if="hasUnsavedChanges" class="text-amber-600 text-xs mt-2 flex items-center gap-1">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

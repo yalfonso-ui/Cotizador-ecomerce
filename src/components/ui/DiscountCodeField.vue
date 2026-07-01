@@ -81,7 +81,7 @@ function handleRemove() {
         @keyup.enter="handleApply"
         :aria-invalid="codeTouched && !codeValid"
         :aria-describedby="codeTouched && !codeValid ? 'discount-error' : undefined"
-        class="border-none bg-transparent focus:ring-0 text-sm w-full p-1 placeholder-slate-400 uppercase outline-none"
+        class="border-none bg-transparent focus:ring-0 text-base w-full p-1 placeholder-slate-400 uppercase outline-none"
         maxlength="20"
         autocomplete="off"
         spellcheck="false"

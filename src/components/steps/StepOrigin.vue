@@ -79,31 +79,27 @@ function handleContinue() {
 </script>
 
 <template>
-  <div class="ds-focus-column" data-origin-root>
+  <div class="ds-focus-column gap-8" data-origin-root>
     <div v-if="isDetecting" class="w-full space-y-3" role="status" aria-live="polite">
       <div class="w-full h-[72px] bg-slate-50 rounded-xl animate-pulse"></div>
       <p class="text-xs text-slate-400">Solo un instante, te llevamos al siguiente paso</p>
     </div>
 
     <template v-else>
-      <span class="ds-eyebrow">
-        Ya casi empezamos
-      </span>
+      <div class="ds-eyebrow">
+        Cuéntanos
+      </div>
 
       <h1 class="ds-heading-1">
-        Cuéntanos, <span style="color: #43D3FF;">¿desde dónde viajas?</span>
+         ¿Desde dónde <span style="color: #43D3FF;">viajas</span>?
       </h1>
 
-      <p class="ds-helper max-w-sm">
-        Esto nos permite ajustar tu cobertura al país correcto.
-      </p>
-
-      <div v-if="!isDropdownOpen" class="w-full space-y-3">
+      <div v-if="!isDropdownOpen" class="w-full space-y-2">
         <button
           type="button"
           data-testid="origin-trigger"
           @click="toggleDropdown"
-          class="w-full bg-white border border-slate-200 rounded-xl p-4 flex items-center justify-between hover:border-slate-300 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/20"
+          class="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 flex items-center justify-between hover:border-slate-300 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/20"
         >
           <div class="flex items-center gap-4 min-w-0">
             <div class="w-8 h-8 rounded-full overflow-hidden bg-slate-100 flex-shrink-0">
@@ -141,7 +137,7 @@ function handleContinue() {
             v-model="search"
             type="text"
             placeholder="Escribe tu país..."
-            class="w-full h-14 pl-12 pr-12 text-lg bg-white border border-slate-200 rounded-xl focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all"
+            class="w-full h-14 pl-12 pr-12 text-base bg-white border border-slate-200 rounded-xl focus:outline-none focus:border-[#43D3FF] focus:ring-2 focus:ring-[#43D3FF]/20 transition-all"
             autocomplete="off"
           />
           <button type="button"
@@ -179,11 +175,18 @@ function handleContinue() {
         type="button"
         @click="handleContinue"
         :disabled="!selectedCountry || isDetecting"
-        class="w-full mt-6 bg-[#FFCC00] hover:bg-[#E6B800] text-slate-900 font-semibold py-4 px-6 rounded-full flex items-center justify-center gap-2 shadow-sm transition-all active:scale-[0.99] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#FFCC00] focus-visible:ring-offset-2 disabled:bg-slate-100 disabled:text-slate-400 disabled:cursor-not-allowed disabled:active:scale-100"
+        class="mt-8 bg-[#F9D35A] text-[#00184C] font-bold text-base flex items-center justify-center gap-2.5 px-8 py-3.5 rounded-full transition-all hover:brightness-95 shadow-sm w-full max-w-md mx-auto disabled:bg-slate-200 disabled:text-slate-400"
       >
-        <span>{{ selectedCountry && !isDetecting ? 'Sigue con tu destino' : 'Confirma tu país de origen' }}</span>
-        <svg v-if="selectedCountry && !isDetecting" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3" />
+        <span v-if="selectedCountry && !isDetecting">
+          <span class="hidden md:inline">Sigue con tu destino</span>
+          <span class="md:hidden">Continuar</span>
+        </span>
+        <span v-else>
+          <span class="hidden md:inline">Confirma tu país de origen</span>
+          <span class="md:hidden">Confirmar</span>
+        </span>
+        <svg v-if="selectedCountry && !isDetecting" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-5 h-5 text-white transform rotate-45">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 19.5l15-15m0 0H8.25m11.25 0v11.25" />
         </svg>
       </button>
     </template>

@@ -1,8 +1,8 @@
 export const UPGRADE_OPTIONS = [
   {
     id: 'preexistencias',
-    title: 'Preexistencias médicas',
-    description: 'Cobertura para condiciones médicas preexistentes declaradas.',
+    title: 'Preexistencias',
+    description: 'Atención para condiciones médicas que ya tienes declaradas.',
     coverage: 'USD 5,000',
     price: 18.20,
     color: 'rose',
@@ -10,8 +10,8 @@ export const UPGRADE_OPTIONS = [
   },
   {
     id: 'deportes',
-    title: 'Práctica deportiva',
-    description: 'Actividades deportivas recreativas y de aventura.',
+    title: 'Deportes y aventura',
+    description: 'Respaldo para ski, surf, trekking y más actividades outdoor.',
     coverage: 'USD 10,000',
     price: 14.50,
     color: 'sky',
@@ -20,7 +20,7 @@ export const UPGRADE_OPTIONS = [
   {
     id: 'futura-mama',
     title: 'Futura mamá',
-    description: 'Coberturas especiales para embarazadas hasta semana 32.',
+    description: 'Acompañamiento médico especializado hasta la semana 32.',
     coverage: 'USD 8,000',
     price: 22.00,
     color: 'pink',

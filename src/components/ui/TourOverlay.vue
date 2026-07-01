@@ -87,15 +87,13 @@ const steps = [
             <button
               type="button"
               @click="finish"
-              class="relative inline-flex items-center justify-between gap-2 px-5 py-2 text-sm font-bold rounded-full shadow-sm transition-all active:scale-95 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#43D3FF] focus-visible:ring-offset-2"
+              class="inline-flex items-center justify-center gap-2 px-5 py-2 text-sm font-bold rounded-full shadow-sm transition-all active:scale-95 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#43D3FF] focus-visible:ring-offset-2"
               style="background-color: #F9D35A; color: #00184C;"
             >
               <span>Inicia aquí</span>
-              <span
-                class="w-6 h-6 rounded-full bg-white flex items-center justify-center shrink-0 ml-1"
-                aria-hidden="true"
-                style="background-image: url(&quot;data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%2300184C' stroke-width='3'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='M7 17L17 7M17 7H8M17 7v9'/%3E%3C/svg%3E&quot;); background-size: 12px 12px; background-repeat: no-repeat; background-position: center;"
-              ></span>
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="3" stroke="currentColor" class="w-4 h-4 text-white transform rotate-45">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 19.5l15-15m0 0H8.25m11.25 0v11.25" />
+              </svg>
             </button>
           </div>
         </div>

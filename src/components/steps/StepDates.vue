@@ -11,8 +11,16 @@ const isValid = computed(() => Array.isArray(dateRange.value) && !!dateRange.val
 const tripDays = computed(() => {
   if (!isValid.value) return 0
   const [start, end] = dateRange.value
-  const diff = end.getTime() - start.getTime()
-  return Math.round(diff / (1000 * 60 * 60 * 24)) + 1
+  if (!start || !end) return 0
+  const normalize = (d) => {
+    const date = new Date(d)
+    date.setHours(0, 0, 0, 0)
+    return date
+  }
+  const dateSalida = normalize(start)
+  const dateRegreso = normalize(end)
+  const diffTime = Math.abs(dateRegreso.getTime() - dateSalida.getTime())
+  return Math.ceil(diffTime / (1000 * 60 * 60 * 24))
 })
 
 function onDateChange(value) {
@@ -39,11 +47,9 @@ function handleContinue() {
 <template>
   <div class="ds-focus-column space-y-8">
     <div class="space-y-2">
-      <span class="ds-eyebrow">Tu ventana de viaje</span>
-      <h1 class="ds-heading-1">Marca las <span style="color: #43D3FF;">fechas</span> de tu viaje</h1>
-      <p class="ds-helper text-center max-w-sm">
-        Selecciona el día de salida y el de regreso.
-      </p>
+      <span class="ds-eyebrow">Marca las</span>
+      <h1 class="ds-heading-1">Fechas de tu<span style="color: #43D3FF;"> viaje</span> </h1>
+     
     </div>
 
     <DateRangePicker
@@ -59,15 +65,16 @@ function handleContinue() {
       <span class="text-base font-black text-slate-900">{{ tripDays }} días</span>
     </div>
 
-    <button
+<button
       type="button"
       @click="handleContinue"
       :disabled="!isValid"
-      class="ds-cta"
+        class="mt-8 bg-[#F9D35A] text-[#00184C] font-bold text-base flex items-center justify-center gap-2.5 px-8 py-3.5 rounded-full transition-all hover:brightness-95 shadow-sm w-full max-w-md mx-auto disabled:bg-slate-200 disabled:text-slate-400"
     >
-      Confirma tus fechas
-      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3" />
+      <span class="hidden md:inline">Confirma tus fechas</span>
+      <span class="md:hidden">Continuar</span>
+      <svg v-if="isValid" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-5 h-5 text-white transform rotate-45">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 19.5l15-15m0 0H8.25m11.25 0v11.25" />
       </svg>
     </button>
 

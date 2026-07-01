@@ -14,6 +14,7 @@ const props = defineProps({
   travelers: { type: [String, Number], default: () => 'solo' },
   travelersCount: { type: Number, default: 1 },
   preloadedBirthdates: { type: Array, default: () => [] },
+  personalData: { type: Array, default: () => [] },
   origin: { type: [Object, String], default: null },
   destination: { type: [Object, Array, String], default: null },
   dates: { type: Object, default: null }
@@ -32,10 +33,24 @@ const privacyAccepted = ref(false)
 
 const touched = ref({})
 const isPrivacyModalOpen = ref(false)
+const isMobileSummaryExpanded = ref(false)
 
 const travelersLabels = { solo: '1 viajero', pareja: '2 viajeros', familia: '4 viajeros', grupo: '6+ viajeros' }
 
 const getTravelerCount = () => resolveCount(props.travelers, props.travelersCount)
+
+const totalViajeros = computed(() => {
+  if (Array.isArray(props.personalData) && props.personalData.length > 0) {
+    return props.personalData.length
+  }
+  return getTravelerCount()
+})
+
+const travelersLabel = computed(() => {
+  const n = totalViajeros.value
+  if (!n || n < 1) return '—'
+  return `${n} ${n === 1 ? 'viajero' : 'viajeros'}`
+})
 
 const initTravelers = () => {
   const count = getTravelerCount()
@@ -220,7 +235,10 @@ const tripDays = computed(() => {
   if (!props.dates?.start || !props.dates?.end) return 0
   const start = new Date(props.dates.start)
   const end = new Date(props.dates.end)
-  return Math.round((end - start) / (1000 * 60 * 60 * 24)) + 1
+  start.setHours(0, 0, 0, 0)
+  end.setHours(0, 0, 0, 0)
+  const diffTime = Math.abs(end.getTime() - start.getTime())
+  return Math.ceil(diffTime / (1000 * 60 * 60 * 24))
 })
 
 function handleNext() {
@@ -271,21 +289,80 @@ watch(travelers_data, () => {
 
 <template>
   <div class="w-full max-w-5xl mx-auto px-4 md:px-8">
-    <header class="space-y-2 text-center mb-6">
-      <span class="ds-eyebrow">Casi listos para protegerte</span>
-      <h1 class="ds-heading-1">Cuéntanos de <span style="color: #43D3FF;">ti</span></h1>
-      <p class="ds-helper max-w-md mx-auto">Así de simple. Así de rápido.</p>
-    </header>
+    <div class="lg:hidden sticky top-0 z-20 -mx-4 px-4 py-2 bg-white/90 backdrop-blur-md border-b border-slate-100 mb-3">
+      <button
+        type="button"
+        @click="isMobileSummaryExpanded = !isMobileSummaryExpanded"
+        class="w-full flex items-center gap-2 text-left"
+        :aria-expanded="isMobileSummaryExpanded"
+      >
+        <div class="flex items-center gap-2 flex-1 min-w-0 overflow-hidden">
+          <svg class="w-4 h-4 shrink-0 text-[#00184C]" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+          </svg>
+          <span class="text-xs font-semibold text-slate-900 truncate">
+            {{ formatOrigin(props.origin) }} → {{ formatDestination(props.destination) }}
+          </span>
+          <span v-if="props.dates?.start && props.dates?.end" class="text-[10px] text-slate-400 shrink-0 hidden sm:inline">
+            · {{ formatDate(props.dates.start) }} → {{ formatDate(props.dates.end) }}
+          </span>
+          <span v-if="props.selectedPlan" class="text-[10px] font-medium text-slate-500 capitalize shrink-0 hidden sm:inline">
+            · {{ props.selectedPlan }}
+          </span>
+        </div>
+        <svg
+          class="w-4 h-4 shrink-0 text-slate-400 transition-transform"
+          :class="isMobileSummaryExpanded ? 'rotate-180' : ''"
+          fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"
+        >
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+        </svg>
+      </button>
 
-    <p class="flex items-start gap-2 text-xs text-slate-600 px-1 max-w-md mx-auto mb-6">
-      <svg class="w-4 h-4 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-      </svg>
-      Tus datos están seguros con nosotros. Los usamos solo para emitir tu asistencia.
-    </p>
+      <transition name="fade">
+        <div v-if="isMobileSummaryExpanded" class="pt-3 mt-3 border-t border-slate-100 space-y-2">
+          <div class="flex items-start gap-2.5">
+            <span class="text-[10px] font-medium text-slate-400 uppercase tracking-wider w-20 shrink-0 pt-0.5">Resumen</span>
+            <span class="text-xs text-slate-800 font-medium">{{ formatOrigin(props.origin) }} → {{ formatDestination(props.destination) }}</span>
+          </div>
+          <div class="flex items-start gap-2.5">
+            <span class="text-[10px] font-medium text-slate-400 uppercase tracking-wider w-20 shrink-0 pt-0.5">Fechas</span>
+            <span class="text-xs text-slate-800 font-medium">
+              <template v-if="props.dates?.start && props.dates?.end">
+                {{ formatDate(props.dates.start) }} → {{ formatDate(props.dates.end) }}
+                <span class="text-slate-400 ml-1">({{ tripDays }} {{ tripDays === 1 ? 'día' : 'días' }})</span>
+              </template>
+              <template v-else>—</template>
+            </span>
+          </div>
+          <div class="flex items-start gap-2.5">
+            <span class="text-[10px] font-medium text-slate-400 uppercase tracking-wider w-20 shrink-0 pt-0.5">Viajeros</span>
+            <span class="text-xs text-slate-800 font-medium">{{ travelersLabel }}</span>
+          </div>
+          <div v-if="props.selectedPlan" class="flex items-start gap-2.5">
+            <span class="text-[10px] font-medium text-slate-400 uppercase tracking-wider w-20 shrink-0 pt-0.5">Plan</span>
+            <span class="text-xs text-slate-800 font-medium capitalize">{{ props.selectedPlan }}</span>
+          </div>
+          <button
+            type="button"
+            @click="$emit('go-to-step', 1)"
+            class="w-full mt-2 inline-flex items-center justify-center gap-1.5 text-xs font-semibold text-[#00184C] py-2 rounded-lg bg-slate-50 hover:bg-slate-100 transition-colors"
+          >
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+            </svg>
+            Editar todo
+          </button>
+        </div>
+      </transition>
+    </div>
 
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
       <section class="lg:col-span-2 w-full space-y-4">
+        <header class="space-y-2 text-center mb-2">
+          <span class="ds-eyebrow">Casi listos para protegerte</span>
+          <h1 class="ds-heading-1">Cuéntanos de <span style="color: #43D3FF;">ti</span></h1>
+        </header>
         <div class="bg-white border border-slate-200 rounded-2xl overflow-hidden w-full">
           <div class="px-5 pt-5 border-b border-slate-100">
             <SubStepIndicator :current-sub-step="activeTab + 1" :steps="tabs" />
@@ -329,15 +406,20 @@ watch(travelers_data, () => {
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                   </svg>
                 </div>
-                <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider text-left">
-                  Viajero {{ traveler.id }} · {{ traveler.id === 1 ? 'Titular' : 'Acompañante' }}
-                  <span v-if="getAge(traveler) !== null" class="text-slate-300"> · {{ getAge(traveler) }} años</span>
+                <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider text-left flex items-center gap-2 flex-wrap">
+                  <span>Viajero {{ traveler.id }} · {{ traveler.id === 1 ? 'Titular' : 'Acompañante' }}</span>
+                  <span
+                    v-if="getAge(traveler) !== null"
+                    class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full normal-case bg-slate-100"
+                  >
+                    <span class="text-sm font-black tabular-nums text-slate-900">{{ getAge(traveler) }}</span>
+                    <span class="text-[10px] font-bold uppercase tracking-wider text-slate-500">años</span>
+                  </span>
                   <span
                     v-if="isTravelerComplete(traveler)"
-                    class="inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full ml-2 align-middle"
-                    style="background-color: rgba(67, 211, 255, 0.12); color: #00184C;"
+                    class="inline-flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full ml-2 align-middle bg-emerald-50 text-emerald-700"
                   >
-                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="color: #43D3FF;">
+                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7" />
                     </svg>
                     Listo
@@ -370,10 +452,10 @@ watch(travelers_data, () => {
                           type="text"
                           placeholder="María García"
                           @blur="touchField(traveler.id, 'name')"
-                          class="w-full h-12 px-4 bg-slate-50 border border-slate-200 rounded-xl text-slate-700 placeholder:text-slate-300 transition-all duration-200 focus:bg-white focus:border-[#43D3FF] focus:ring-4 focus:ring-[#43D3FF]/15 outline-none pr-9 text-sm"
-                          :class="[isFieldTouched(traveler.id, 'name') && isFieldValid(traveler, 'name') ? 'border-green-300 bg-green-50/30' : 'border-slate-200', isFieldTouched(traveler.id, 'name') && !isFieldValid(traveler, 'name') ? 'border-red-300 ring-4 ring-red-50' : '']"
+                          class="w-full h-12 px-4 bg-slate-50 border border-slate-200 rounded-xl text-slate-700 placeholder:text-slate-300 transition-all duration-200 focus:bg-white focus:border-[#43D3FF] focus:ring-4 focus:ring-[#43D3FF]/15 outline-none pr-9 text-base"
+                          :class="[isFieldTouched(traveler.id, 'name') && isFieldValid(traveler, 'name') ? 'border-emerald-500 ring-2 ring-emerald-400/30 bg-emerald-50/40' : 'border-slate-200', isFieldTouched(traveler.id, 'name') && !isFieldValid(traveler, 'name') ? 'border-red-300 ring-4 ring-red-50' : '']"
                         />
-                        <svg v-if="isFieldTouched(traveler.id, 'name') && isFieldValid(traveler, 'name')" class="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-green-400 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                        <svg v-if="isFieldTouched(traveler.id, 'name') && isFieldValid(traveler, 'name')" class="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-emerald-500 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" />
                         </svg>
                       </div>
@@ -393,10 +475,10 @@ watch(travelers_data, () => {
                           type="text"
                           placeholder="12345678 o AB123456"
                           maxlength="20"
-                          class="w-full h-12 px-4 bg-slate-50 border border-slate-200 rounded-xl text-slate-700 placeholder:text-slate-300 transition-all duration-200 focus:bg-white focus:border-[#43D3FF] focus:ring-4 focus:ring-[#43D3FF]/15 outline-none pr-9 text-sm uppercase"
-                          :class="[isFieldTouched(traveler.id, 'idNumber') && isFieldValid(traveler, 'idNumber') ? 'border-green-300 bg-green-50/30' : 'border-slate-200', isFieldTouched(traveler.id, 'idNumber') && !isFieldValid(traveler, 'idNumber') ? 'border-red-300 ring-4 ring-red-50' : '']"
+                          class="w-full h-12 px-4 bg-slate-50 border border-slate-200 rounded-xl text-slate-700 placeholder:text-slate-300 transition-all duration-200 focus:bg-white focus:border-[#43D3FF] focus:ring-4 focus:ring-[#43D3FF]/15 outline-none pr-9 text-base uppercase"
+                          :class="[isFieldTouched(traveler.id, 'idNumber') && isFieldValid(traveler, 'idNumber') ? 'border-emerald-500 ring-2 ring-emerald-400/30 bg-emerald-50/40' : 'border-slate-200', isFieldTouched(traveler.id, 'idNumber') && !isFieldValid(traveler, 'idNumber') ? 'border-red-300 ring-4 ring-red-50' : '']"
                         />
-                        <svg v-if="isFieldTouched(traveler.id, 'idNumber') && isFieldValid(traveler, 'idNumber')" class="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-green-400 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                        <svg v-if="isFieldTouched(traveler.id, 'idNumber') && isFieldValid(traveler, 'idNumber')" class="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-emerald-500 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" />
                         </svg>
                       </div>
@@ -414,10 +496,10 @@ watch(travelers_data, () => {
                           type="email"
                           placeholder="maria@email.com"
                           @blur="touchField(traveler.id, 'email')"
-                          class="w-full h-12 px-4 bg-slate-50 border border-slate-200 rounded-xl text-slate-700 placeholder:text-slate-300 transition-all duration-200 focus:bg-white focus:border-[#43D3FF] focus:ring-4 focus:ring-[#43D3FF]/15 outline-none pr-9 text-sm"
-                          :class="[isFieldTouched(traveler.id, 'email') && isFieldValid(traveler, 'email') ? 'border-green-300 bg-green-50/30' : 'border-slate-200', isFieldTouched(traveler.id, 'email') && !isFieldValid(traveler, 'email') ? 'border-red-300 ring-4 ring-red-50' : '']"
+                          class="w-full h-12 px-4 bg-slate-50 border border-slate-200 rounded-xl text-slate-700 placeholder:text-slate-300 transition-all duration-200 focus:bg-white focus:border-[#43D3FF] focus:ring-4 focus:ring-[#43D3FF]/15 outline-none pr-9 text-base"
+                          :class="[isFieldTouched(traveler.id, 'email') && isFieldValid(traveler, 'email') ? 'border-emerald-500 ring-2 ring-emerald-400/30 bg-emerald-50/40' : 'border-slate-200', isFieldTouched(traveler.id, 'email') && !isFieldValid(traveler, 'email') ? 'border-red-300 ring-4 ring-red-50' : '']"
                         />
-                        <svg v-if="isFieldTouched(traveler.id, 'email') && isFieldValid(traveler, 'email')" class="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-green-400 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                        <svg v-if="isFieldTouched(traveler.id, 'email') && isFieldValid(traveler, 'email')" class="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-emerald-500 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" />
                         </svg>
                       </div>
@@ -435,10 +517,10 @@ watch(travelers_data, () => {
                           type="tel"
                           placeholder="+52 55 1234 5678"
                           @blur="touchField(traveler.id, 'phone')"
-                          class="w-full h-12 px-4 bg-slate-50 border border-slate-200 rounded-xl text-slate-700 placeholder:text-slate-300 transition-all duration-200 focus:bg-white focus:border-[#43D3FF] focus:ring-4 focus:ring-[#43D3FF]/15 outline-none pr-9 text-sm"
-                          :class="[isFieldTouched(traveler.id, 'phone') && isFieldValid(traveler, 'phone') ? 'border-green-300 bg-green-50/30' : 'border-slate-200', isFieldTouched(traveler.id, 'phone') && !isFieldValid(traveler, 'phone') ? 'border-red-300 ring-4 ring-red-50' : '']"
+                          class="w-full h-12 px-4 bg-slate-50 border border-slate-200 rounded-xl text-slate-700 placeholder:text-slate-300 transition-all duration-200 focus:bg-white focus:border-[#43D3FF] focus:ring-4 focus:ring-[#43D3FF]/15 outline-none pr-9 text-base"
+                          :class="[isFieldTouched(traveler.id, 'phone') && isFieldValid(traveler, 'phone') ? 'border-emerald-500 ring-2 ring-emerald-400/30 bg-emerald-50/40' : 'border-slate-200', isFieldTouched(traveler.id, 'phone') && !isFieldValid(traveler, 'phone') ? 'border-red-300 ring-4 ring-red-50' : '']"
                         />
-                        <svg v-if="isFieldTouched(traveler.id, 'phone') && isFieldValid(traveler, 'phone')" class="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-green-400 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                        <svg v-if="isFieldTouched(traveler.id, 'phone') && isFieldValid(traveler, 'phone')" class="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-emerald-500 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" />
                         </svg>
                       </div>
@@ -485,7 +567,7 @@ watch(travelers_data, () => {
                           </svg>
                         </div>
                       </div>
-                      <p class="text-[10px] text-slate-400 mt-1">
+                      <p class="text-xs text-slate-500 mt-2">
                         <span v-if="getAge(traveler) !== null">{{ getAge(traveler) }} años · pre-cargada del paso anterior</span>
                         <span v-else>Pre-cargada del paso anterior</span>
                       </p>
@@ -531,10 +613,10 @@ watch(travelers_data, () => {
                     type="text"
                     placeholder="Juan García"
                     @blur="emergencyNameTouched = true"
-                    class="w-full h-12 px-4 bg-slate-50 border border-slate-200 rounded-xl text-slate-700 placeholder:text-slate-300 transition-all duration-200 focus:bg-white focus:border-[#43D3FF] focus:ring-4 focus:ring-[#43D3FF]/15 outline-none pr-9 text-sm"
-                    :class="[emergencyNameTouched && emergencyNameValid ? 'border-green-300 bg-green-50/30' : 'border-slate-200', emergencyNameTouched && !emergencyNameValid ? 'border-red-300 ring-4 ring-red-50' : '']"
+                    class="w-full h-12 px-4 bg-slate-50 border border-slate-200 rounded-xl text-slate-700 placeholder:text-slate-300 transition-all duration-200 focus:bg-white focus:border-[#43D3FF] focus:ring-4 focus:ring-[#43D3FF]/15 outline-none pr-9 text-base"
+                    :class="[emergencyNameTouched && emergencyNameValid ? 'border-emerald-500 ring-2 ring-emerald-400/30 bg-emerald-50/40' : 'border-slate-200', emergencyNameTouched && !emergencyNameValid ? 'border-red-300 ring-4 ring-red-50' : '']"
                   />
-                  <svg v-if="emergencyNameTouched && emergencyNameValid" class="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-green-400 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                  <svg v-if="emergencyNameTouched && emergencyNameValid" class="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-emerald-500 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" />
                   </svg>
                 </div>
@@ -550,10 +632,10 @@ watch(travelers_data, () => {
                     type="tel"
                     placeholder="+52 55 9876 5432"
                     @blur="emergencyPhoneTouched = true"
-                    class="w-full h-12 px-4 bg-slate-50 border border-slate-200 rounded-xl text-slate-700 placeholder:text-slate-300 transition-all duration-200 focus:bg-white focus:border-[#43D3FF] focus:ring-4 focus:ring-[#43D3FF]/15 outline-none pr-9 text-sm"
-                    :class="[emergencyPhoneTouched && emergencyPhoneValid ? 'border-green-300 bg-green-50/30' : 'border-slate-200', emergencyPhoneTouched && !emergencyPhoneValid ? 'border-red-300 ring-4 ring-red-50' : '']"
+                    class="w-full h-12 px-4 bg-slate-50 border border-slate-200 rounded-xl text-slate-700 placeholder:text-slate-300 transition-all duration-200 focus:bg-white focus:border-[#43D3FF] focus:ring-4 focus:ring-[#43D3FF]/15 outline-none pr-9 text-base"
+                    :class="[emergencyPhoneTouched && emergencyPhoneValid ? 'border-emerald-500 ring-2 ring-emerald-400/30 bg-emerald-50/40' : 'border-slate-200', emergencyPhoneTouched && !emergencyPhoneValid ? 'border-red-300 ring-4 ring-red-50' : '']"
                   />
-                  <svg v-if="emergencyPhoneTouched && emergencyPhoneValid" class="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-green-400 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                  <svg v-if="emergencyPhoneTouched && emergencyPhoneValid" class="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-emerald-500 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" />
                   </svg>
                 </div>
@@ -566,7 +648,7 @@ watch(travelers_data, () => {
                   v-model="emergencyEmail"
                   type="email"
                   placeholder="contacto@email.com"
-                  class="w-full h-12 px-4 bg-slate-50 border border-slate-200 rounded-xl text-slate-700 placeholder:text-slate-300 transition-all focus:bg-white focus:border-[#43D3FF] focus:ring-4 focus:ring-[#43D3FF]/15 outline-none text-sm"
+                  class="w-full h-12 px-4 bg-slate-50 border border-slate-200 rounded-xl text-slate-700 placeholder:text-slate-300 transition-all focus:bg-white focus:border-[#43D3FF] focus:ring-4 focus:ring-[#43D3FF]/15 outline-none text-base"
                 />
               </div>
             </div>
@@ -611,14 +693,28 @@ watch(travelers_data, () => {
       </div>
         </div>
 
+        <p class="flex items-start gap-2 text-xs text-slate-500 px-1 max-w-md mx-auto mb-3">
+          <svg class="w-4 h-4 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          Tus datos están seguros con nosotros. Los usamos solo para emitir tu asistencia.
+        </p>
+
         <button type="button"
           @click="handleNext"
           :disabled="activeTab === 0 ? !tab0Valid : !canSubmit"
-          class="ds-cta w-auto sm:w-auto min-w-0 px-6 py-2.5 text-sm mx-auto"
+          class="bg-[#F9D35A] text-[#00184C] font-bold text-base flex items-center justify-center gap-2.5 px-8 py-3.5 rounded-full transition-all hover:brightness-95 shadow-sm w-full max-w-md mx-auto disabled:bg-slate-200 disabled:text-slate-400"
         >
-          <span>{{ activeTab === 0 ? 'Sigue con tu contacto de emergencia' : 'Continúa a tus coberturas opcionales' }}</span>
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3" />
+          <span v-if="activeTab === 0">
+            <span class="hidden md:inline">Sigue con tu contacto de emergencia</span>
+            <span class="md:hidden">Continuar</span>
+          </span>
+          <span v-else>
+            <span class="hidden md:inline">Continúa a tus coberturas opcionales</span>
+            <span class="md:hidden">Siguiente</span>
+          </span>
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-5 h-5 text-white transform rotate-45">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 19.5l15-15m0 0H8.25m11.25 0v11.25" />
           </svg>
         </button>
 
@@ -632,93 +728,70 @@ watch(travelers_data, () => {
         </button>
       </section>
 
-      <aside class="lg:col-span-1 w-full space-y-2 lg:sticky lg:top-20 lg:self-start">
+      <aside class="hidden lg:block lg:col-span-1 w-full space-y-2 lg:sticky lg:top-20 lg:self-start">
         <div class="bg-white rounded-2xl border border-slate-200 shadow-sm w-full">
-          <div class="flex items-center justify-between p-4">
-            <p class="text-xs font-bold text-slate-400 uppercase tracking-wider">Tu reserva</p>
-            <button type="button" @click="$emit('go-to-step', 1)" class="text-xs font-semibold text-blue-600 hover:text-blue-700 transition-colors">
+          <div class="flex items-center justify-between p-4 pb-3 border-b border-slate-100">
+            <p class="text-xs font-medium text-slate-500 uppercase tracking-wider">Tu reserva</p>
+            <button type="button" @click="$emit('go-to-step', 1)" class="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-500 hover:text-[#00184C] transition-colors">
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+              </svg>
               Editar todo
             </button>
           </div>
 
-          <div class="px-4 pb-4">
-            <div class="flex items-center gap-3 p-4 rounded-xl" style="background-color: rgba(67, 211, 255, 0.08);">
-              <div class="w-10 h-10 rounded-lg flex items-center justify-center shrink-0" style="background-color: rgba(67, 211, 255, 0.15);">
-                <svg class="w-5 h-5" style="color: #43D3FF;" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-              </div>
+          <dl class="px-4 pb-4 divide-y divide-slate-100">
+            <div class="flex items-start gap-3 py-2.5">
+              <svg class="w-4 h-4 mt-0.5 shrink-0 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
               <div class="flex-1 min-w-0">
-                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">Tu ruta</p>
-                <p class="font-semibold text-slate-800 text-sm truncate">
+                <dt class="text-[10px] font-medium text-slate-400 uppercase tracking-wider mb-0.5">Tu ruta</dt>
+                <dd class="font-semibold text-slate-800 text-sm truncate">
                   {{ formatOrigin(props.origin) }}
-                  <span class="text-slate-400 mx-1">→</span>
+                  <span class="text-slate-300 mx-1">→</span>
                   {{ formatDestination(props.destination) }}
-                </p>
+                </dd>
               </div>
-              <button type="button" @click="$emit('go-to-step', 1)" class="shrink-0 text-xs font-medium text-blue-600 hover:text-blue-700 transition-colors">
-                Editar
-              </button>
             </div>
-          </div>
 
-          <div class="px-4 pb-4">
-            <div class="flex items-center gap-3 p-4 rounded-xl" style="background-color: rgba(67, 211, 255, 0.08);">
-              <div class="w-10 h-10 rounded-lg flex items-center justify-center shrink-0" style="background-color: rgba(67, 211, 255, 0.15);">
-                <svg class="w-5 h-5" style="color: #43D3FF;" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                </svg>
-              </div>
+            <div class="flex items-start gap-3 py-2.5">
+              <svg class="w-4 h-4 mt-0.5 shrink-0 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+              </svg>
               <div class="flex-1 min-w-0">
-                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">Fechas del viaje</p>
-                <p class="font-semibold text-slate-800 text-sm">
+                <dt class="text-[10px] font-medium text-slate-400 uppercase tracking-wider mb-0.5">Fechas del viaje</dt>
+                <dd class="font-semibold text-slate-800 text-sm">
                   <span class="whitespace-nowrap">{{ props.dates?.start ? formatDate(props.dates.start) : '—' }}</span>
-                  <span v-if="props.dates?.start && props.dates?.end" class="text-slate-400 mx-1">→</span>
+                  <span v-if="props.dates?.start && props.dates?.end" class="text-slate-300 mx-1">→</span>
                   <span class="whitespace-nowrap">{{ props.dates?.end ? formatDate(props.dates.end) : '' }}</span>
-                </p>
-                <span v-if="tripDays > 0" class="inline-block mt-1 text-xs font-medium px-2 py-0.5 rounded-full" style="background-color: rgba(67, 211, 255, 0.15); color: #43D3FF;">
-                  {{ tripDays }} días
+                </dd>
+                <span v-if="tripDays > 0" class="inline-block mt-1 text-xs text-slate-400">
+                  {{ tripDays }} {{ tripDays === 1 ? 'día' : 'días' }}
                 </span>
               </div>
-              <button type="button" @click="$emit('go-to-step', 2)" class="shrink-0 text-xs font-medium text-blue-600 hover:text-blue-700 transition-colors">
-                Editar
-              </button>
             </div>
-          </div>
 
-          <div class="px-4 pb-4">
-            <div class="flex items-center gap-3 p-4 rounded-xl" style="background-color: rgba(67, 211, 255, 0.08);">
-              <div class="w-10 h-10 rounded-lg flex items-center justify-center shrink-0" style="background-color: rgba(67, 211, 255, 0.15);">
-                <svg class="w-5 h-5" style="color: #43D3FF;" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-                </svg>
-              </div>
+            <div class="flex items-start gap-3 py-2.5">
+              <svg class="w-4 h-4 mt-0.5 shrink-0 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+              </svg>
               <div class="flex-1 min-w-0">
-                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">Viajeros</p>
-                <p class="font-semibold text-slate-800 text-sm">{{ travelersLabels[props.travelers] || props.travelersCount || '—' }} {{ travelersLabels[props.travelers] ? '' : 'personas' }}</p>
+                <dt class="text-[10px] font-medium text-slate-400 uppercase tracking-wider mb-0.5">Viajeros</dt>
+                <dd class="font-semibold text-slate-800 text-sm">{{ travelersLabel }}</dd>
               </div>
-              <button type="button" @click="$emit('go-to-step', 3)" class="shrink-0 text-xs font-medium text-blue-600 hover:text-blue-700 transition-colors">
-                Editar
-              </button>
             </div>
-          </div>
 
-          <div v-if="props.selectedPlan" class="px-4 pb-4">
-            <div class="flex items-center gap-3 p-4 rounded-xl" style="background-color: rgba(249, 211, 90, 0.12);">
-              <div class="w-10 h-10 rounded-lg flex items-center justify-center shrink-0" style="background-color: rgba(249, 211, 90, 0.20);">
-                <svg class="w-5 h-5" style="color: #F9D35A;" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-                </svg>
-              </div>
+            <div v-if="props.selectedPlan" class="flex items-start gap-3 py-2.5">
+              <svg class="w-4 h-4 mt-0.5 shrink-0 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+              </svg>
               <div class="flex-1 min-w-0">
-                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">Tu plan</p>
-                <p class="font-semibold text-slate-800 text-sm capitalize">{{ props.selectedPlan }}</p>
+                <dt class="text-[10px] font-medium text-slate-400 uppercase tracking-wider mb-0.5">Tu plan</dt>
+                <dd class="font-semibold text-slate-800 text-sm capitalize">{{ props.selectedPlan }}</dd>
               </div>
-              <button type="button" @click="$emit('go-to-step', 4)" class="shrink-0 text-xs font-medium text-blue-600 hover:text-blue-700 transition-colors">
-                Editar
-              </button>
             </div>
-          </div>
+          </dl>
         </div>
       </aside>
     </div>
@@ -753,3 +826,6 @@ watch(travelers_data, () => {
   max-height: 800px;
 }
 </style>
+
+
+

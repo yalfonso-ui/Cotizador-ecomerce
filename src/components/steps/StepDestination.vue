@@ -266,7 +266,7 @@ watch(
               v-model="searchQuery"
               type="text"
               placeholder="Escribe el país o región que buscas"
-              class="w-full h-10 px-3 text-sm text-slate-900 placeholder:text-slate-400 bg-slate-50 border border-transparent rounded-lg focus:bg-white focus:border-[color:var(--ds-focus)] focus:outline-none transition-colors duration-150"
+              class="w-full h-10 px-3 text-base text-slate-900 placeholder:text-slate-400 bg-slate-50 border border-transparent rounded-lg focus:bg-white focus:border-[color:var(--ds-focus)] focus:outline-none transition-colors duration-150"
               autocomplete="off"
             />
           </div>
@@ -364,29 +364,28 @@ watch(
         </div>
       </div>
 
-      <p
-        v-if="!isOpen && selectedCountries.length === 0"
-        class="ds-helper text-center"
-      >
-        Toca el buscador y elige tu primer destino.
-      </p>
+     
     </div>
 
-    <button
+<button
       type="button"
       @click="handleContinue"
       :disabled="selectedCountries.length === 0"
-      class="ds-cta"
+        class="bg-[#F9D35A] text-[#00184C] font-bold text-base flex items-center justify-center gap-2.5 px-8 py-3.5 rounded-full transition-all hover:brightness-95 shadow-sm w-full max-w-md mx-auto disabled:bg-slate-200 disabled:text-slate-400"
     >
       <span v-if="selectedCountries.length > 0">
-        Confirma tus destinos
+        <span class="hidden md:inline">Confirma tus destinos</span>
+        <span class="md:hidden">Confirmar</span>
         <span v-if="selectedCountries.length > 1" class="text-sm font-medium opacity-80 ml-1">
           ({{ selectedCountries.length }})
         </span>
       </span>
-      <span v-else>Elige al menos un destino</span>
-      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3" />
+      <span v-else>
+        <span class="hidden md:inline">Elige al menos un destino</span>
+        <span class="md:hidden">Selecciona un destino</span>
+      </span>
+      <svg v-if="selectedCountries.length > 0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-5 h-5 text-white transform rotate-45 disabled:opacity-0">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 19.5l15-15m0 0H8.25m11.25 0v11.25" />
       </svg>
     </button>
   </div>
