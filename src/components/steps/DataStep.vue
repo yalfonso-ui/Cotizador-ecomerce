@@ -3,6 +3,8 @@ import { ref, computed, watch, onMounted } from 'vue'
 import PrivacyPolicyModal from '@/components/ui/PrivacyPolicyModal.vue'
 import SubStepIndicator from '@/components/ui/SubStepIndicator.vue'
 import { getTravelerCount as resolveCount, calculateAge } from '@/composables/useTravelerInfo.js'
+import { getPlanPrice as planPrice } from '@/data/plans.js'
+import { getUpgradesTotal } from '@/data/upgrades.js'
 import { formatBirthdate as fmtBirthdate, formatDate } from '@/composables/useDateFormatter.js'
 import { showToast } from '@/composables/useToast.js'
 
@@ -17,7 +19,8 @@ const props = defineProps({
   personalData: { type: Array, default: () => [] },
   origin: { type: [Object, String], default: null },
   destination: { type: [Object, Array, String], default: null },
-  dates: { type: Object, default: null }
+  dates: { type: Object, default: null },
+  upgrades: { type: Object, default: () => ({}) }
 })
 
 const activeTab = ref(0)
@@ -50,6 +53,12 @@ const travelersLabel = computed(() => {
   const n = totalViajeros.value
   if (!n || n < 1) return '—'
   return `${n} ${n === 1 ? 'viajero' : 'viajeros'}`
+})
+
+const upgradesTotalPrice = computed(() => getUpgradesTotal(props.upgrades))
+const planTotalPrice = computed(() => {
+  const base = planPrice(props.selectedPlan)
+  return base + upgradesTotalPrice.value
 })
 
 const initTravelers = () => {
@@ -288,7 +297,7 @@ watch(travelers_data, () => {
 </script>
 
 <template>
-  <div class="w-full max-w-5xl mx-auto px-4 md:px-8">
+  <div class="w-full max-w-3xl mx-auto px-4 md:px-8">
     <div class="lg:hidden sticky top-0 z-20 -mx-4 px-4 py-2 bg-white/90 backdrop-blur-md border-b border-slate-100 mb-3">
       <button
         type="button"
@@ -357,8 +366,7 @@ watch(travelers_data, () => {
       </transition>
     </div>
 
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
-      <section class="lg:col-span-2 w-full space-y-4">
+      <section class="w-full space-y-4">
         <header class="space-y-2 text-center mb-2">
           <span class="ds-eyebrow">Casi listos para protegerte</span>
           <h1 class="ds-heading-1">Cuéntanos de <span style="color: #43D3FF;">ti</span></h1>
@@ -713,7 +721,7 @@ watch(travelers_data, () => {
             <span class="hidden md:inline">Continúa a tus coberturas opcionales</span>
             <span class="md:hidden">Siguiente</span>
           </span>
-          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-5 h-5 text-white transform rotate-45">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-5 h-5 text-current transform rotate-45">
             <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 19.5l15-15m0 0H8.25m11.25 0v11.25" />
           </svg>
         </button>
@@ -728,73 +736,7 @@ watch(travelers_data, () => {
         </button>
       </section>
 
-      <aside class="hidden lg:block lg:col-span-1 w-full space-y-2 lg:sticky lg:top-20 lg:self-start">
-        <div class="bg-white rounded-2xl border border-slate-200 shadow-sm w-full">
-          <div class="flex items-center justify-between p-4 pb-3 border-b border-slate-100">
-            <p class="text-xs font-medium text-slate-500 uppercase tracking-wider">Tu reserva</p>
-            <button type="button" @click="$emit('go-to-step', 1)" class="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-500 hover:text-[#00184C] transition-colors">
-              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
-              </svg>
-              Editar todo
-            </button>
-          </div>
 
-          <dl class="px-4 pb-4 divide-y divide-slate-100">
-            <div class="flex items-start gap-3 py-2.5">
-              <svg class="w-4 h-4 mt-0.5 shrink-0 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-              <div class="flex-1 min-w-0">
-                <dt class="text-[10px] font-medium text-slate-400 uppercase tracking-wider mb-0.5">Tu ruta</dt>
-                <dd class="font-semibold text-slate-800 text-sm truncate">
-                  {{ formatOrigin(props.origin) }}
-                  <span class="text-slate-300 mx-1">→</span>
-                  {{ formatDestination(props.destination) }}
-                </dd>
-              </div>
-            </div>
-
-            <div class="flex items-start gap-3 py-2.5">
-              <svg class="w-4 h-4 mt-0.5 shrink-0 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-              </svg>
-              <div class="flex-1 min-w-0">
-                <dt class="text-[10px] font-medium text-slate-400 uppercase tracking-wider mb-0.5">Fechas del viaje</dt>
-                <dd class="font-semibold text-slate-800 text-sm">
-                  <span class="whitespace-nowrap">{{ props.dates?.start ? formatDate(props.dates.start) : '—' }}</span>
-                  <span v-if="props.dates?.start && props.dates?.end" class="text-slate-300 mx-1">→</span>
-                  <span class="whitespace-nowrap">{{ props.dates?.end ? formatDate(props.dates.end) : '' }}</span>
-                </dd>
-                <span v-if="tripDays > 0" class="inline-block mt-1 text-xs text-slate-400">
-                  {{ tripDays }} {{ tripDays === 1 ? 'día' : 'días' }}
-                </span>
-              </div>
-            </div>
-
-            <div class="flex items-start gap-3 py-2.5">
-              <svg class="w-4 h-4 mt-0.5 shrink-0 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-              </svg>
-              <div class="flex-1 min-w-0">
-                <dt class="text-[10px] font-medium text-slate-400 uppercase tracking-wider mb-0.5">Viajeros</dt>
-                <dd class="font-semibold text-slate-800 text-sm">{{ travelersLabel }}</dd>
-              </div>
-            </div>
-
-            <div v-if="props.selectedPlan" class="flex items-start gap-3 py-2.5">
-              <svg class="w-4 h-4 mt-0.5 shrink-0 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-              </svg>
-              <div class="flex-1 min-w-0">
-                <dt class="text-[10px] font-medium text-slate-400 uppercase tracking-wider mb-0.5">Tu plan</dt>
-                <dd class="font-semibold text-slate-800 text-sm capitalize">{{ props.selectedPlan }}</dd>
-              </div>
-            </div>
-          </dl>
-        </div>
-      </aside>
-    </div>
 
     <PrivacyPolicyModal v-model="isPrivacyModalOpen" />
   </div>

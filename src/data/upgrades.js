@@ -27,22 +27,13 @@ export const UPGRADE_OPTIONS = [
     iconBg: 'bg-pink-100'
   },
   {
-    id: 'equipaje-extra',
-    title: 'Equipaje extra',
-    description: 'Incrementa el límite por pérdida o daño de equipaje.',
-    coverage: 'USD 2,500',
-    price: 9.80,
-    color: 'amber',
-    iconBg: 'bg-amber-100'
-  },
-  {
-    id: 'cancelacion-flex',
-    title: 'Cancelación flexible',
-    description: 'Cancela tu viaje hasta 48h antes sin penalización.',
+    id: 'cancelacion-multicausa',
+    title: 'Cancelación multicausa',
+    description: 'Reembolso total por cancelación por enfermedad, trabajo, clima o cualquier imprevisto.',
     coverage: 'Cobertura total',
-    price: 12.40,
-    color: 'violet',
-    iconBg: 'bg-violet-100'
+    price: 15.90,
+    color: 'blue',
+    iconBg: 'bg-blue-100'
   }
 ]
 

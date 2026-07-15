@@ -18,7 +18,7 @@ function handleStart() {
     </div>
 
     <div class="relative z-10 min-h-screen flex items-center">
-      <div class="max-w-6xl mx-auto px-6 py-16 w-full">
+      <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-16 w-full">
         <div class="max-w-2xl">
           <div class="inline-flex items-center gap-2 px-4 py-2 rounded-full mb-8 border" style="background-color: rgba(67, 211, 255, 0.10); border-color: rgba(67, 211, 255, 0.30);">
             <span class="relative flex h-2 w-2">
@@ -41,10 +41,10 @@ function handleStart() {
           <button
             type="button"
             @click="handleStart"
-            class="bg-[#F9D35A] text-[#00184C] font-bold text-base flex items-center justify-center gap-2.5 px-8 py-3.5 rounded-full transition-all hover:brightness-95 shadow-lg active:scale-[0.99] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#43D3FF] focus-visible:ring-offset-2"
+            class="inline-flex items-center justify-center gap-2.5 bg-[#F9D35A] text-[#00184C] font-bold text-base md:text-lg px-7 md:px-8 py-3 md:py-3.5 rounded-full transition-all duration-200 ease-out shadow-md hover:-translate-y-px hover:brightness-95 hover:shadow-lg active:translate-y-0 active:scale-[0.98] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#43D3FF] focus-visible:ring-offset-2"
           >
             <span>Inicia aquí tu compra</span>
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-5 h-5 text-white transform rotate-45">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-4 h-4 text-current transform rotate-45">
               <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 19.5l15-15m0 0H8.25m11.25 0v11.25" />
             </svg>
           </button>

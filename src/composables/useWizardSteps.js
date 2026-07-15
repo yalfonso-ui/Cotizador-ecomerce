@@ -1,18 +1,16 @@
 export const STEPS = {
-  ORIGIN: 0,
-  DESTINATION: 1,
-  DATES: 2,
-  TRAVELERS: 3,
-  PLANS: 4,
-  DATA: 5,
-  UPGRADES: 6,
-  CHECKOUT: 7,
-  SUCCESS: 8
+  ROUTE: 0,
+  DATES: 1,
+  TRAVELERS: 2,
+  PLANS: 3,
+  DATA: 4,
+  UPGRADES: 5,
+  CHECKOUT: 6,
+  SUCCESS: 7
 }
 
 export const STEP_LABELS = {
-  [STEPS.ORIGIN]: 'Origen',
-  [STEPS.DESTINATION]: 'Destino',
+  [STEPS.ROUTE]: 'Ruta',
   [STEPS.DATES]: 'Fechas',
   [STEPS.TRAVELERS]: 'Viajeros',
   [STEPS.PLANS]: 'Plan',
@@ -22,4 +20,4 @@ export const STEP_LABELS = {
   [STEPS.SUCCESS]: 'Confirmado'
 }
 
-export const TOTAL_STEPS = 9
+export const TOTAL_STEPS = 8

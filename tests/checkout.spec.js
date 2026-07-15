@@ -259,7 +259,7 @@ test.describe('Flujo Completo de Compra - Continental Assist', () => {
           personalData: { name: 'Test', email: 'test@test.com', phone: '3001234567' },
           emergencyContact: { name: 'Test', phone: '3001234567', email: 'test@test.com' }
         },
-        currentStep: 7,
+        currentStep: 6,
         savedAt: Date.now()
       };
       localStorage.setItem('wizard_state', JSON.stringify(state));
@@ -274,7 +274,7 @@ test.describe('Flujo Completo de Compra - Continental Assist', () => {
         discountPercent: 20,
         label: '20% de descuento'
       };
-      stored.currentStep = 7;
+      stored.currentStep = 6;
       localStorage.setItem('wizard_state', JSON.stringify(stored));
     });
     await page.reload();

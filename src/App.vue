@@ -1,6 +1,9 @@
 <script setup>
+import GlobalLayout from '@/components/ui/GlobalLayout.vue'
 </script>
 
 <template>
-  <RouterView />
+  <GlobalLayout>
+    <RouterView />
+  </GlobalLayout>
 </template>

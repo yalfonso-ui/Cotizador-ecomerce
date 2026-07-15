@@ -74,9 +74,10 @@
 
   /* ============================================================
    * CTA — Botón principal amarillo (píldora perfecta)
-   * Estructura unificada: [Texto Bold] [Flecha blanca inline]
+   * Estructura unificada: [Texto Bold] [Flecha del color del texto inline]
    * Ya no se usa el círculo blanco con flecha — la flecha va
-   * inline en SVG (`text-white`, `stroke-2.5`, `rotate-45`).
+   * inline en SVG (`text-current` hereda el color del texto,
+   * `stroke-2.5`, `rotate-45`).
    * ============================================================ */
   .ds-cta {
     @apply inline-flex items-center justify-center gap-2.5 bg-[color:var(--ds-cta)] hover:bg-[color:var(--ds-cta-hover)] active:scale-[0.99] text-[color:var(--ds-primary)] font-bold text-base px-8 py-3.5 rounded-full shadow-sm transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--ds-secondary)] focus-visible:ring-offset-2 disabled:bg-slate-200 disabled:text-slate-400 disabled:cursor-not-allowed disabled:active:scale-100;
@@ -159,6 +160,19 @@
 
   .font-accent {
     font-family: 'Galano Grotesque', 'Inter', sans-serif;
+  }
+
+  /* Oculta las barras de scroll nativas (Webkit, Firefox, IE/Edge legacy)
+     manteniendo el scroll por inercia/touch intacto. */
+  .hide-scroll-bar {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+    -webkit-overflow-scrolling: touch;
+  }
+  .hide-scroll-bar::-webkit-scrollbar {
+    display: none;
+    width: 0;
+    height: 0;
   }
 }
 

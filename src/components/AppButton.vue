@@ -1,4 +1,6 @@
 <script setup>
+import AppSpinner from '@/components/ui/AppSpinner.vue'
+
 defineProps({
   variant: {
     type: String,
@@ -35,7 +37,7 @@ defineProps({
       'px-6 py-3 text-base': size === 'lg'
     }"
   >
-    <span v-if="loading" class="animate-spin">⟳</span>
+    <AppSpinner v-if="loading" />
     <slot></slot>
   </component>
 </template>

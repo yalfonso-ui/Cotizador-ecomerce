@@ -6,28 +6,51 @@ const props = defineProps({
   modelValue: { type: Object, default: () => ({}) }
 })
 
-const emit = defineEmits(['next', 'prev'])
+const emit = defineEmits(['next', 'prev', 'update:modelValue'])
 
 const travelersCount = ref(props.modelValue?.travelersCount || 1)
 const birthdates = ref([])
 const ages = ref([])
+const birthdateTouched = ref([])
 
 function initTravelers(count) {
   travelersCount.value = count
   const existing = props.modelValue?.birthdates || []
   const next = []
   const agesNext = []
+  const touchedNext = []
   for (let i = 0; i < count; i++) {
     if (i < birthdates.value.length) {
       next.push(birthdates.value[i])
       agesNext.push(ages.value[i])
+      touchedNext.push(birthdateTouched.value[i] || false)
     } else {
       next.push(existing[i] || { day: '', month: '', year: '' })
       agesNext.push(calculateAge(next[next.length - 1].day, next[next.length - 1].month, next[next.length - 1].year))
+      touchedNext.push(false)
     }
   }
   birthdates.value = next
   ages.value = agesNext
+  birthdateTouched.value = touchedNext
+}
+
+function isBirthdateValid(index) {
+  const a = ages.value[index]
+  return a !== null && a !== undefined && a >= 0 && a <= 120
+}
+
+function isBirthdateTouched(index) {
+  return !!birthdateTouched.value[index]
+}
+
+function markBirthdateTouched(index) {
+  if (!birthdateTouched.value[index]) {
+    const next = [...birthdateTouched.value]
+    next[index] = true
+    birthdateTouched.value = next
+  }
+  updateAge(index)
 }
 
 function formatBirthdateFromDigits(digits) {
@@ -108,6 +131,7 @@ function addTraveler() {
   if (birthdates.value.length < 10) {
     birthdates.value.push({ day: '', month: '', year: '' })
     ages.value.push(null)
+    birthdateTouched.value.push(false)
     travelersCount.value = birthdates.value.length
   }
 }
@@ -116,6 +140,7 @@ function removeTraveler(index) {
   if (birthdates.value.length > 1) {
     birthdates.value.splice(index, 1)
     ages.value.splice(index, 1)
+    birthdateTouched.value.splice(index, 1)
     travelersCount.value = birthdates.value.length
   }
 }
@@ -131,6 +156,15 @@ function handleContinue() {
 }
 
 initTravelers(travelersCount.value)
+
+watch(travelersCount, (count) => {
+  emit('update:modelValue', {
+    ...props.modelValue,
+    travelersCount: count,
+    birthdates: birthdates.value,
+    ages: ages.value
+  })
+})
 </script>
 
 <template>
@@ -185,19 +219,39 @@ initTravelers(travelersCount.value)
           <label :for="`birthdate-${index}`" class="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1.5 block">
             Fecha de nacimiento
           </label>
-          <input
-            :id="`birthdate-${index}`"
-            type="text"
-            inputmode="numeric"
-            autocomplete="off"
-            maxlength="10"
-            placeholder="DD/MM/AAAA"
-            :value="formatBirthdateField(b)"
-            @input="handleBirthdateInput(index, $event)"
-            @blur="updateAge(index)"
-            :aria-label="`Fecha de nacimiento del viajero ${index + 1} en formato DD/MM/AAAA`"
-            class="w-full h-12 px-3.5 bg-white border-2 border-slate-200 rounded-xl text-slate-900 text-base placeholder:text-slate-300 transition-all focus:border-[color:var(--ds-focus)] focus:ring-2 focus:ring-[color:var(--ds-focus-ring)] focus:outline-none font-semibold tracking-wider"
-          />
+          <div class="relative">
+            <input
+              :id="`birthdate-${index}`"
+              type="text"
+              inputmode="numeric"
+              autocomplete="off"
+              maxlength="10"
+              placeholder="DD/MM/AAAA"
+              :value="formatBirthdateField(b)"
+              @input="handleBirthdateInput(index, $event)"
+              @blur="markBirthdateTouched(index)"
+              :aria-invalid="isBirthdateTouched(index) && !isBirthdateValid(index)"
+              :aria-label="`Fecha de nacimiento del viajero ${index + 1} en formato DD/MM/AAAA`"
+              class="w-full h-12 pl-3.5 pr-11 bg-white border-2 rounded-xl text-slate-900 text-base placeholder:text-slate-300 transition-all focus:outline-none font-semibold tracking-wider"
+              :class="isBirthdateTouched(index) && isBirthdateValid(index)
+                ? 'border-emerald-500 ring-2 ring-emerald-400/30 bg-emerald-50/40 focus:ring-emerald-400/30 focus:border-emerald-500'
+                : 'border-slate-200 focus:border-[color:var(--ds-focus)] focus:ring-2 focus:ring-[color:var(--ds-focus-ring)]'"
+            />
+            <svg
+              v-if="isBirthdateTouched(index) && isBirthdateValid(index)"
+              class="absolute right-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-emerald-500 pointer-events-none"
+              fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"
+            >
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" />
+            </svg>
+            <svg
+              v-else
+              class="absolute right-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none"
+              fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"
+            >
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+            </svg>
+          </div>
         </div>
 
         <button type="button"
@@ -237,7 +291,7 @@ initTravelers(travelersCount.value)
         <span class="hidden md:inline">Completa las fechas de nacimiento</span>
         <span class="md:hidden">Completa las fechas</span>
       </span>
-      <svg v-if="allValid" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-5 h-5 text-white transform rotate-45">
+      <svg v-if="allValid" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-5 h-5 text-current transform rotate-45">
         <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 19.5l15-15m0 0H8.25m11.25 0v11.25" />
       </svg>
     </button>

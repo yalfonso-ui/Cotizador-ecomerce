@@ -10,7 +10,8 @@ import futuraMamaImg from '@/assets/images/imagenes/Futura mamá.png'
 const imageMap = {
   preexistencias: preexistenciasImg,
   deportes: deportesImg,
-  'futura-mama': futuraMamaImg
+  'futura-mama': futuraMamaImg,
+  'cancelacion-multicausa': null
 }
 
 const emit = defineEmits(['update:modelValue', 'next'])
@@ -24,7 +25,7 @@ const props = defineProps({
 
 const travelerCount = computed(() => resolveCount(props.travelers, props.travelersCount))
 
-const upgradeOptions = allUpgrades.filter(u => imageMap[u.id])
+const upgradeOptions = allUpgrades
 
 function buildEmpty(count) {
   const next = {}
@@ -123,17 +124,14 @@ function handleNext() {
         </div>
       </div>
 
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div
           v-for="upgrade in upgradeOptions"
           :key="upgrade.id"
-          class="relative border rounded-xl p-4 transition-colors duration-200 cursor-pointer bg-white flex items-start gap-3"
+          class="relative rounded-xl p-4 transition-colors duration-200 cursor-pointer bg-white flex items-start gap-3"
           :class="isSelected(travelerId, upgrade.id)
-            ? 'border-2'
+            ? 'border-2 border-blue-600 bg-blue-50'
             : 'border border-slate-200 hover:border-slate-300'"
-          :style="isSelected(travelerId, upgrade.id)
-            ? { borderColor: '#00184C', backgroundColor: 'rgba(67, 211, 255, 0.04)' }
-            : {}"
           @click="toggleUpgrade(travelerId, upgrade.id)"
           role="checkbox"
           :aria-checked="isSelected(travelerId, upgrade.id)"
@@ -149,11 +147,20 @@ function handleNext() {
               : { backgroundColor: '#EDF4F9' }"
           >
             <img
+              v-if="imageMap[upgrade.id]"
               :src="imageMap[upgrade.id]"
               :alt="upgrade.title"
               class="w-full h-full object-contain"
               loading="lazy"
             />
+            <svg
+              v-else
+              class="w-10 h-10"
+              :class="isSelected(travelerId, upgrade.id) ? 'text-[#00184C]' : 'text-slate-400'"
+              fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"
+            >
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+            </svg>
           </div>
 
           <div class="flex-1 min-w-0">
@@ -215,7 +222,7 @@ function handleNext() {
     <div class="w-full flex items-center justify-center pt-2">
       <button type="button"
         @click="handleNext"
-        class="bg-[#FFCC00] hover:bg-[#E6B800] text-slate-900 font-semibold text-base flex items-center justify-center gap-2 px-8 py-4 rounded-full transition-all active:scale-[0.99] shadow-sm w-full max-w-md disabled:bg-slate-100 disabled:text-slate-400 disabled:cursor-not-allowed focus:outline-none focus-visible:ring-2 focus-visible:ring-[#FFCC00] focus-visible:ring-offset-2"
+        class="bg-[#FFCC00] hover:bg-[#E6B800] text-slate-900 font-semibold text-base flex items-center justify-center gap-2 px-8 py-4 rounded-full transition-all duration-200 ease-out shadow-sm hover:-translate-y-px hover:shadow-md active:translate-y-0 active:scale-[0.98] w-full max-w-md disabled:bg-slate-100 disabled:text-slate-400 disabled:cursor-not-allowed disabled:hover:translate-y-0 disabled:hover:shadow-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-[#FFCC00] focus-visible:ring-offset-2"
       >
         <span class="hidden md:inline">Continúa al pago</span>
         <span class="md:hidden">Ir al pago</span>

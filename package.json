@@ -13,6 +13,8 @@
   "dependencies": {
     "@primevue/themes": "^4.5.4",
     "lucide-vue-next": "^0.344.0",
+    "pinia": "^4.0.0",
+    "pinia-plugin-persistedstate": "^4.7.1",
     "primeicons": "^7.0.0",
     "primevue": "^4.5.5",
     "vue": "^3.4.21",

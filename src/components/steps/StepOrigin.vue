@@ -185,7 +185,7 @@ function handleContinue() {
           <span class="hidden md:inline">Confirma tu país de origen</span>
           <span class="md:hidden">Confirmar</span>
         </span>
-        <svg v-if="selectedCountry && !isDetecting" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-5 h-5 text-white transform rotate-45">
+        <svg v-if="selectedCountry && !isDetecting" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-5 h-5 text-current transform rotate-45">
           <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 19.5l15-15m0 0H8.25m11.25 0v11.25" />
         </svg>
       </button>

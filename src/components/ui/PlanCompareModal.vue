@@ -1,52 +1,53 @@
 <script setup>
-import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
+import { computed, onMounted, onUnmounted } from 'vue'
 import { useModalFocus } from '@/composables/useModalFocus.js'
 
 const props = defineProps({
   modelValue: { type: Boolean, default: false },
   plans: { type: Array, required: true },
-  selectedPlanId: { type: String, default: null }
+  selectedPlanId: { type: String, default: null },
+  recommendedPlanId: { type: String, default: null }
 })
 
-const emit = defineEmits(['update:modelValue', 'close'])
+const emit = defineEmits(['update:modelValue', 'close', 'select-plan'])
 
 const isOpen = computed({
   get: () => props.modelValue,
   set: (v) => emit('update:modelValue', v)
 })
 
-const planIds = computed(() => props.plans.map(p => p.id))
-
-const buildComparisonData = (ids) => [
+const COMPARISON = [
   {
     category: 'Salud y emergencias',
     benefits: [
-      { name: 'Atención médica de urgencia', values: { lite: 'USD 10.000', essential: 'USD 15.000', explorer: 'USD 50.000', premium: 'USD 100.000', elite: 'USD 250.000' }, ids },
-      { name: 'Repatriación a casa', values: { lite: 'check', essential: 'check', explorer: 'check', premium: 'check', elite: 'check' }, ids },
-      { name: 'Teleconsulta cuando la necesites', values: { lite: 'dash', essential: 'check', explorer: 'check', premium: 'check', elite: 'check' }, ids },
-      { name: 'Cobertura COVID-19', values: { lite: 'dash', essential: 'check', explorer: 'check', premium: 'check', elite: 'check' }, ids },
-      { name: 'Actividades deportivas', values: { lite: 'dash', essential: 'dash', explorer: 'dash', premium: 'check', elite: 'check' }, ids }
+      { name: 'Atención médica de urgencia', values: { lite: 'USD 10.000', essential: 'USD 15.000', explorer: 'USD 50.000', premium: 'USD 100.000', elite: 'USD 250.000' } },
+      { name: 'Repatriación a casa', values: { lite: 'check', essential: 'check', explorer: 'check', premium: 'check', elite: 'check' } },
+      { name: 'Teleconsulta cuando la necesites', values: { lite: 'dash', essential: 'check', explorer: 'check', premium: 'check', elite: 'check' } },
+      { name: 'Cobertura COVID-19', values: { lite: 'dash', essential: 'check', explorer: 'check', premium: 'check', elite: 'check' } },
+      { name: 'Actividades deportivas', values: { lite: 'dash', essential: 'dash', explorer: 'dash', premium: 'check', elite: 'check' } }
     ]
   },
   {
     category: 'Tu viaje y tus pertenencias',
     benefits: [
-      { name: 'Cancelación de viaje', values: { lite: 'dash', essential: 'dash', explorer: 'check', premium: 'check', elite: 'check' }, ids },
-      { name: 'Equipaje protegido', values: { lite: 'USD 500', essential: 'USD 1.000', explorer: 'USD 1.500', premium: 'USD 3.000', elite: 'USD 5.000' }, ids },
-      { name: 'Concierge personal', values: { lite: 'dash', essential: 'dash', explorer: 'dash', premium: 'check', elite: 'check' }, ids },
-      { name: 'Acompañamiento 24/7', values: { lite: 'check', essential: 'check', explorer: 'check', premium: 'check', elite: 'check' }, ids }
+      { name: 'Cancelación de viaje', values: { lite: 'dash', essential: 'dash', explorer: 'check', premium: 'check', elite: 'check' } },
+      { name: 'Equipaje protegido', values: { lite: 'USD 500', essential: 'USD 1.000', explorer: 'USD 1.500', premium: 'USD 3.000', elite: 'USD 5.000' } },
+      { name: 'Concierge personal', values: { lite: 'dash', essential: 'dash', explorer: 'dash', premium: 'check', elite: 'check' } },
+      { name: 'Acompañamiento 24/7', values: { lite: 'check', essential: 'check', explorer: 'check', premium: 'check', elite: 'check' } }
     ]
   },
   {
     category: 'Límites de tu cobertura',
     benefits: [
-      { name: 'Edad máxima', values: { lite: '70 años', essential: '70 años', explorer: '75 años', premium: '80 años', elite: 'Sin límite' }, ids },
-      { name: 'Duración del viaje', values: { lite: '30 días', essential: '60 días', explorer: '180 días', premium: '365 días', elite: 'Sin límite' }, ids }
+      { name: 'Edad máxima', values: { lite: '70 años', essential: '70 años', explorer: '75 años', premium: '80 años', elite: 'Sin límite' } },
+      { name: 'Duración del viaje', values: { lite: '30 días', essential: '60 días', explorer: '180 días', premium: '365 días', elite: 'Sin límite' } }
     ]
   }
-]  
+]
 
-const comparisonData = computed(() => buildComparisonData(planIds.value))
+const gridStyle = computed(() => ({
+  gridTemplateColumns: `minmax(0, 1.3fr) repeat(${props.plans.length}, minmax(0, 1fr))`
+}))
 
 function close() {
   isOpen.value = false
@@ -57,6 +58,11 @@ function handleBackdropClick(e) {
   if (e.target === e.currentTarget) {
     close()
   }
+}
+
+function handleSelect(planId) {
+  emit('select-plan', planId)
+  close()
 }
 
 const { handleKeydown } = useModalFocus(isOpen, close)
@@ -78,7 +84,7 @@ onUnmounted(() => {
         class="fixed inset-0 z-[100] flex items-end md:items-center justify-center"
         @click="handleBackdropClick"
       >
-        <div class="absolute inset-0 bg-black/40 backdrop-blur-sm" aria-hidden="true" />
+        <div class="absolute inset-0 bg-[#00184C]/40 backdrop-blur-sm" aria-hidden="true" />
 
         <div
           class="relative w-full md:max-w-6xl md:mx-4 bg-white rounded-t-3xl md:rounded-2xl shadow-2xl max-h-[92vh] flex flex-col overflow-hidden"
@@ -86,123 +92,181 @@ onUnmounted(() => {
           aria-modal="true"
           aria-labelledby="compare-title"
         >
-          <header class="flex items-center justify-between px-8 pt-8 pb-6 flex-shrink-0">
-            <div>
-              <p class="text-[11px] font-semibold text-slate-500 uppercase tracking-[0.15em] mb-1">Compara sin compromiso</p>
-              <h2 id="compare-title" class="text-2xl md:text-3xl font-semibold text-slate-900 tracking-tight">
-                Lo que te cubre cada plan
-              </h2>
+          <!-- Header -->
+          <header class="px-6 md:px-10 pt-8 pb-5 flex-shrink-0 border-b border-slate-100">
+            <div class="flex items-start justify-between gap-4">
+              <div>
+                <p class="text-[10px] font-bold uppercase tracking-[0.18em] mb-1.5" style="color: #43D3FF;">
+                  Comparación
+                </p>
+                <h2 id="compare-title" class="text-xl md:text-2xl font-bold text-slate-900 tracking-tight">
+                  ¿Cuál te conviene más?
+                </h2>
+                <p class="text-sm text-slate-500 mt-1 leading-snug">
+                  Mira las diferencias y elige el que mejor se adapte a tu viaje.
+                </p>
+              </div>
+              <button
+                type="button"
+                @click="close"
+                class="shrink-0 flex items-center justify-center w-10 h-10 rounded-full text-slate-400 hover:text-slate-900 hover:bg-slate-100 active:scale-95 transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-[#00184C] focus-visible:ring-offset-2"
+                aria-label="Cerrar modal"
+              >
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
             </div>
-            <button
-              type="button"
-              @click="close"
-              class="flex items-center justify-center w-10 h-10 rounded-full active:scale-95 transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-[#43D3FF] focus-visible:ring-offset-2"
-              style="background-color: #EDF4F9;"
-              aria-label="Cerrar modal"
-            >
-              <svg class="w-4 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true" style="color: #00184C;">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </button>
           </header>
 
+          <!-- Body -->
           <div class="flex-1 overflow-y-auto">
-            <table class="w-full min-w-[900px] border-collapse">
-              <thead class="sticky top-0 z-20 backdrop-blur-md bg-white/80 border-b border-slate-100">
-                <tr>
-                  <th
-                    scope="col"
-                    class="sticky left-0 z-30 backdrop-blur-md bg-white/80 text-left pl-8 pr-6 py-4 font-medium text-[13px] text-slate-500 min-w-[180px]"
-                  >
-                    Tu respaldo
-                  </th>
-                  <th
+            <!-- Sticky plan headers (se quedan fijos al scrollear las filas) -->
+            <div class="sticky top-0 z-10 bg-white/95 backdrop-blur-sm border-b border-slate-200 shadow-sm">
+              <div class="min-w-[720px] px-6 md:px-10 py-5">
+                <div class="grid gap-3" :style="gridStyle">
+                  <!-- Columna fantasma para alinear con las features -->
+                  <div></div>
+
+                  <!-- Headers por plan -->
+                  <div
                     v-for="plan in plans"
                     :key="plan.id"
-                    scope="col"
-                    class="text-center px-4 py-4 min-w-[140px] relative"
+                    class="rounded-xl p-3 -m-1 transition-colors duration-200"
+                    :class="plan.id === selectedPlanId
+                      ? 'bg-[#EDF4F9] ring-1 ring-[#00184C]/10'
+                      : 'hover:bg-slate-50'"
                   >
-                    <div class="flex flex-col items-center gap-1">
-                      <span class="text-[11px] font-medium text-slate-500 uppercase tracking-wider">
-                        {{ plan.name }}
-                      </span>
-                      <span class="text-xl font-semibold text-slate-900 tracking-tight">
-                        ${{ plan.price }}
-                      </span>
-                      <span class="text-[11px] text-slate-400">USD</span>
+                    <!-- Badge: Tu plan / Recomendado / vacío -->
+                    <div class="h-[18px] mb-2.5 flex items-center justify-center">
                       <span
                         v-if="plan.id === selectedPlanId"
-                        class="inline-block mt-1 px-2 py-0.5 rounded-full text-[10px] font-medium uppercase tracking-wider"
-                        style="background-color: #43D3FF; color: #00184C;"
+                        class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider text-white"
+                        style="background-color: #00184C;"
                       >
+                        <svg class="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7" />
+                        </svg>
                         Tu plan
                       </span>
+                      <span
+                        v-else-if="plan.id === recommendedPlanId && plan.id !== selectedPlanId"
+                        class="inline-flex items-center px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider"
+                        style="color: #00184C; background-color: rgba(67, 211, 255, 0.18); border: 1px solid rgba(67, 211, 255, 0.4);"
+                      >
+                        Recomendado
+                      </span>
                     </div>
-                  </th>
-                </tr>
-              </thead>
 
-              <tbody>
-                <template v-for="group in comparisonData" :key="group.category">
-                  <tr>
-                    <td
-                      colspan="100"
-                      class="sticky left-0 bg-slate-50 pl-8 pr-6 py-2.5 text-[11px] font-semibold text-slate-500 uppercase tracking-[0.1em] border-y border-slate-100"
+                    <!-- Nombre del plan -->
+                    <p class="text-base font-bold text-slate-900 tracking-tight text-center leading-tight">
+                      {{ plan.name }}
+                    </p>
+
+                    <!-- Cobertura (hero) -->
+                    <div class="mt-3 text-center">
+                      <p class="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Cobertura médica</p>
+                      <p class="text-lg md:text-xl font-black tabular-nums mt-0.5 leading-none" style="color: #00184C;">
+                        ${{ plan.coverage }}
+                      </p>
+                    </div>
+
+                    <!-- Precio -->
+                    <p class="mt-2.5 text-sm font-bold text-slate-900 tabular-nums text-center">
+                      ${{ plan.price }} <span class="text-[10px] font-medium text-slate-500">USD</span>
+                    </p>
+
+                    <!-- CTA -->
+                    <button
+                      v-if="plan.id === selectedPlanId"
+                      type="button"
+                      disabled
+                      class="mt-3 w-full px-3 py-2 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 cursor-default flex items-center justify-center gap-1"
                     >
-                      {{ group.category }}
-                    </td>
-                  </tr>
-                  <tr
-                    v-for="benefit in group.benefits"
-                    :key="benefit.name"
-                    class="border-b border-slate-100 hover:bg-slate-50/50 transition-colors"
+                      <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7" />
+                      </svg>
+                      Seleccionado
+                    </button>
+                    <button
+                      v-else
+                      type="button"
+                      @click="handleSelect(plan.id)"
+                      class="mt-3 w-full px-3 py-2 rounded-full text-xs font-bold transition-all active:scale-95 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#00184C] focus-visible:ring-offset-2 hover:brightness-95"
+                      style="background-color: #F9D35A; color: #00184C;"
+                    >
+                      Elegir este
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Filas de comparación -->
+            <div class="min-w-[720px] px-6 md:px-10 pb-3">
+              <template v-for="group in COMPARISON" :key="group.category">
+                <div class="pt-7 pb-2 flex items-center gap-2.5">
+                  <span class="w-1.5 h-1.5 rounded-full" style="background-color: #43D3FF;"></span>
+                  <h3 class="text-[11px] font-bold text-slate-500 uppercase tracking-[0.15em]">
+                    {{ group.category }}
+                  </h3>
+                </div>
+
+                <div
+                  v-for="benefit in group.benefits"
+                  :key="benefit.name"
+                  class="grid gap-3 py-3.5 border-b border-slate-100"
+                  :style="gridStyle"
+                >
+                  <div class="text-sm text-slate-700 self-center leading-snug">
+                    {{ benefit.name }}
+                  </div>
+                  <div
+                    v-for="plan in plans"
+                    :key="plan.id"
+                    class="text-center self-center"
                   >
-                    <th
-                      scope="row"
-                      class="sticky left-0 bg-white text-left pl-8 pr-6 py-3.5 font-normal text-[14px] text-slate-700 min-w-[180px]"
-                    >
-                      {{ benefit.name }}
-                    </th>
-                    <td
-                      v-for="plan in plans"
-                      :key="plan.id"
-                      class="text-center px-4 py-3.5 text-[14px]"
-                      :class="plan.id === selectedPlanId ? 'bg-slate-50/40' : ''"
-                    >
-                      <template v-if="benefit.values[plan.id] === 'check'">
-                        <svg class="w-5 h-5 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-label="Incluido" style="color: #00184C;">
-                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                    <template v-if="benefit.values[plan.id] === 'check'">
+                      <span
+                        class="inline-flex items-center justify-center w-7 h-7 rounded-full"
+                        :style="plan.id === selectedPlanId
+                          ? 'background-color: #00184C;'
+                          : 'background-color: rgba(16, 185, 129, 0.12);'"
+                      >
+                        <svg
+                          class="w-3.5 h-3.5"
+                          :style="plan.id === selectedPlanId ? 'color: white;' : 'color: #047857;'"
+                          fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-label="Incluido"
+                        >
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7" />
                         </svg>
-                      </template>
-                      <template v-else-if="benefit.values[plan.id] === 'dash'">
-                        <span class="inline-block w-4 h-px bg-slate-300" aria-label="No incluido"></span>
-                      </template>
-                      <template v-else>
-                        <span class="font-medium text-slate-900 tabular-nums">{{ benefit.values[plan.id] }}</span>
-                      </template>
-                    </td>
-                  </tr>
-                </template>
-              </tbody>
-            </table>
+                      </span>
+                    </template>
+                    <template v-else-if="benefit.values[plan.id] === 'dash'">
+                      <span class="inline-block w-3 h-[2px] bg-slate-300 rounded-full" aria-label="No incluido"></span>
+                    </template>
+                    <template v-else>
+                      <span class="text-sm font-bold text-slate-900 tabular-nums">
+                        {{ benefit.values[plan.id] }}
+                      </span>
+                    </template>
+                  </div>
+                </div>
+              </template>
+            </div>
           </div>
 
-          <footer class="flex items-center justify-between gap-3 px-8 py-5 border-t border-slate-100 flex-shrink-0" style="background-color: #EDF4F9;">
-            <p class="text-xs" style="color: #00184C; opacity: 0.6;">
-              Precios en dólares estadounidenses. Así de simple.
+          <!-- Footer -->
+          <footer class="px-6 md:px-10 py-4 border-t border-slate-100 bg-slate-50/50 flex-shrink-0 flex items-center justify-between gap-4">
+            <p class="text-xs text-slate-500 leading-snug">
+              Precios en dólares estadounidenses · Coberturas por evento
             </p>
             <button
               type="button"
               @click="close"
-              class="relative inline-flex items-center justify-between gap-2 px-5 py-2.5 text-sm font-bold rounded-full shadow-sm transition-all active:scale-[0.98] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#43D3FF] focus-visible:ring-offset-2"
-              style="background-color: #F9D35A; color: #00184C;"
+              class="px-5 py-2 rounded-full text-sm font-semibold text-slate-700 hover:bg-slate-100 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-300"
             >
-              <span>Listo, gracias</span>
-              <span
-                class="w-6 h-6 rounded-full bg-white flex items-center justify-center shrink-0 ml-1"
-                aria-hidden="true"
-                style="background-image: url(&quot;data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%2300184C' stroke-width='3'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='M7 17L17 7M17 7H8M17 7v9'/%3E%3C/svg%3E&quot;); background-size: 12px 12px; background-repeat: no-repeat; background-position: center;"
-              ></span>
+              Volver
             </button>
           </footer>
         </div>
@@ -216,22 +280,18 @@ onUnmounted(() => {
 .modal-leave-active {
   transition: opacity 0.3s ease;
 }
-
 .modal-enter-active > div:last-child,
 .modal-leave-active > div:last-child {
   transition: transform 0.4s cubic-bezier(0.32, 0.72, 0, 1);
 }
-
 .modal-enter-from,
 .modal-leave-to {
   opacity: 0;
 }
-
 .modal-enter-from > div:last-child,
 .modal-leave-to > div:last-child {
   transform: translateY(100%);
 }
-
 @media (min-width: 768px) {
   .modal-enter-from > div:last-child,
   .modal-leave-to > div:last-child {

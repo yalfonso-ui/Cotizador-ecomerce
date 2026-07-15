@@ -384,7 +384,7 @@ watch(
         <span class="hidden md:inline">Elige al menos un destino</span>
         <span class="md:hidden">Selecciona un destino</span>
       </span>
-      <svg v-if="selectedCountries.length > 0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-5 h-5 text-white transform rotate-45 disabled:opacity-0">
+      <svg v-if="selectedCountries.length > 0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-5 h-5 text-current transform rotate-45 disabled:opacity-0">
         <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 19.5l15-15m0 0H8.25m11.25 0v11.25" />
       </svg>
     </button>

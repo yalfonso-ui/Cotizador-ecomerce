@@ -115,7 +115,7 @@ onUnmounted(() => {
               class="w-full bg-[#F9D35A] text-[#00184C] font-bold text-sm py-3.5 rounded-full flex items-center justify-center gap-2 mt-4 hover:brightness-95 shadow-sm transition-all disabled:bg-slate-200 disabled:text-slate-400 disabled:cursor-not-allowed disabled:hover:brightness-100"
             >
               <span>{{ isSubmitting ? 'Enviando…' : 'Enviar cotización' }}</span>
-              <svg v-if="!isSubmitting" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-4 h-4 text-white transform rotate-45">
+              <svg v-if="!isSubmitting" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-4 h-4 text-current transform rotate-45">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 19.5l15-15m0 0H8.25m11.25 0v11.25" />
               </svg>
             </button>

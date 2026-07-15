@@ -1,20 +1,71 @@
 <script setup>
-import { ref, computed, watch, onBeforeUnmount } from 'vue'
+import { ref, computed, watch, onMounted, onBeforeUnmount } from 'vue'
+import { useRouter } from 'vue-router'
+import { storeToRefs } from 'pinia'
 import DiscountCodeField from '@/components/ui/DiscountCodeField.vue'
+import AppSpinner from '@/components/ui/AppSpinner.vue'
+import AppAlert from '@/components/ui/AppAlert.vue'
+import { useCheckoutStore } from '@/stores/useCheckoutStore.js'
+import { useWizardStore } from '@/stores/useWizardStore.js'
 import { getPlanPrice as planPrice, getPlanName as planName, getPlanCoverage as planCoverage } from '@/data/plans.js'
 import { getUpgradesTotal } from '@/data/upgrades.js'
 import { formatDate as fmtDate } from '@/composables/useDateFormatter.js'
 import { getTravelerCount as resolveCount } from '@/composables/useTravelerInfo.js'
 import { showToast } from '@/composables/useToast.js'
 import { STEPS } from '@/composables/useWizardSteps.js'
+import { processPayment } from '@/services/paymentService.js'
 
-const emit = defineEmits(['payment-success', 'go-to-step'])
+const emit = defineEmits(['go-to-step'])
 
 const props = defineProps({
   data: { type: Object, default: () => ({}) }
 })
 
-const travelersLabels = { solo: '1 viajero', pareja: '2 viajeros', familia: '4 viajeros', grupo: '6+ viajeros' }
+const checkoutStore = useCheckoutStore()
+const wizardStore = useWizardStore()
+const {
+  cardNumber,
+  cardName,
+  expiryDate,
+  cvv,
+  cardNumberTouched,
+  cardNameTouched,
+  expiryTouched,
+  cvvTouched,
+  submitAttempted,
+  isProcessing,
+  processingStep,
+  paymentError,
+  appliedDiscount,
+  isMobileSummaryExpanded
+} = storeToRefs(checkoutStore)
+
+const {
+  cardNumberDigits,
+  cardNumberValid,
+  cardNameValid,
+  expiryValid,
+  cvvValid,
+  isFormValid,
+  cardNumberError,
+  cardNameError,
+  expiryError,
+  cvvError,
+  cardBrand
+} = storeToRefs(checkoutStore)
+
+const router = useRouter()
+
+// Cola de timers para los steps progresivos ("Procesando…", "Activando…").
+// Hay que limpiarlos cuando el API responde o el componente se desmonta,
+// si no quedan vivos y pisan el texto "Redirigiendo…" después del éxito.
+const stepTimers = []
+
+function clearStepTimers() {
+  while (stepTimers.length) {
+    clearTimeout(stepTimers.shift())
+  }
+}
 
 function getPlanPrice() {
   return planPrice(props.data?.selectedPlan)
@@ -37,11 +88,6 @@ function formatDestination(dest) {
   if (typeof dest === 'object' && dest?.name) return dest.name
   return dest || 'No especificado'
 }
-
-const isProcessing = ref(false)
-const processingStep = ref('')
-const appliedDiscount = ref(null)
-const isMobileSummaryExpanded = ref(false)
 
 let dragStartY = 0
 let dragCurrentY = 0
@@ -70,7 +116,7 @@ function onTouchEnd() {
   if (!isDragging) return
   isDragging = false
   if (dragCurrentY > 80) {
-    isMobileSummaryExpanded.value = false
+    checkoutStore.setMobileSummaryExpanded(false)
   }
   dragOffset.value = 0
   dragCurrentY = 0
@@ -85,43 +131,25 @@ onBeforeUnmount(() => {
   if (typeof document !== 'undefined') {
     document.body.style.overflow = ''
   }
+  clearStepTimers()
 })
 
-const cardNumber = ref('')
-const cardName = ref('')
-const expiryDate = ref('')
-const cvv = ref('')
-
-const cardNumberTouched = ref(false)
-const cardNameTouched = ref(false)
-const expiryTouched = ref(false)
-const cvvTouched = ref(false)
-const submitAttempted = ref(false)
-
-const cardNumberDigits = computed(() => cardNumber.value.replace(/\s+/g, ''))
-
-const cardNumberValid = computed(() => {
-  const digits = cardNumberDigits.value
-  return digits.length >= 13 && digits.length <= 19 && /^\d+$/.test(digits)
+onMounted(() => {
+  checkoutStore.resetInteractionFlags()
+  // Defensa: si el usuario navegó fuera del checkout durante un pago
+  // (ej. clic en back del navegador) y volvió, isProcessing puede estar
+  // atascado en true. Lo reseteamos para que el botón no quede
+  // permanentemente disabled.
+  if (checkoutStore.isProcessing) {
+    checkoutStore.setProcessing(false)
+    checkoutStore.setProcessingStep('')
+  }
 })
 
-const cardNameValid = computed(() => cardName.value.replace(/\s+/g, '').length >= 3)
-
-const expiryValid = computed(() => {
-  const m = expiryDate.value.match(/^(\d{2})\/(\d{2})$/)
-  if (!m) return false
-  const month = parseInt(m[1], 10)
-  return month >= 1 && month <= 12
+const cardBrandLabel = computed(() => {
+  const map = { visa: 'Visa', mastercard: 'Mastercard', amex: 'Amex', discover: 'Discover', diners: 'Diners' }
+  return cardBrand.value ? map[cardBrand.value] : null
 })
-
-const cvvValid = computed(() => /^\d{3,4}$/.test(cvv.value))
-
-const cardNumberError = computed(() => (cardNumberTouched.value || submitAttempted.value) && !cardNumberValid.value)
-const cardNameError = computed(() => (cardNameTouched.value || submitAttempted.value) && !cardNameValid.value)
-const expiryError = computed(() => (expiryTouched.value || submitAttempted.value) && !expiryValid.value)
-const cvvError = computed(() => (cvvTouched.value || submitAttempted.value) && !cvvValid.value)
-
-const isFormValid = computed(() => cardNumberValid.value && cardNameValid.value && expiryValid.value && cvvValid.value)
 
 const discountAmount = computed(() => {
   if (!appliedDiscount.value) return 0
@@ -156,93 +184,140 @@ const finalPrice = computed(() => {
   return Math.max(0, (getPlanPrice() - discountAmount.value) + upgradesTotal.value)
 })
 
-function formatCardNumber(e) {
-  const inputValue = e?.target?.value ?? e
-  const raw = String(inputValue).replace(/\D/g, '').slice(0, 19)
-  cardNumber.value = raw.match(/.{1,4}/g)?.join(' ') || raw
-}
-
 function onCardNumberInput(e) {
-  formatCardNumber(e)
+  checkoutStore.setCardNumber(e.target.value)
 }
 
 function onCardNumberBlur() {
-  cardNumberTouched.value = true
-}
-
-function formatExpiry(e) {
-  const inputValue = e?.target?.value ?? e
-  const raw = String(inputValue).replace(/\D/g, '').slice(0, 4)
-  if (raw.length <= 2) {
-    expiryDate.value = raw
-  } else {
-    expiryDate.value = raw.slice(0, 2) + '/' + raw.slice(2, 4)
-  }
+  checkoutStore.touchCardNumber()
 }
 
 function onExpiryInput(e) {
-  formatExpiry(e)
+  checkoutStore.setExpiryDate(e.target.value)
 }
 
 function onExpiryBlur() {
-  expiryTouched.value = true
+  checkoutStore.touchExpiry()
 }
 
 function onCvvInput(e) {
-  const inputValue = e?.target?.value ?? e
-  cvv.value = String(inputValue).replace(/\D/g, '').slice(0, 4)
+  checkoutStore.setCvv(e.target.value)
 }
 
 function onCvvBlur() {
-  cvvTouched.value = true
+  checkoutStore.touchCvv()
 }
 
 function onCardNameInput(e) {
-  cardName.value = e.target.value
+  checkoutStore.setCardName(e.target.value)
 }
 
 function onCardNameBlur() {
-  cardNameTouched.value = true
+  checkoutStore.touchCardName()
 }
 
 function handleApplyDiscount(discount) {
-  appliedDiscount.value = discount
+  checkoutStore.applyDiscount(discount)
 }
 
 function handleRemoveDiscount() {
-  appliedDiscount.value = null
+  checkoutStore.removeDiscount()
 }
 
-function handleSubmit() {
+async function handleSubmit() {
   if (isProcessing.value) return
-  submitAttempted.value = true
-  cardNumberTouched.value = true
-  cardNameTouched.value = true
-  expiryTouched.value = true
-  cvvTouched.value = true
+  checkoutStore.setPaymentError(null)
+  checkoutStore.markAllTouched()
 
   if (!isFormValid.value) {
     showToast('Revisa los datos de pago para finalizar tu compra', { variant: 'error', duration: 3000 })
     return
   }
 
-  isProcessing.value = true
-  processingStep.value = 'Validando tu tarjeta…'
-  setTimeout(() => {
-    processingStep.value = 'Procesando tu pago…'
-  }, 500)
-  setTimeout(() => {
-    processingStep.value = 'Activando tu cobertura…'
-  }, 1000)
-  setTimeout(() => {
-    isProcessing.value = false
-    processingStep.value = ''
-    emit('payment-success', {
-      cardLast4: cardNumber.value.replace(/\s/g, '').slice(-4),
-      amount: finalPrice.value,
-      discount: appliedDiscount.value
-    })
-  }, 1500)
+  // Iniciar flujo: el overlay global (ProcessingOverlay en GlobalLayout)
+  // toma el control de la pantalla para evitar parpadeo de UI.
+  checkoutStore.setProcessing(true)
+  checkoutStore.setProcessingStep('Validando tu tarjeta…')
+
+  // Steps progresivos (UX feedback mientras la API procesa).
+  stepTimers.push(setTimeout(() => {
+    checkoutStore.setProcessingStep('Procesando tu pago…')
+  }, 400))
+  stepTimers.push(setTimeout(() => {
+    checkoutStore.setProcessingStep('Activando tu cobertura…')
+  }, 900))
+
+  try {
+    const payload = {
+      cardNumber: checkoutStore.cardNumberDigits,
+      cardName: checkoutStore.cardName,
+      expiry: checkoutStore.expiryDate,
+      cvv: checkoutStore.cvv,
+      order: {
+        plan: props.data?.selectedPlan,
+        origin: props.data?.origin,
+        destination: props.data?.destination,
+        dates: props.data?.dates,
+        travelers: props.data?.travelersInfo
+      }
+    }
+
+    const result = await processPayment(payload)
+
+    if (!result.success) {
+      // Mapear errores de sistema a 'SYSTEM' (los de tarjeta son 'A' o 'B').
+      // Esto evita mostrar "datos no coinciden" cuando el problema es de red,
+      // timeout o configuración.
+      const isCardError = result.errorCode === 'A' || result.errorCode === 'B'
+      checkoutStore.setPaymentError(isCardError ? result.errorCode : 'SYSTEM')
+      return
+    }
+
+    // ── Pago OK ──
+    clearStepTimers()
+    checkoutStore.setProcessingStep('Redirigiendo…')
+
+    // Pequeño delay para que el usuario vea el mensaje final
+    await new Promise(resolve => setTimeout(resolve, 350))
+
+    // Limpiar estado antes de navegar
+    wizardStore.clearPersistedState()
+    checkoutStore.resetInteractionFlags()
+
+    // Navegación con fallback: router.replace primero, router.push si falla.
+    // Si ambas fallan, el usuario verá un error (no quedará pegado).
+    const redirectTo = result.redirectUrl || '/confirmacion-pago'
+    let navOk = false
+    try {
+      await router.replace(redirectTo)
+      navOk = true
+    } catch (navErr) {
+      console.warn('[StepCheckout] router.replace falló, intentando push:', navErr)
+      try {
+        await router.push(redirectTo)
+        navOk = true
+      } catch (pushErr) {
+        console.error('[StepCheckout] Ambas navegaciones fallaron:', pushErr)
+      }
+    }
+
+    if (!navOk) {
+      checkoutStore.setPaymentError('SYSTEM')
+    }
+  } catch (err) {
+    // Catch-all para errores inesperados (no debería llegar aquí en flujo normal,
+    // pero garantiza que el overlay se cierre pase lo que pase).
+    console.error('[StepCheckout] Error inesperado en handleSubmit:', err)
+    checkoutStore.setPaymentError('SYSTEM')
+  } finally {
+    // ── Cleanup garantizado ──
+    // SIEMPRE se ejecuta: limpia timers, apaga el overlay, resetea el step.
+    // Si la navegación tarda o falla, el overlay se cierra igual y el usuario
+    // ve la página actual (o la nueva, si la navegación funcionó).
+    clearStepTimers()
+    checkoutStore.setProcessing(false)
+    checkoutStore.setProcessingStep('')
+  }
 }
 </script>
 
@@ -381,7 +456,7 @@ function handleSubmit() {
 
           <button
             type="button"
-            @click="$emit('go-to-step', STEPS.DESTINATION); isMobileSummaryExpanded = false"
+            @click="$emit('go-to-step', STEPS.ROUTE); isMobileSummaryExpanded = false"
             class="mt-5 w-full inline-flex items-center justify-center gap-2 py-3 rounded-full text-sm font-semibold transition-colors"
             style="background-color: #F9D35A; color: #00184C;"
           >
@@ -416,23 +491,48 @@ function handleSubmit() {
             <label for="card-number" class="text-xs font-bold text-slate-700 uppercase tracking-wide mb-1.5 block">
               Número de tarjeta
             </label>
-            <input
-              id="card-number"
-              :value="cardNumber"
-              @input="onCardNumberInput"
-              @blur="onCardNumberBlur"
-              type="text"
-              inputmode="numeric"
-              placeholder="1234 5678 9012 3456"
-              maxlength="23"
-              autocomplete="cc-number"
-              :aria-invalid="cardNumberError"
-              :aria-describedby="cardNumberError ? 'card-number-error' : undefined"
-              class="w-full h-12 px-4 bg-slate-50 border-2 rounded-xl text-slate-700 placeholder:text-slate-300 transition-all duration-200 focus:bg-white focus:ring-4 outline-none text-base tracking-wider"
-              :class="[
-                cardNumberError ? 'border-red-400 focus:border-red-500 focus:ring-red-100 bg-red-50/30' : (cardNumberTouched && cardNumberValid ? 'border-emerald-500 ring-2 ring-emerald-400/30 bg-emerald-50/40' : 'border-slate-200 focus:border-[#43D3FF] focus:ring-[#43D3FF]/15')
-              ]"
-            />
+            <div class="relative">
+              <input
+                id="card-number"
+                :value="cardNumber"
+                @input="onCardNumberInput"
+                @blur="onCardNumberBlur"
+                type="text"
+                inputmode="numeric"
+                placeholder="1234 5678 9012 3456"
+                maxlength="23"
+                autocomplete="cc-number"
+                :aria-invalid="cardNumberError"
+                :aria-describedby="cardNumberError ? 'card-number-error' : undefined"
+                class="w-full h-12 px-4 pr-20 bg-slate-50 border-2 rounded-xl text-slate-700 placeholder:text-slate-300 transition-all duration-200 focus:bg-white focus:ring-4 outline-none text-base tracking-wider"
+                :class="[
+                  cardNumberError ? 'border-red-400 focus:border-red-500 focus:ring-red-100 bg-red-50/30' : (cardNumberTouched && cardNumberValid && cardNumber.length > 0 ? 'border-emerald-500 ring-2 ring-emerald-400/30 bg-emerald-50/40' : 'border-slate-200 focus:border-[#43D3FF] focus:ring-[#43D3FF]/15')
+                ]"
+              />
+              <div class="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1.5">
+                <span
+                  v-if="cardBrandLabel"
+                  class="text-[10px] font-semibold uppercase tracking-wider text-slate-500"
+                  aria-live="polite"
+                >
+                  {{ cardBrandLabel }}
+                </span>
+                <span
+                  v-if="cardBrand"
+                  class="inline-flex items-center justify-center w-7 h-5 rounded text-[10px] font-bold text-white shrink-0"
+                  :class="{
+                    'bg-[#1A1F71]': cardBrand === 'visa',
+                    'bg-[#EB001B]': cardBrand === 'mastercard',
+                    'bg-[#006FCF]': cardBrand === 'amex',
+                    'bg-[#FF6000]': cardBrand === 'discover',
+                    'bg-[#0079BE]': cardBrand === 'diners'
+                  }"
+                  aria-hidden="true"
+                >
+                  {{ cardBrand === 'mastercard' ? 'MC' : cardBrand === 'amex' ? 'AX' : cardBrand === 'discover' ? 'DS' : cardBrand === 'diners' ? 'DC' : 'V' }}
+                </span>
+              </div>
+            </div>
             <p v-if="cardNumberError" id="card-number-error" class="mt-1.5 text-red-600 text-xs flex items-center gap-1" role="alert">
               <svg class="w-3 h-3 shrink-0" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
                 <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd" />
@@ -457,7 +557,7 @@ function handleSubmit() {
               :aria-describedby="cardNameError ? 'card-name-error' : undefined"
               class="w-full h-12 px-4 bg-slate-50 border-2 rounded-xl text-slate-700 text-base placeholder:text-slate-300 transition-all duration-200 focus:bg-white focus:ring-4 outline-none"
               :class="[
-                cardNameError ? 'border-red-400 focus:border-red-500 focus:ring-red-100 bg-red-50/30' : (cardNameTouched && cardNameValid ? 'border-emerald-500 ring-2 ring-emerald-400/30 bg-emerald-50/40' : 'border-slate-200 focus:border-[#43D3FF] focus:ring-[#43D3FF]/15')
+                  cardNameError ? 'border-red-400 focus:border-red-500 focus:ring-red-100 bg-red-50/30' : (cardNameTouched && cardNameValid && cardName.length > 0 ? 'border-emerald-500 ring-2 ring-emerald-400/30 bg-emerald-50/40' : 'border-slate-200 focus:border-[#43D3FF] focus:ring-[#43D3FF]/15')
               ]"
             />
             <p v-if="cardNameError" id="card-name-error" class="mt-1.5 text-red-600 text-xs flex items-center gap-1" role="alert">
@@ -487,7 +587,7 @@ function handleSubmit() {
                 :aria-describedby="expiryError ? 'card-expiry-error' : undefined"
                 class="w-full h-12 px-4 bg-slate-50 border-2 rounded-xl text-slate-700 placeholder:text-slate-300 transition-all duration-200 focus:bg-white focus:ring-4 outline-none text-center tracking-wider"
                 :class="[
-                  expiryError ? 'border-red-400 focus:border-red-500 focus:ring-red-100 bg-red-50/30' : (expiryTouched && expiryValid ? 'border-emerald-500 ring-2 ring-emerald-400/30 bg-emerald-50/40' : 'border-slate-200 focus:border-[#43D3FF] focus:ring-[#43D3FF]/15')
+                    expiryError ? 'border-red-400 focus:border-red-500 focus:ring-red-100 bg-red-50/30' : (expiryTouched && expiryValid && expiryDate.length > 0 ? 'border-emerald-500 ring-2 ring-emerald-400/30 bg-emerald-50/40' : 'border-slate-200 focus:border-[#43D3FF] focus:ring-[#43D3FF]/15')
                 ]"
               />
               <p v-if="expiryError" id="card-expiry-error" class="mt-1.5 text-red-600 text-xs flex items-center gap-1" role="alert">
@@ -515,7 +615,7 @@ function handleSubmit() {
                 :aria-describedby="cvvError ? 'card-cvv-error' : undefined"
                 class="w-full h-12 px-4 bg-slate-50 border-2 rounded-xl text-slate-700 placeholder:text-slate-300 transition-all duration-200 focus:bg-white focus:ring-4 outline-none text-center tracking-wider"
                 :class="[
-                  cvvError ? 'border-red-400 focus:border-red-500 focus:ring-red-100 bg-red-50/30' : (cvvTouched && cvvValid ? 'border-emerald-500 ring-2 ring-emerald-400/30 bg-emerald-50/40' : 'border-slate-200 focus:border-[#43D3FF] focus:ring-[#43D3FF]/15')
+                    cvvError ? 'border-red-400 focus:border-red-500 focus:ring-red-100 bg-red-50/30' : (cvvTouched && cvvValid && cvv.length > 0 ? 'border-emerald-500 ring-2 ring-emerald-400/30 bg-emerald-50/40' : 'border-slate-200 focus:border-[#43D3FF] focus:ring-[#43D3FF]/15')
                 ]"
               />
               <p v-if="cvvError" id="card-cvv-error" class="mt-1.5 text-red-600 text-xs flex items-center gap-1" role="alert">
@@ -528,21 +628,54 @@ function handleSubmit() {
           </div>
         </div>
 
+        <AppAlert
+          v-if="paymentError"
+          variant="error"
+          dismissible
+          @dismiss="paymentError = null"
+          class="animate-fade-in"
+        >
+          <template v-if="paymentError === 'A'">
+            <span class="font-semibold">No pudimos procesar tu tarjeta.</span>
+            Revisa el número, la fecha de vencimiento y el código de seguridad e inténtalo de nuevo.
+            Si el error persiste, prueba con otra tarjeta.
+          </template>
+          <template v-else-if="paymentError === 'B'">
+            <span class="font-semibold">Parece que los datos de la tarjeta no coinciden.</span>
+            Verifica que el número, el nombre del titular y la fecha sean correctos.
+            Tu información está segura — ningún cargo se realizó.
+          </template>
+          <template v-else-if="paymentError === 'SYSTEM'">
+            <span class="font-semibold">Hubo un problema con el sistema.</span>
+            Por favor intenta de nuevo en unos momentos.
+            Si el problema persiste, contáctanos.
+          </template>
+          <template v-else>
+            <span class="font-semibold">Tu banco rechazó la transacción.</span>
+            No te preocupes — no se hizo ningún cobro. Puedes intentar con otra tarjeta o
+            comunicarte con tu banco para más detalles.
+          </template>
+        </AppAlert>
+
         <button
           type="button"
           @click="handleSubmit"
           :disabled="isProcessing"
-          class="bg-[#F9D35A] text-[#00184C] font-bold text-base flex items-center justify-center gap-2.5 px-8 py-3.5 rounded-full transition-all hover:brightness-95 shadow-sm w-full max-w-md mx-auto disabled:bg-slate-200 disabled:text-slate-400"
+          class="bg-[#F9D35A] text-[#00184C] font-bold text-base flex items-center justify-center gap-2.5 px-8 py-3.5 rounded-full transition-all duration-200 ease-out shadow-sm hover:-translate-y-px hover:brightness-95 hover:shadow-md active:translate-y-0 active:scale-[0.98] w-full max-w-md mx-auto disabled:bg-slate-200 disabled:text-slate-400 disabled:cursor-not-allowed disabled:hover:translate-y-0 disabled:hover:shadow-sm disabled:shadow-none"
         >
-          <span v-if="isProcessing" class="animate-spin w-5 h-5">⏳</span>
-          <span v-if="isProcessing">{{ processingStep }}</span>
-          <span v-else>
-            <span class="hidden md:inline">Activa tu cobertura · ${{ finalPrice.toFixed(2) }} USD</span>
-            <span class="md:hidden">Pagar ${{ finalPrice.toFixed(2) }} USD</span>
-          </span>
-          <svg v-if="!isProcessing" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-5 h-5 text-white transform rotate-45">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 19.5l15-15m0 0H8.25m11.25 0v11.25" />
-          </svg>
+          <template v-if="isProcessing">
+            <AppSpinner size="lg" />
+            <span>{{ processingStep }}</span>
+          </template>
+          <template v-else>
+            <span>
+              <span class="hidden md:inline">Activa tu cobertura · ${{ finalPrice.toFixed(2) }} USD</span>
+              <span class="md:hidden">Pagar ${{ finalPrice.toFixed(2) }} USD</span>
+            </span>
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-5 h-5 text-current transform rotate-45">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 19.5l15-15m0 0H8.25m11.25 0v11.25" />
+            </svg>
+          </template>
         </button>
 
         <div class="flex items-center justify-center gap-2 text-xs pt-2" style="color: #00184C; opacity: 0.5;">
@@ -558,7 +691,7 @@ function handleSubmit() {
 
           <div class="flex items-center justify-between pb-3 border-b border-slate-100">
             <p class="text-xs font-medium text-slate-500 uppercase tracking-wider">Tu reserva</p>
-            <button type="button" @click="$emit('go-to-step', STEPS.DESTINATION)" class="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-500 hover:text-[#00184C] transition-colors">
+            <button type="button" @click="$emit('go-to-step', STEPS.ROUTE)" class="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-500 hover:text-[#00184C] transition-colors">
               <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
               </svg>
@@ -655,6 +788,15 @@ function handleSubmit() {
 .fade-enter-from,
 .fade-leave-to {
   opacity: 0;
+}
+
+.animate-fade-in {
+  animation: fade-in 0.3s ease-out;
+}
+
+@keyframes fade-in {
+  0% { opacity: 0; transform: translateY(-4px); }
+  100% { opacity: 1; transform: translateY(0); }
 }
 
 .sheet-enter-active,

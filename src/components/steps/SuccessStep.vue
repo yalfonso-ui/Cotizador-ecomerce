@@ -4,13 +4,37 @@ import { generateVoucherCode } from '@/utils/voucher.js'
 import { getTravelerCount } from '@/composables/useTravelerInfo.js'
 import { formatDate as fmtDate } from '@/composables/useDateFormatter.js'
 import TripHeroBanner from '@/components/ui/TripHeroBanner.vue'
+import ContactChannelsModal from '@/components/ui/ContactChannelsModal.vue'
+import GeneralTermsModal from '@/components/ui/GeneralTermsModal.vue'
 
 const props = defineProps({
   formData: { type: Object, default: () => ({}) },
   selectedPlan: { type: Object, default: () => ({}) }
 })
 
-defineEmits(['restart-flow'])
+const emit = defineEmits(['restart-flow'])
+
+const showContact = ref(false)
+const showTerms = ref(false)
+
+function handlePrint() {
+  window.print()
+}
+
+function handleDownloadPdf() {
+  window.print()
+}
+
+function handleShare() {
+  if (navigator.share) {
+    navigator.share({
+      title: 'Mi asistencia Continental Assist',
+      text: `Código: ${voucherCode}`,
+    }).catch(() => {})
+  } else {
+    navigator.clipboard.writeText(voucherCode).catch(() => {})
+  }
+}
 
 const voucherCode = generateVoucherCode(props.formData?.selectedPlan)
 const copied = ref(false)
@@ -67,6 +91,14 @@ const tripDuration = computed(() => {
   return Math.max(1, Math.ceil(diffTime / (1000 * 60 * 60 * 24)))
 })
 
+const titularName = computed(() => {
+  const info = props.formData?.travelersInfo
+  if (Array.isArray(info) && info.length > 0 && info[0]?.name) return info[0].name
+  const pd = props.formData?.personalData
+  if (Array.isArray(pd) && pd.length > 0 && pd[0]?.name) return pd[0].name
+  return '—'
+})
+
 const summaryRows = computed(() => [
   {
     label: 'Fechas',
@@ -75,6 +107,14 @@ const summaryRows = computed(() => [
   {
     label: 'Pasajeros',
     value: `${travelerCount()} ${travelerCount() === 1 ? 'persona' : 'personas'}`
+  },
+  {
+    label: 'Titular',
+    value: titularName.value
+  },
+  {
+    label: 'Total pagado',
+    value: `$${props.selectedPlan?.price || 0} USD`
   }
 ])
 </script>
@@ -131,19 +171,54 @@ const summaryRows = computed(() => [
       </section>
 
       <section>
-        <div class="grid grid-cols-3 gap-2 sm:gap-3 border-t border-b border-slate-100 py-4 sm:py-3 w-full">
+        <div class="grid grid-cols-2 gap-3 sm:gap-4 border-t border-b border-slate-100 py-4 sm:py-3 w-full">
           <div v-for="row in summaryRows" :key="row.label">
             <p class="text-[10px] font-bold tracking-wider text-slate-400 uppercase">{{ row.label }}</p>
             <p class="text-sm font-semibold text-slate-800 mt-0.5 leading-snug">{{ row.value }}</p>
-          </div>
-          <div>
-            <p class="text-[10px] font-bold tracking-wider text-slate-400 uppercase">Tu plan</p>
-            <p class="text-sm font-semibold text-slate-800 mt-0.5 capitalize leading-snug">{{ selectedPlan?.name || 'Asistencia' }}</p>
           </div>
         </div>
       </section>
 
     </div>
+
+    <!-- Action links -->
+    <section class="mt-5 sm:mt-6 flex flex-wrap items-center justify-center gap-x-5 gap-y-2.5 text-xs text-slate-500">
+      <button type="button" @click="handlePrint" class="inline-flex items-center gap-1.5 hover:text-slate-800 transition-colors focus:outline-none focus-visible:underline">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+        </svg>
+        <span>Imprimir</span>
+      </button>
+
+      <button type="button" @click="handleDownloadPdf" class="inline-flex items-center gap-1.5 hover:text-slate-800 transition-colors focus:outline-none focus-visible:underline">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+        </svg>
+        <span>Descargar PDF</span>
+      </button>
+
+      <button type="button" @click="handleShare" class="inline-flex items-center gap-1.5 hover:text-slate-800 transition-colors focus:outline-none focus-visible:underline">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
+        </svg>
+        <span>Compartir / enviar</span>
+      </button>
+
+      <button type="button" @click="showContact = true" class="inline-flex items-center gap-1.5 hover:text-slate-800 transition-colors focus:outline-none focus-visible:underline">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M18.364 5.636a9 9 0 010 12.728m-2.829-2.829a5 5 0 000-7.07m-4.243 4.243a1 1 0 010-1.414" />
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+        </svg>
+        <span>Ver canales de contacto</span>
+      </button>
+
+      <button type="button" @click="showTerms = true" class="inline-flex items-center gap-1.5 hover:text-slate-800 transition-colors focus:outline-none focus-visible:underline">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+        </svg>
+        <span>Ver condiciones generales</span>
+      </button>
+    </section>
 
     <div class="mt-5 sm:mt-6 text-center">
       <p class="text-[#00184C] font-semibold text-sm text-center mb-3 sm:mb-4">
@@ -190,14 +265,16 @@ const summaryRows = computed(() => [
       <button
         type="button"
         @click="$emit('restart-flow')"
-        class="bg-[#F9D35A] text-[#00184C] font-bold text-base flex items-center justify-center gap-2.5 px-8 py-3.5 rounded-full transition-all hover:brightness-95 shadow-sm w-full sm:w-auto"
+        class="bg-[#F9D35A] text-[#00184C] font-bold text-base flex items-center justify-center gap-2.5 px-8 py-3.5 rounded-full transition-all duration-200 ease-out shadow-sm hover:-translate-y-px hover:brightness-95 hover:shadow-md active:translate-y-0 active:scale-[0.98] w-full sm:w-auto"
       >
         <span>Empieza otra compra</span>
-        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-5 h-5 text-white transform rotate-45">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-5 h-5 text-current transform rotate-45">
           <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 19.5l15-15m0 0H8.25m11.25 0v11.25" />
         </svg>
       </button>
     </div>
 
+    <ContactChannelsModal :visible="showContact" @close="showContact = false" />
+    <GeneralTermsModal :visible="showTerms" @close="showTerms = false" />
   </div>
 </template>
