@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, watch, onMounted } from 'vue'
+import { ref, computed, watch, onMounted, reactive, shallowRef, triggerRef } from 'vue'
 import PrivacyPolicyModal from '@/components/ui/PrivacyPolicyModal.vue'
 import SubStepIndicator from '@/components/ui/SubStepIndicator.vue'
 import { getTravelerCount as resolveCount, calculateAge } from '@/composables/useTravelerInfo.js'
@@ -7,13 +7,15 @@ import { getPlanPrice as planPrice } from '@/data/plans.js'
 import { getUpgradesTotal } from '@/data/upgrades.js'
 import { formatBirthdate as fmtBirthdate, formatDate } from '@/composables/useDateFormatter.js'
 import { showToast } from '@/composables/useToast.js'
+import { usePhoneFormatter, isValidPhone, getCountryName } from '@/composables/usePhoneFormatter.js'
+import { useBirthdateMask } from '@/composables/useBirthdateMask.js'
 
 const emit = defineEmits(['next', 'go-to-step'])
 
 const props = defineProps({
   modelValue: Object,
   selectedPlan: { type: String, default: null },
-  travelers: { type: [String, Number], default: () => 'solo' },
+  travelers: { type: [String, Number, Array], default: () => 'solo' },
   travelersCount: { type: Number, default: 1 },
   preloadedBirthdates: { type: Array, default: () => [] },
   personalData: { type: Array, default: () => [] },
@@ -33,6 +35,41 @@ const emergencyName = ref('')
 const emergencyPhone = ref('')
 const emergencyEmail = ref('')
 const privacyAccepted = ref(false)
+
+// Formatters de teléfono por viajero (uno por id de viajero).
+// Almacenamos las instancias en un Map plano FUERA de un `ref` o
+// `reactive` para que Vue no envuelva los composables en un proxy
+// y desenvuelva los refs/computeds internos. La reactividad se
+// mantiene con un counter de versión.
+const _phoneFormatters = new Map()
+const _birthdateMasks = new Map()
+const _formattersVersion = ref(0)
+function bumpFormatters() { _formattersVersion.value++ }
+
+function getPhoneFormatter(id) {
+  void _formattersVersion.value // dependency tracking
+  return _phoneFormatters.get(id)
+}
+function getBirthdateMaskById(id) {
+  void _formattersVersion.value
+  return _birthdateMasks.get(id)
+}
+
+// Formatter de teléfono para el contacto de emergencia.
+const emergencyPhoneFormatter = usePhoneFormatter(PHONE_INITIAL_DIAL)
+const emergencyPhoneDialCode = computed(() => emergencyPhoneFormatter.dialCode.value)
+const emergencyPhoneCountryName = computed(() => emergencyPhoneFormatter.countryName.value)
+
+// Trigger de animación shake para el checkbox de privacidad cuando
+// el usuario intenta continuar sin aceptarlo.
+const privacyShake = ref(false)
+const emergencyShake = ref(false)
+const PHONE_INITIAL_DIAL = '57' // +57 Colombia por default
+
+// Set de IDs de viajero cuyo birthdate fue desbloqueado manualmente por
+// el usuario (los demás quedan en modo "solo lectura" cuando vienen
+// pre-cargados del paso de selección de pasajeros).
+const unlockedBirthdates = ref(new Set())
 
 const touched = ref({})
 const isPrivacyModalOpen = ref(false)
@@ -66,9 +103,10 @@ const initTravelers = () => {
   const preloaded = props.preloadedBirthdates || []
   const next = []
   for (let i = 0; i < count; i++) {
+    const id = i + 1
     const b = preloaded[i] || {}
     next.push({
-      id: i + 1,
+      id,
       name: '',
       idNumber: '',
       email: '',
@@ -77,12 +115,28 @@ const initTravelers = () => {
       month: b.month || '',
       year: b.year || ''
     })
+
+    // Phone formatter: lazy por viajero
+    if (!_phoneFormatters.has(id)) {
+      _phoneFormatters.set(id, usePhoneFormatter(PHONE_INITIAL_DIAL))
+    } else {
+      _phoneFormatters.get(id).reset()
+    }
+
+    // Birthdate mask: lazy por viajero
+    if (!_birthdateMasks.has(id)) {
+      _birthdateMasks.set(id, useBirthdateMask({ day: b.day, month: b.month, year: b.year }))
+    } else {
+      _birthdateMasks.get(id).setValue({ d: b.day, m: b.month, y: b.year })
+    }
   }
+  bumpFormatters()
   travelers_data.value = next
 }
 
 const resetFormState = () => {
   travelers_data.value = []
+  unlockedBirthdates.value = new Set()
   emergencyName.value = ''
   emergencyPhone.value = ''
   emergencyEmail.value = ''
@@ -90,6 +144,9 @@ const resetFormState = () => {
   touched.value = {}
   activeTab.value = 0
   expandedTraveler.value = 1
+  for (const fmt of _phoneFormatters.values()) fmt?.reset?.()
+  for (const m of _birthdateMasks.values()) m?.reset?.()
+  bumpFormatters()
 }
 
 const FORM_STORAGE_KEY = 'data_step_form_state'
@@ -111,12 +168,20 @@ const isFieldValid = (traveler, field) => {
   switch (field) {
     case 'name': return (t.name || '').trim().length >= 3
     case 'email': return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(t.email || '')
-    case 'phone': return (t.phone || '').replace(/\D/g, '').length >= 10
+    case 'phone':
+      // Prioriza la validación del formatter (longitud por país)
+      // y cae al conteo de dígitos para casos donde el formateador
+      // aún no se inicializó.
+      return isValidPhone(t.phone || '') || ((t.phone || '').replace(/\D/g, '').length >= 10)
     case 'idNumber': {
       const v = (t.idNumber || '').trim()
       return v.length >= 6 && v.length <= 20 && /^[a-zA-Z0-9]+$/.test(v)
     }
     case 'birthdate': {
+      // Usa el formateador de máscara si está disponible; si no, cae
+      // al calculateAge existente.
+      const mask = getBirthdateMaskById(traveler.id)
+      if (mask && mask.isValid) return !!mask.isValid.value
       const age = calculateAge(t.day, t.month, t.year)
       return age !== null && age >= 0 && age <= 120
     }
@@ -211,19 +276,134 @@ function fillTestData() {
     t.idNumber = s.idNumber
     t.email = s.email
     t.phone = s.phone
+    const fmt = getPhoneFormatter(t.id)
+    if (fmt) {
+      fmt.onPhoneInput(s.phone)
+    }
   })
   emergencyName.value = 'Ana Martínez'
   emergencyPhone.value = '+52 55 5555 5555'
+  emergencyPhoneFormatter.onPhoneInput('+52 55 5555 5555')
   emergencyEmail.value = 'ana.martinez@email.com'
   privacyAccepted.value = true
   showToast('Datos de prueba cargados.', { variant: 'success', duration: 2000 })
 }
 
 function formatBirthdate(traveler) {
+  // Si el formateador de máscara ya inicializó, devuelve el string
+  // formateado reactivo. Si no, cae al helper del composable de fechas.
+  const mask = getBirthdateMaskById(traveler.id)
+  if (mask && (mask.day.value || mask.month.value || mask.year.value)) {
+    return mask.masked.value
+  }
   return fmtBirthdate(traveler.day, traveler.month, traveler.year)
 }
 
+function getBirthdateMaskString(traveler) {
+  const mask = getBirthdateMaskById(traveler.id)
+  if (mask) {
+    return mask.masked.value
+  }
+  // Fallback estático
+  const d = (traveler.day || '__')
+  const m = (traveler.month || '__')
+  const y = (traveler.year || '____')
+  return `${d}/${m}/${y}`
+}
+
+/**
+ * Determina si el campo birthdate de un viajero debe mostrarse en modo
+ * "solo lectura" (campo bloqueado). Esto ocurre cuando la fecha ya fue
+ * capturada en el paso de selección de pasajeros y el usuario no la ha
+ * desbloqueado explícitamente.
+ */
+function isBirthdateLocked(traveler) {
+  if (unlockedBirthdates.value.has(traveler.id)) return false
+  const b = traveler
+  return !!(b.day && b.month && b.year)
+}
+
+function toggleBirthdateLock(traveler) {
+  // Crea un nuevo Set para asegurar la reactividad (Vue 3 detecta el
+  // reemplazo de la referencia, no las mutaciones internas).
+  const next = new Set(unlockedBirthdates.value)
+  if (next.has(traveler.id)) {
+    next.delete(traveler.id)
+  } else {
+    next.add(traveler.id)
+  }
+  unlockedBirthdates.value = next
+}
+
+function applyBirthdateMask(traveler, rawValue) {
+  // Aplica la máscara al estado del formateador reactivo y sincroniza
+  // los campos day/month/year del traveler para que la lógica existente
+  // (calculateAge, emit) siga funcionando.
+  const mask = getBirthdateMaskById(traveler.id)
+  if (!mask) return
+  mask.onInput(rawValue)
+  traveler.day = mask.day.value
+  traveler.month = mask.month.value
+  traveler.year = mask.year.value
+}
+
+function applyPhoneMask(traveler, rawValue) {
+  // El input NO incluye el prefijo del país (éste se muestra a la izquierda
+  // como un badge estático). Por tanto, al construir el número completo
+  // para el formateador, le anteponemos el dial code actual.
+  const fmt = getPhoneFormatter(traveler.id)
+  if (!fmt) {
+    traveler.phone = rawValue
+    return
+  }
+  const localDigits = String(rawValue || '').replace(/\D/g, '')
+  const fullValue = `+${fmt.dialCode.value}${localDigits}`
+  fmt.onPhoneInput(fullValue)
+  const formatted = fmt.formatted.value
+  const parts = formatted.split(' ')
+  const local = parts.slice(1).join(' ')
+  traveler.phone = local
+}
+
+function isPhoneComplete(traveler) {
+  const fmt = getPhoneFormatter(traveler.id)
+  if (fmt) return fmt.isValid.value
+  return (traveler.phone || '').replace(/\D/g, '').length >= 10
+}
+
+function onEmergencyPhoneInput(value) {
+  // emergencyPhoneFormatter NO está dentro de un `reactive({})`, por
+  // lo que SÍ mantenemos `.value` aquí.
+  const localDigits = String(value || '').replace(/\D/g, '')
+  const fullValue = `+${emergencyPhoneFormatter.dialCode.value}${localDigits}`
+  emergencyPhoneFormatter.onPhoneInput(fullValue)
+  const parts = emergencyPhoneFormatter.formatted.value.split(' ')
+  emergencyPhone.value = parts.slice(1).join(' ')
+}
+
+function getPhoneCountry(traveler) {
+  const fmt = getPhoneFormatter(traveler.id)
+  if (!fmt) return getCountryName(PHONE_INITIAL_DIAL)
+  return fmt.countryName.value
+}
+
+function getPhoneDialCode(traveler) {
+  const fmt = getPhoneFormatter(traveler.id)
+  return fmt?.dialCode?.value || '57'
+}
+
+function getPhonePlaceholder() {
+  // Placeholder genérico usando el país default. El prefijo +57 está
+  // visible a la izquierda del input, así que el placeholder arranca
+  // con el número local.
+  return '300 123 4567'
+}
+
 function getAge(traveler) {
+  const mask = getBirthdateMaskById(traveler.id)
+  if (mask && mask.isValid && mask.isValid.value) {
+    return mask.age.value
+  }
   return calculateAge(traveler.day, traveler.month, traveler.year)
 }
 
@@ -250,6 +430,13 @@ const tripDays = computed(() => {
   return Math.ceil(diffTime / (1000 * 60 * 60 * 24))
 })
 
+function triggerShake(target) {
+  // Dispara una animación de shake rápida sobre el elemento target
+  // y la limpia después de 500ms (duración total del keyframe).
+  target.value = true
+  setTimeout(() => { target.value = false }, 500)
+}
+
 function handleNext() {
   if (activeTab.value === 0) {
     travelers_data.value.forEach(t => {
@@ -262,6 +449,17 @@ function handleNext() {
     emergencyNameTouched.value = true
     emergencyPhoneTouched.value = true
     privacyTouched.value = true
+
+    // Si privacidad no está aceptada, dispara shake sobre el bloque
+    // para señalizar visualmente el error.
+    if (!privacyAccepted.value) {
+      triggerShake(privacyShake)
+    }
+    // Si los datos de emergencia están incompletos, shake también.
+    if (!emergencyNameValid.value || !emergencyPhoneValid.value) {
+      triggerShake(emergencyShake)
+    }
+
     if (canSubmit.value) {
       const personalDataArray = travelers_data.value.map(t => ({
         name: t.name,
@@ -518,66 +716,125 @@ watch(travelers_data, () => {
                       <label :for="`phone-${traveler.id}`" class="text-xs font-bold text-slate-500 uppercase tracking-wide mb-1.5 block text-left">
                         Teléfono <span class="text-red-500">*</span>
                       </label>
-                      <div class="relative">
+                      <div class="relative flex">
+                        <!-- Prefijo de país persistente, no editable -->
+                        <span
+                          class="inline-flex items-center px-3 rounded-l-xl border border-r-0 border-slate-200 bg-slate-100 text-slate-700 text-sm font-semibold tabular-nums"
+                          style="color: #00184C;"
+                          :title="getPhoneCountry(traveler)"
+                        >
+                          +{{ getPhoneDialCode(traveler) }}
+                        </span>
                         <input
                           :id="`phone-${traveler.id}`"
-                          v-model="traveler.phone"
-                          type="tel"
-                          placeholder="+52 55 1234 5678"
+                          :value="traveler.phone"
+                          @input="applyPhoneMask(traveler, $event.target.value); touchField(traveler.id, 'phone')"
                           @blur="touchField(traveler.id, 'phone')"
-                          class="w-full h-12 px-4 bg-slate-50 border border-slate-200 rounded-xl text-slate-700 placeholder:text-slate-300 transition-all duration-200 focus:bg-white focus:border-[#43D3FF] focus:ring-4 focus:ring-[#43D3FF]/15 outline-none pr-9 text-base"
+                          type="tel"
+                          inputmode="tel"
+                          :placeholder="getPhonePlaceholder()"
+                          maxlength="18"
+                          class="w-full h-12 px-4 bg-slate-50 border border-slate-200 rounded-r-xl text-slate-700 placeholder:text-slate-300 transition-all duration-200 focus:bg-white focus:border-[#43D3FF] focus:ring-4 focus:ring-[#43D3FF]/15 outline-none pr-9 text-base tabular-nums tracking-wide"
                           :class="[isFieldTouched(traveler.id, 'phone') && isFieldValid(traveler, 'phone') ? 'border-emerald-500 ring-2 ring-emerald-400/30 bg-emerald-50/40' : 'border-slate-200', isFieldTouched(traveler.id, 'phone') && !isFieldValid(traveler, 'phone') ? 'border-red-300 ring-4 ring-red-50' : '']"
                         />
                         <svg v-if="isFieldTouched(traveler.id, 'phone') && isFieldValid(traveler, 'phone')" class="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-emerald-500 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" />
                         </svg>
                       </div>
-                      <p v-if="isFieldTouched(traveler.id, 'phone') && !isFieldValid(traveler, 'phone')" class="text-red-500 text-xs mt-1">Mínimo 10 dígitos</p>
+                      <p v-if="isFieldTouched(traveler.id, 'phone') && !isFieldValid(traveler, 'phone')" class="text-red-500 text-xs mt-1">Mínimo 10 dígitos (incluyendo código de país)</p>
+                      <p v-else-if="traveler.phone" class="text-slate-400 text-[11px] mt-1">
+                        {{ getPhoneCountry(traveler) }}
+                      </p>
                     </div>
 
                     <div>
-                      <label class="text-xs font-bold text-slate-500 uppercase tracking-wide mb-1.5 block text-left">
-                        Fecha de nacimiento
-                      </label>
-                      <div class="relative">
-                        <div
-                          class="group w-full h-12 px-4 bg-white border border-slate-200 rounded-xl text-slate-400 flex items-center gap-2 text-sm cursor-default transition-colors hover:border-slate-300"
-                          aria-readonly="true"
+                      <div class="flex items-center justify-between mb-1.5">
+                        <label :for="`birthdate-${traveler.id}`" class="text-xs font-bold text-slate-500 uppercase tracking-wide text-left">
+                          Fecha de nacimiento <span class="text-red-500">*</span>
+                        </label>
+                        <button
+                          v-if="isBirthdateLocked(traveler)"
+                          type="button"
+                          @click="toggleBirthdateLock(traveler); $nextTick(() => $event.target.blur())"
+                          class="text-[10px] font-semibold uppercase tracking-wider text-[#00184C] hover:opacity-70 transition-opacity focus:outline-none focus-visible:underline inline-flex items-center gap-1"
                         >
-                          <svg
-                            class="w-4 h-4 text-slate-300 shrink-0"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                            aria-hidden="true"
-                          >
-                            <path
-                              stroke-linecap="round"
-                              stroke-linejoin="round"
-                              stroke-width="2"
-                              d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
-                            />
+                          <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
                           </svg>
-                          <span class="font-medium tabular-nums tracking-wide">{{ formatBirthdate(traveler) || '—' }}</span>
-                          <svg
-                            class="w-3.5 h-3.5 text-slate-200 ml-auto shrink-0 transition-colors group-hover:text-slate-300"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                            aria-hidden="true"
-                          >
-                            <path
-                              stroke-linecap="round"
-                              stroke-linejoin="round"
-                              stroke-width="2"
-                              d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
-                            />
-                          </svg>
-                        </div>
+                          Editar
+                        </button>
                       </div>
-                      <p class="text-xs text-slate-500 mt-2">
-                        <span v-if="getAge(traveler) !== null">{{ getAge(traveler) }} años · pre-cargada del paso anterior</span>
-                        <span v-else>Pre-cargada del paso anterior</span>
+                      <div class="relative">
+                        <input
+                          :id="`birthdate-${traveler.id}`"
+                          :value="getBirthdateMaskString(traveler)"
+                          :readonly="isBirthdateLocked(traveler)"
+                          :tabindex="isBirthdateLocked(traveler) ? -1 : 0"
+                          :aria-readonly="isBirthdateLocked(traveler) ? 'true' : 'false'"
+                          @input="applyBirthdateMask(traveler, $event.target.value); touchField(traveler.id, 'birthdate')"
+                          @blur="touchField(traveler.id, 'birthdate')"
+                          @focus="isBirthdateLocked(traveler) && toggleBirthdateLock(traveler)"
+                          inputmode="numeric"
+                          maxlength="10"
+                          placeholder="DD/MM/AAAA"
+                          class="w-full h-12 px-4 border rounded-xl text-slate-700 placeholder:text-slate-300 transition-all duration-200 outline-none pr-9 text-base tabular-nums tracking-wide"
+                          :class="[
+                            isBirthdateLocked(traveler)
+                              ? 'bg-slate-100 border-slate-200 cursor-not-allowed text-slate-500 focus:bg-slate-100 focus:border-slate-200 focus:ring-0'
+                              : (isFieldTouched(traveler.id, 'birthdate') && isFieldValid(traveler, 'birthdate')
+                                  ? 'bg-emerald-50/40 border-emerald-500 ring-2 ring-emerald-400/30 focus:bg-white focus:border-emerald-500 focus:ring-4 focus:ring-emerald-400/30'
+                                  : 'bg-slate-50 border-slate-200 focus:bg-white focus:border-[#43D3FF] focus:ring-4 focus:ring-[#43D3FF]/15'),
+                            !isBirthdateLocked(traveler) && isFieldTouched(traveler.id, 'birthdate') && !isFieldValid(traveler, 'birthdate') ? 'border-red-300 ring-4 ring-red-50' : ''
+                          ]"
+                        />
+                        <!-- Lock icon cuando está bloqueado -->
+                        <svg
+                          v-if="isBirthdateLocked(traveler)"
+                          class="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none"
+                          fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                          aria-hidden="true"
+                        >
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                        </svg>
+                        <!-- Check verde cuando es válido (sólo si no está bloqueado) -->
+                        <svg
+                          v-else-if="isFieldTouched(traveler.id, 'birthdate') && isFieldValid(traveler, 'birthdate')"
+                          class="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-emerald-500 pointer-events-none"
+                          fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                          aria-hidden="true"
+                        >
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" />
+                        </svg>
+                        <!-- Icono calendario por defecto -->
+                        <svg
+                          v-else
+                          class="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-300 pointer-events-none"
+                          fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                          aria-hidden="true"
+                        >
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                        </svg>
+                      </div>
+                      <p
+                        v-if="isBirthdateLocked(traveler)"
+                        class="text-slate-400 text-[11px] mt-1.5 inline-flex items-center gap-1.5"
+                      >
+                        <svg class="w-3 h-3 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" />
+                        </svg>
+                        {{ getAge(traveler) !== null ? getAge(traveler) + ' años ·' : '' }} Pre-cargada del paso anterior
+                      </p>
+                      <p
+                        v-else-if="isFieldTouched(traveler.id, 'birthdate') && !isFieldValid(traveler, 'birthdate')"
+                        class="text-red-500 text-xs mt-1"
+                      >
+                        Fecha inválida
+                      </p>
+                      <p
+                        v-else-if="getAge(traveler) !== null"
+                        class="text-slate-400 text-[11px] mt-1"
+                      >
+                        {{ getAge(traveler) }} años
                       </p>
                     </div>
                   </div>
@@ -633,21 +890,31 @@ watch(travelers_data, () => {
 
               <div>
                 <label for="emergency-phone" class="text-xs font-bold text-slate-500 uppercase tracking-wide mb-1.5 block text-left">Teléfono</label>
-                <div class="relative">
+                <div class="relative flex">
+                  <span
+                    class="inline-flex items-center px-3 rounded-l-xl border border-r-0 border-slate-200 bg-slate-100 text-slate-700 text-sm font-semibold tabular-nums"
+                    style="color: #00184C;"
+                    title="Colombia"
+                  >
+                    +{{ emergencyPhoneDialCode }}
+                  </span>
                   <input
                     id="emergency-phone"
-                    v-model="emergencyPhone"
-                    type="tel"
-                    placeholder="+52 55 9876 5432"
+                    :value="emergencyPhone"
+                    @input="onEmergencyPhoneInput($event.target.value); emergencyPhoneTouched = true"
                     @blur="emergencyPhoneTouched = true"
-                    class="w-full h-12 px-4 bg-slate-50 border border-slate-200 rounded-xl text-slate-700 placeholder:text-slate-300 transition-all duration-200 focus:bg-white focus:border-[#43D3FF] focus:ring-4 focus:ring-[#43D3FF]/15 outline-none pr-9 text-base"
+                    type="tel"
+                    inputmode="tel"
+                    placeholder="300 987 6543"
+                    maxlength="18"
+                    class="w-full h-12 px-4 bg-slate-50 border border-slate-200 rounded-r-xl text-slate-700 placeholder:text-slate-300 transition-all focus:bg-white focus:border-[#43D3FF] focus:ring-4 focus:ring-[#43D3FF]/15 outline-none pr-9 text-base tabular-nums tracking-wide"
                     :class="[emergencyPhoneTouched && emergencyPhoneValid ? 'border-emerald-500 ring-2 ring-emerald-400/30 bg-emerald-50/40' : 'border-slate-200', emergencyPhoneTouched && !emergencyPhoneValid ? 'border-red-300 ring-4 ring-red-50' : '']"
                   />
                   <svg v-if="emergencyPhoneTouched && emergencyPhoneValid" class="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-emerald-500 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" />
                   </svg>
                 </div>
-                <p v-if="emergencyPhoneTouched && !emergencyPhoneValid" class="text-red-500 text-xs mt-1">Mínimo 10 dígitos</p>
+                <p v-if="emergencyPhoneTouched && !emergencyPhoneValid" class="text-red-500 text-xs mt-1">Mínimo 10 dígitos (incluyendo código de país)</p>
               </div>
 
               <div class="md:col-span-2">
@@ -662,39 +929,62 @@ watch(travelers_data, () => {
             </div>
 
             <div class="pt-4 border-t border-slate-100">
-              <label class="flex items-start gap-3 cursor-pointer group">
-                <div class="relative flex items-center justify-center mt-0.5">
-                  <input
-                    v-model="privacyAccepted"
-                    type="checkbox"
-                    class="peer sr-only"
-                  />
-                  <div
-                    class="w-5 h-5 rounded border-2 transition-all flex items-center justify-center"
-                    :class="privacyAccepted ? '' : 'bg-white border-slate-300 group-hover:border-[#43D3FF]'"
-                    :style="privacyAccepted ? { backgroundColor: '#43D3FF', borderColor: '#43D3FF' } : {}"
-                  >
-                    <svg v-if="privacyAccepted" class="w-3.5 h-3.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7" />
-                    </svg>
-                  </div>
-                </div>
-                <div class="flex-1">
-                  <p class="text-sm text-slate-700 leading-relaxed">
-                    Confirmo que he leído las
-                    <button
-                      type="button"
-                      @click.stop="openPrivacyPolicy"
-                      class="font-semibold underline underline-offset-2 hover:opacity-80 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#43D3FF] focus-visible:ring-offset-1 rounded"
-                      style="color: #00184C;"
+              <div
+                :class="['rounded-xl transition-all duration-200', privacyTouched && !privacyValid ? '-mx-2 px-2 py-2 ring-2 ring-red-200 bg-red-50/40' : '', privacyShake ? 'shake' : '']"
+              >
+                <label class="flex items-start gap-3 cursor-pointer group">
+                  <div class="relative flex items-center justify-center mt-0.5">
+                    <input
+                      v-model="privacyAccepted"
+                      type="checkbox"
+                      class="peer sr-only"
+                    />
+                    <div
+                      class="w-5 h-5 rounded border-2 transition-all flex items-center justify-center"
+                      :class="[
+                        privacyAccepted ? '' : (privacyTouched ? 'bg-white border-red-400 group-hover:border-red-500' : 'bg-white border-slate-300 group-hover:border-[#43D3FF]')
+                      ]"
+                      :style="privacyAccepted ? { backgroundColor: '#43D3FF', borderColor: '#43D3FF' } : {}"
+                      role="checkbox"
+                      :aria-checked="privacyAccepted"
+                      :aria-invalid="privacyTouched && !privacyValid ? 'true' : 'false'"
                     >
-                      políticas de privacidad
-                    </button>
-                    y autorizo el uso de mis datos para gestionar mi asistencia.
-                    <span class="text-red-500">*</span>
-                  </p>
-                </div>
-              </label>
+                      <svg v-if="privacyAccepted" class="w-3.5 h-3.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7" />
+                      </svg>
+                    </div>
+                  </div>
+                  <div class="flex-1">
+                    <p
+                      class="text-sm leading-relaxed"
+                      :class="privacyTouched && !privacyValid ? 'text-red-700' : 'text-slate-700'"
+                    >
+                      Confirmo que he leído las
+                      <button
+                        type="button"
+                        @click.stop="openPrivacyPolicy"
+                        class="font-semibold underline underline-offset-2 hover:opacity-80 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#43D3FF] focus-visible:ring-offset-1 rounded"
+                        style="color: #00184C;"
+                      >
+                        políticas de privacidad
+                      </button>
+                      y autorizo el uso de mis datos para gestionar mi asistencia.
+                      <span class="text-red-500">*</span>
+                    </p>
+                  </div>
+                </label>
+                <p
+                  v-if="privacyTouched && !privacyValid"
+                  class="text-red-500 text-xs mt-2 flex items-center gap-1.5 font-medium"
+                  role="alert"
+                  aria-live="polite"
+                >
+                  <svg class="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01M5 19h14a2 2 0 001.84-2.75L13.74 4a2 2 0 00-3.48 0L3.16 16.25A2 2 0 005 19z" />
+                  </svg>
+                  Debes aceptar las políticas de privacidad para continuar.
+                </p>
+              </div>
             </div>
           </div>
         </transition>
@@ -710,7 +1000,7 @@ watch(travelers_data, () => {
 
         <button type="button"
           @click="handleNext"
-          :disabled="activeTab === 0 ? !tab0Valid : !canSubmit"
+          :disabled="activeTab === 0 ? !tab0Valid : (!emergencyNameValid || !emergencyPhoneValid)"
           class="bg-[#F9D35A] text-[#00184C] font-bold text-base flex items-center justify-center gap-2.5 px-8 py-3.5 rounded-full transition-all hover:brightness-95 shadow-sm w-full max-w-md mx-auto disabled:bg-slate-200 disabled:text-slate-400"
         >
           <span v-if="activeTab === 0">
@@ -766,6 +1056,18 @@ watch(travelers_data, () => {
 .accordion-leave-from {
   opacity: 1;
   max-height: 800px;
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  20% { transform: translateX(-4px); }
+  40% { transform: translateX(4px); }
+  60% { transform: translateX(-3px); }
+  80% { transform: translateX(3px); }
+}
+.shake {
+  animation: shake 0.4s ease-in-out;
+  background-color: rgba(254, 226, 226, 0.35);
 }
 </style>
 

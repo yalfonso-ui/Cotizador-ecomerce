@@ -4,27 +4,36 @@ const STORAGE_KEY = 'wizard_state'
 const STATE_TTL_DAYS = 7
 const STATE_TTL_MS = STATE_TTL_DAYS * 24 * 60 * 60 * 1000
 
+// Único país de origen precargado por defecto.
+// El resto del formulario arranca completamente vacío.
+const DEFAULT_ORIGIN = { code: 'CO', name: 'Colombia', flag: 'co' }
+
+function createEmptyFormData() {
+  return {
+    origin: { ...DEFAULT_ORIGIN },
+    destination: [],
+    dates: { start: null, end: null },
+    tripDuration: null,
+    travelersCount: 1,
+    travelers: [],
+    birthdates: [],
+    ages: [],
+    selectedPlan: null,
+    personalData: { name: '', email: '', phone: '', document: '', documentType: '' },
+    companions: [],
+    travelersInfo: [],
+    upgrades: {},
+    emergencyContact: { name: '', phone: '', email: '' }
+  }
+}
+
 function createInitialState() {
   return {
     currentStep: 0,
     direction: 'left',
     isPaymentCompleted: false,
     showLanding: true,
-    formData: {
-      origin: null,
-      destination: [],
-      dates: { start: null, end: null },
-      tripDuration: null,
-      travelersCount: 1,
-      birthdates: [],
-      ages: [],
-      selectedPlan: null,
-      personalData: { name: '', email: '', phone: '' },
-      companions: [],
-      travelersInfo: [],
-      upgrades: {},
-      emergencyContact: { name: '', phone: '', email: '' }
-    }
+    formData: createEmptyFormData()
   }
 }
 
@@ -102,7 +111,15 @@ export const useWizardStore = defineStore('wizard', {
     },
 
     resetWizard() {
+      // Reset duro: reemplaza el formData completo para garantizar que
+      // ningún campo quede con valores residuales (destinos, fechas,
+      // pasajeros, datos personales, contacto de emergencia).
+      // El origen vuelve al default (Colombia).
       this.$reset()
+      this.formData = createEmptyFormData()
+      this.currentStep = 0
+      this.direction = 'left'
+      this.isPaymentCompleted = false
     },
 
     showLandingView() {

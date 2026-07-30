@@ -1,6 +1,7 @@
 <script setup>
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { storeToRefs } from 'pinia'
+import { useRoute } from 'vue-router'
 import { useWizardStore } from '@/stores/useWizardStore.js'
 import { useCheckoutStore } from '@/stores/useCheckoutStore.js'
 import { getPlanPrice } from '@/data/plans.js'
@@ -11,6 +12,7 @@ import ProcessingOverlay from './ProcessingOverlay.vue'
 
 const wizardStore = useWizardStore()
 const checkoutStore = useCheckoutStore()
+const route = useRoute()
 const { formData, currentStep, showLanding } = storeToRefs(wizardStore)
 const { isProcessing } = storeToRefs(checkoutStore)
 
@@ -19,6 +21,23 @@ const menuRef = ref(null)
 const buttonRef = ref(null)
 
 const isHome = computed(() => showLanding.value === true)
+
+// El módulo de reembolsos se anuncia desde el navbar global para que
+// el usuario siempre vea: logo · "Reembolsos" · | · idioma.
+// Pero dentro del cotizador (/, /cotizacion) ese link no tiene sentido
+// y se oculta para no distraer del flujo de compra.
+const isReembolsos = computed(() => route.path.startsWith('/reembolsos'))
+const isQuoteFlow = computed(() =>
+  route.path === '/' || route.path.startsWith('/cotizacion')
+)
+
+// Selector de idioma (UI only, pendiente i18n real)
+const langs = ['ES', 'EN', 'PT', 'FR']
+const activeLang = ref('ES')
+function selectLang(lang) {
+  activeLang.value = lang
+}
+
 const routeComplete = computed(() => wizardStore.hasRoute)
 const datesComplete = computed(() => !!(formData.value.dates?.start && formData.value.dates?.end))
 const price = computed(() => getPlanPrice(formData.value.selectedPlan))
@@ -107,23 +126,14 @@ onUnmounted(() => {
   <div class="min-h-screen bg-white">
     <!-- FIXED HEADER -->
     <!--
-      Header ADAPTATIVO:
-      - En la landing (hero oscuro) → transparente, sin border, logo blanco
-        (vía `brightness-0 invert`) para que se funda con el fondo navy.
-      - En el wizard (fondo blanco) → blanco/95 con backdrop-blur, border
-        sutil slate, logo en color.
-      La transición de color es animada (300ms) para que sea suave al
-      pasar de landing → primer step.
-      Ancho unificado con el resto de la app: max-w-6xl.
-      Se oculta cuando el ProcessingOverlay está activo (`isProcessing`)
-      porque el overlay tiene su propio logo y si no se verían duplicados.
+      Header FIJO: siempre sólido blanco, siempre visible (excepto durante
+      el processing overlay para no duplicar el logo). Así el usuario
+      siempre tiene el navbar a la vista al scrollear, sin transparencias
+      que dejen ver el contenido por detrás.
     -->
     <header
       v-if="!isProcessing"
-      class="fixed top-0 left-0 right-0 z-50 transition-colors duration-300"
-      :class="isHome
-        ? 'bg-transparent'
-        : 'bg-white/95 backdrop-blur-sm border-b border-slate-100'"
+      class="fixed top-0 left-0 right-0 z-50 bg-white border-b border-slate-100"
     >
       <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-3 text-xs">
 
@@ -141,8 +151,57 @@ onUnmounted(() => {
           />
         </a>
 
-        <!-- RIGHT: Summary + Edit button + dropdown (hidden on home) -->
-        <div class="flex items-center gap-2 shrink-0">
+        <!-- RIGHT: Reembolsos link + separator + idioma + Summary + Edit -->
+        <div class="flex items-center gap-2 sm:gap-3 shrink-0">
+          <!--
+            Link "Reembolsos" (sección transversal de la app).
+            Sin recuadro, sin fondo hover: solo texto limpio con
+            hover:opacity-70.
+          -->
+          <RouterLink
+            v-if="!isQuoteFlow"
+            to="/reembolsos"
+            class="hidden sm:inline-flex items-center gap-1.5 text-xs font-semibold text-slate-600 hover:opacity-70 active:scale-[0.98] transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-[#43D3FF] focus-visible:ring-offset-1"
+            aria-label="Ir al módulo de reembolsos"
+          >
+            <span>Reembolsos</span>
+          </RouterLink>
+
+          <!--
+            Controles contextuales del módulo /reembolsos.
+            Solo el selector de idioma — visible cuando el usuario
+            está dentro del módulo.
+          -->
+          <template v-if="isReembolsos">
+            <!-- Separador vertical sutil entre "Reembolsos" y el idioma -->
+            <span
+              class="hidden sm:block h-4 border-l border-slate-200"
+              aria-hidden="true"
+            ></span>
+
+            <!-- Selector de idioma -->
+            <div
+              class="hidden sm:inline-flex items-center bg-white border border-slate-200 rounded-full p-0.5"
+              role="tablist"
+              aria-label="Idioma"
+            >
+              <button
+                v-for="lang in langs"
+                :key="lang"
+                type="button"
+                role="tab"
+                :aria-selected="activeLang === lang"
+                @click="selectLang(lang)"
+                class="min-w-[1.75rem] h-7 px-1.5 text-[10px] font-bold tracking-wider rounded-full transition-colors duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#43D3FF] focus-visible:ring-offset-1"
+                :class="activeLang === lang
+                  ? 'bg-[#00184C] text-white'
+                  : 'text-slate-500 hover:text-slate-800'"
+              >
+                {{ lang }}
+              </button>
+            </div>
+          </template>
+
           <SummaryHeader v-if="shouldShowNavbarSummary" />
           <div v-if="shouldShowEdit" class="relative">
           <button

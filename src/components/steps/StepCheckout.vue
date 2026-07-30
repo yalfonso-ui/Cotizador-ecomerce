@@ -502,11 +502,10 @@ async function handleSubmit() {
                 placeholder="1234 5678 9012 3456"
                 maxlength="23"
                 autocomplete="cc-number"
-                :aria-invalid="cardNumberError"
-                :aria-describedby="cardNumberError ? 'card-number-error' : undefined"
+                :aria-invalid="false"
                 class="w-full h-12 px-4 pr-20 bg-slate-50 border-2 rounded-xl text-slate-700 placeholder:text-slate-300 transition-all duration-200 focus:bg-white focus:ring-4 outline-none text-base tracking-wider"
                 :class="[
-                  cardNumberError ? 'border-red-400 focus:border-red-500 focus:ring-red-100 bg-red-50/30' : (cardNumberTouched && cardNumberValid && cardNumber.length > 0 ? 'border-emerald-500 ring-2 ring-emerald-400/30 bg-emerald-50/40' : 'border-slate-200 focus:border-[#43D3FF] focus:ring-[#43D3FF]/15')
+                  (cardNumberTouched && cardNumberValid && cardNumber.length > 0 ? 'border-emerald-500 ring-2 ring-emerald-400/30 bg-emerald-50/40' : 'border-slate-200 focus:border-[#43D3FF] focus:ring-[#43D3FF]/15')
                 ]"
               />
               <div class="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1.5">
@@ -533,12 +532,6 @@ async function handleSubmit() {
                 </span>
               </div>
             </div>
-            <p v-if="cardNumberError" id="card-number-error" class="mt-1.5 text-red-600 text-xs flex items-center gap-1" role="alert">
-              <svg class="w-3 h-3 shrink-0" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
-                <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd" />
-              </svg>
-              Ingresa un número de tarjeta válido (13 a 19 dígitos)
-            </p>
           </div>
 
           <div>
@@ -553,19 +546,12 @@ async function handleSubmit() {
               type="text"
               placeholder="Como aparece en tu tarjeta"
               autocomplete="cc-name"
-              :aria-invalid="cardNameError"
-              :aria-describedby="cardNameError ? 'card-name-error' : undefined"
+              :aria-invalid="false"
               class="w-full h-12 px-4 bg-slate-50 border-2 rounded-xl text-slate-700 text-base placeholder:text-slate-300 transition-all duration-200 focus:bg-white focus:ring-4 outline-none"
               :class="[
-                  cardNameError ? 'border-red-400 focus:border-red-500 focus:ring-red-100 bg-red-50/30' : (cardNameTouched && cardNameValid && cardName.length > 0 ? 'border-emerald-500 ring-2 ring-emerald-400/30 bg-emerald-50/40' : 'border-slate-200 focus:border-[#43D3FF] focus:ring-[#43D3FF]/15')
+                  (cardNameTouched && cardNameValid && cardName.length > 0 ? 'border-emerald-500 ring-2 ring-emerald-400/30 bg-emerald-50/40' : 'border-slate-200 focus:border-[#43D3FF] focus:ring-[#43D3FF]/15')
               ]"
             />
-            <p v-if="cardNameError" id="card-name-error" class="mt-1.5 text-red-600 text-xs flex items-center gap-1" role="alert">
-              <svg class="w-3 h-3 shrink-0" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
-                <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd" />
-              </svg>
-              Ingresa el nombre completo del titular (mínimo 3 caracteres)
-            </p>
           </div>
 
           <div class="grid grid-cols-2 gap-4">
@@ -583,19 +569,12 @@ async function handleSubmit() {
                 placeholder="MM/AA"
                 maxlength="5"
                 autocomplete="cc-exp"
-                :aria-invalid="expiryError"
-                :aria-describedby="expiryError ? 'card-expiry-error' : undefined"
+                :aria-invalid="false"
                 class="w-full h-12 px-4 bg-slate-50 border-2 rounded-xl text-slate-700 placeholder:text-slate-300 transition-all duration-200 focus:bg-white focus:ring-4 outline-none text-center tracking-wider"
                 :class="[
-                    expiryError ? 'border-red-400 focus:border-red-500 focus:ring-red-100 bg-red-50/30' : (expiryTouched && expiryValid && expiryDate.length > 0 ? 'border-emerald-500 ring-2 ring-emerald-400/30 bg-emerald-50/40' : 'border-slate-200 focus:border-[#43D3FF] focus:ring-[#43D3FF]/15')
+                    (expiryTouched && expiryValid && expiryDate.length > 0 ? 'border-emerald-500 ring-2 ring-emerald-400/30 bg-emerald-50/40' : 'border-slate-200 focus:border-[#43D3FF] focus:ring-[#43D3FF]/15')
                 ]"
               />
-              <p v-if="expiryError" id="card-expiry-error" class="mt-1.5 text-red-600 text-xs flex items-center gap-1" role="alert">
-                <svg class="w-3 h-3 shrink-0" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
-                  <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd" />
-                </svg>
-                Formato MM/AA (mes 01-12)
-              </p>
             </div>
             <div>
               <label for="card-cvv" class="text-xs font-bold text-slate-700 uppercase tracking-wide mb-1.5 block">
@@ -611,19 +590,12 @@ async function handleSubmit() {
                 placeholder="123"
                 maxlength="4"
                 autocomplete="cc-csc"
-                :aria-invalid="cvvError"
-                :aria-describedby="cvvError ? 'card-cvv-error' : undefined"
+                :aria-invalid="false"
                 class="w-full h-12 px-4 bg-slate-50 border-2 rounded-xl text-slate-700 placeholder:text-slate-300 transition-all duration-200 focus:bg-white focus:ring-4 outline-none text-center tracking-wider"
                 :class="[
-                    cvvError ? 'border-red-400 focus:border-red-500 focus:ring-red-100 bg-red-50/30' : (cvvTouched && cvvValid && cvv.length > 0 ? 'border-emerald-500 ring-2 ring-emerald-400/30 bg-emerald-50/40' : 'border-slate-200 focus:border-[#43D3FF] focus:ring-[#43D3FF]/15')
+                    (cvvTouched && cvvValid && cvv.length > 0 ? 'border-emerald-500 ring-2 ring-emerald-400/30 bg-emerald-50/40' : 'border-slate-200 focus:border-[#43D3FF] focus:ring-[#43D3FF]/15')
                 ]"
               />
-              <p v-if="cvvError" id="card-cvv-error" class="mt-1.5 text-red-600 text-xs flex items-center gap-1" role="alert">
-                <svg class="w-3 h-3 shrink-0" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
-                  <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd" />
-                </svg>
-                CVV de 3 o 4 dígitos
-              </p>
             </div>
           </div>
         </div>

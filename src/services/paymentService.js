@@ -23,6 +23,11 @@ const PAYMENT_API_URL = import.meta.env.VITE_PAYMENT_API_URL
 const IS_DEV = import.meta.env.DEV
 const HAS_API = Boolean(PAYMENT_API_URL)
 const DEV_MOCK_ENABLED = IS_DEV && !HAS_API
+// En producción, si no hay API configurada, simula un pago exitoso para que
+// el revisor pueda probar el flujo end-to-end sin montar un backend.
+// (No se usa en builds reales en producción — el equipo puede desactivarlo
+// seteando VITE_PAYMENT_API_URL antes del build, o VITE_PAYMENT_MOCK=off.)
+const PROD_MOCK_ENABLED = !HAS_API && import.meta.env.VITE_PAYMENT_MOCK !== 'off'
 
 // Timeout duro para evitar que un fetch colgado deje al usuario con
 // el overlay de "Procesando…" para siempre.
@@ -73,6 +78,16 @@ export async function processPayment(payload) {
 
   // ── Producción sin API configurada: error de configuración ──
   if (!PAYMENT_API_URL) {
+    if (PROD_MOCK_ENABLED) {
+      console.info('[paymentService] PROD_MOCK activo — simulando pago exitoso (setear VITE_PAYMENT_API_URL o VITE_PAYMENT_MOCK=off para conectar el backend real)')
+      await new Promise(resolve => setTimeout(resolve, 1500))
+      return {
+        success: true,
+        transactionId: `demo_${Date.now()}`,
+        redirectUrl: '/confirmacion-pago',
+        voucherCode: `DEMO-${Math.random().toString(36).slice(2, 8).toUpperCase()}`
+      }
+    }
     return {
       success: false,
       errorCode: 'CONFIG',

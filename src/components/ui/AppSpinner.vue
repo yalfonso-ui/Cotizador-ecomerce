@@ -13,11 +13,13 @@ defineProps({
     dentro de layouts flex.
   -->
   <svg
-    class="animate-spin shrink-0"
+    class="animate-spin shrink-0 motion-reduce:animate-none"
     :class="{
       'w-3 h-3': size === 'sm',
       'w-4 h-4': size === 'md',
-      'w-5 h-5': size === 'lg'
+      'w-5 h-5': size === 'lg',
+      'w-10 h-10': size === 'xl',
+      'w-20 h-20': size === '2xl'
     }"
     width="24"
     height="24"

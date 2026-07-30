@@ -20,44 +20,43 @@ export const useCheckoutStore = defineStore('checkout', {
     isProcessing: false,
     processingStep: '',
     paymentError: null,
-    isMobileSummaryExpanded: false
+    isMobileSummaryExpanded: false,
+
+    // Total final cobrado (plan base + adicionales - descuento).
+    // Se setea al momento del pago exitoso en StepCheckout y se consume
+    // en la pantalla final (SuccessStep). No se persiste: si el usuario
+    // recarga la página de éxito, este valor se pierde y SuccessStep
+    // cae al fallback del precio base del plan.
+    finalTotal: 0
   }),
 
   getters: {
     cardNumberDigits: (state) => state.cardNumber.replace(/\s+/g, ''),
 
+    // Validaciones flexibles: cualquier input con al menos N caracteres
+    // cuenta como "lleno" para que el botón "Activar cobertura" se habilite.
+    // No se valida formato de tarjeta, mes de expiración ni longitud
+    // exacta del CVV — eso lo hace el backend (paymentService).
     cardNumberValid: (state) => {
       const digits = state.cardNumber.replace(/\s+/g, '')
-      return digits.length >= 13 && digits.length <= 19 && /^\d+$/.test(digits)
+      return digits.length > 0
     },
+    cardNameValid: (state) => (state.cardName || '').trim().length > 0,
+    expiryValid: (state) => (state.expiryDate || '').replace(/\D/g, '').length > 0,
+    cvvValid: (state) => (state.cvv || '').trim().length > 0,
 
-    cardNameValid: (state) => state.cardName.replace(/\s+/g, '').length >= 3,
-
-    expiryValid: (state) => {
-      const m = state.expiryDate.match(/^(\d{2})\/(\d{2})$/)
-      if (!m) return false
-      const month = parseInt(m[1], 10)
-      return month >= 1 && month <= 12
-    },
-
-    cvvValid: (state) => /^\d{3,4}$/.test(state.cvv),
-
+    // El formulario pasa al checkout si los 4 campos no están vacíos.
     isFormValid() {
       return this.cardNumberValid && this.cardNameValid && this.expiryValid && this.cvvValid
     },
 
-    cardNumberError() {
-      return (this.cardNumberTouched || this.submitAttempted) && !this.cardNumberValid
-    },
-    cardNameError() {
-      return (this.cardNameTouched || this.submitAttempted) && !this.cardNameValid
-    },
-    expiryError() {
-      return (this.expiryTouched || this.submitAttempted) && !this.expiryValid
-    },
-    cvvError() {
-      return (this.cvvTouched || this.submitAttempted) && !this.cvvValid
-    },
+    // Ya no se exponen errores de formato (el backend los maneja). Estos
+    // getters quedan como `false` por compat con el template, pero
+    // nunca se activan en el flujo normal.
+    cardNumberError() { return false },
+    cardNameError() { return false },
+    expiryError() { return false },
+    cvvError() { return false },
 
     cardBrand(state) {
       const digits = state.cardNumber.replace(/\s+/g, '')
@@ -100,6 +99,14 @@ export const useCheckoutStore = defineStore('checkout', {
     setPaymentError(error) { this.paymentError = error },
     setMobileSummaryExpanded(value) { this.isMobileSummaryExpanded = value },
 
+    // Congela el total final cobrado (base + upgrades - descuento) en el
+    // momento del pago exitoso. La pantalla final lee este valor para
+    // mostrar el monto real, no el precio base del plan.
+    setFinalTotal(amount) {
+      const v = Number(amount)
+      this.finalTotal = isFinite(v) && v >= 0 ? v : 0
+    },
+
     markAllTouched() {
       this.cardNumberTouched = true
       this.cardNameTouched = true
@@ -121,6 +128,7 @@ export const useCheckoutStore = defineStore('checkout', {
       this.isProcessing = false
       this.processingStep = ''
       this.paymentError = null
+      this.finalTotal = 0
     },
 
     resetInteractionFlags() {

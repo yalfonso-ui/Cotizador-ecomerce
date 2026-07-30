@@ -32,9 +32,12 @@ const titularComplete = computed(() => {
 })
 
 const travelersLabel = computed(() => {
-  if (!formData.value.birthdates?.length) return null
-  if (!titularComplete.value) return null
-  const n = formData.value.birthdates.length
+  // Sincronización en tiempo real: en cuanto el usuario defina
+  // viajeros en el Paso 3, mostramos la cantidad en el navbar.
+  // Antes exigía titularComplete; ahora basta con que la cantidad
+  // de viajeros esté definida (>0).
+  const n = formData.value.birthdates?.length || formData.value.travelersCount || 0
+  if (!n) return null
   return `${n} viajero${n !== 1 ? 's' : ''}`
 })
 

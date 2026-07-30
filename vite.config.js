@@ -11,9 +11,9 @@ export default defineConfig({
   },
   server: {
     allowedHosts: [
-      'hopefully-fix-version-fairfield.trycloudflare.com',
-      'updates-shut-hour-shoe.trycloudflare.com',
-      /^.*\.trycloudflare\.com$/
+      'localhost',
+      '127.0.0.1',
+      '.trycloudflare.com'  // acepta cualquier subdominio de trycloudflare.com
     ]
   }
 })

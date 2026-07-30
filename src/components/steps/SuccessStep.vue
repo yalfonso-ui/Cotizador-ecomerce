@@ -9,13 +9,32 @@ import GeneralTermsModal from '@/components/ui/GeneralTermsModal.vue'
 
 const props = defineProps({
   formData: { type: Object, default: () => ({}) },
-  selectedPlan: { type: Object, default: () => ({}) }
+  selectedPlan: { type: Object, default: () => ({}) },
+  // Total final cobrado (plan base + adicionales - descuento).
+  // Se setea desde el checkout store al momento del pago exitoso.
+  // Si no se pasa, cae al precio base del plan para mantener compatibilidad.
+  totalPaid: { type: Number, default: null }
 })
 
 const emit = defineEmits(['restart-flow'])
 
+// Logos oficiales de las tiendas — SVGs inlined en el template para
+// que no dependan de archivos sueltos en /dist y siempre carguen
+// sin importar el bundler. Ver <template> más abajo.
 const showContact = ref(false)
 const showTerms = ref(false)
+
+// ── Total a mostrar en "Total pagado" ──
+// Prioridad: prop totalPaid (cifra real cobrada) > selectedPlan.price (fallback).
+// Esto es lo que el usuario ve en la pantalla de éxito y DEBE coincidir
+// con lo que se cobró en la pantalla de checkout (incluye adicionales
+// como "Deportes y aventura" y descuentos aplicados).
+const totalPaidDisplay = computed(() => {
+  if (props.totalPaid != null && isFinite(props.totalPaid) && props.totalPaid >= 0) {
+    return props.totalPaid
+  }
+  return Number(props.selectedPlan?.price) || 0
+})
 
 function handlePrint() {
   window.print()
@@ -114,7 +133,7 @@ const summaryRows = computed(() => [
   },
   {
     label: 'Total pagado',
-    value: `$${props.selectedPlan?.price || 0} USD`
+    value: `$${totalPaidDisplay.value} USD`
   }
 ])
 </script>
@@ -181,80 +200,135 @@ const summaryRows = computed(() => [
 
     </div>
 
-    <!-- Action links -->
-    <section class="mt-5 sm:mt-6 flex flex-wrap items-center justify-center gap-x-5 gap-y-2.5 text-xs text-slate-500">
-      <button type="button" @click="handlePrint" class="inline-flex items-center gap-1.5 hover:text-slate-800 transition-colors focus:outline-none focus-visible:underline">
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+    <!-- Action links — flex-wrap con gap-3 para evitar compresión en pantallas medianas/pequeñas -->
+    <section class="mt-5 sm:mt-6 flex flex-wrap items-stretch justify-center gap-2.5 sm:gap-3 text-xs text-slate-500">
+      <button
+        type="button"
+        @click="handlePrint"
+        class="inline-flex items-center gap-2 px-4 py-2.5 bg-white border border-slate-200 rounded-full hover:border-slate-300 hover:bg-slate-50 hover:text-slate-800 transition-colors shadow-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-300 flex-1 sm:flex-none justify-center min-w-[120px]"
+      >
+        <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
         </svg>
-        <span>Imprimir</span>
+        <span class="font-medium whitespace-nowrap">Imprimir</span>
       </button>
 
-      <button type="button" @click="handleDownloadPdf" class="inline-flex items-center gap-1.5 hover:text-slate-800 transition-colors focus:outline-none focus-visible:underline">
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+      <button
+        type="button"
+        @click="handleDownloadPdf"
+        class="inline-flex items-center gap-2 px-4 py-2.5 bg-white border border-slate-200 rounded-full hover:border-slate-300 hover:bg-slate-50 hover:text-slate-800 transition-colors shadow-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-300 flex-1 sm:flex-none justify-center min-w-[140px]"
+      >
+        <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
         </svg>
-        <span>Descargar PDF</span>
+        <span class="font-medium whitespace-nowrap">Descargar PDF</span>
       </button>
 
-      <button type="button" @click="handleShare" class="inline-flex items-center gap-1.5 hover:text-slate-800 transition-colors focus:outline-none focus-visible:underline">
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+      <button
+        type="button"
+        @click="handleShare"
+        class="inline-flex items-center gap-2 px-4 py-2.5 bg-white border border-slate-200 rounded-full hover:border-slate-300 hover:bg-slate-50 hover:text-slate-800 transition-colors shadow-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-300 flex-1 sm:flex-none justify-center min-w-[150px]"
+      >
+        <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
         </svg>
-        <span>Compartir / enviar</span>
+        <span class="font-medium whitespace-nowrap">Compartir / enviar</span>
       </button>
 
-      <button type="button" @click="showContact = true" class="inline-flex items-center gap-1.5 hover:text-slate-800 transition-colors focus:outline-none focus-visible:underline">
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M18.364 5.636a9 9 0 010 12.728m-2.829-2.829a5 5 0 000-7.07m-4.243 4.243a1 1 0 010-1.414" />
+      <button
+        type="button"
+        @click="showContact = true"
+        class="inline-flex items-center gap-2 px-4 py-2.5 bg-white border border-slate-200 rounded-full hover:border-slate-300 hover:bg-slate-50 hover:text-slate-800 transition-colors shadow-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-300 flex-1 sm:flex-none justify-center min-w-[140px]"
+      >
+        <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
         </svg>
-        <span>Ver canales de contacto</span>
+        <span class="font-medium whitespace-nowrap">Canales de contacto</span>
       </button>
 
-      <button type="button" @click="showTerms = true" class="inline-flex items-center gap-1.5 hover:text-slate-800 transition-colors focus:outline-none focus-visible:underline">
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+      <button
+        type="button"
+        @click="showTerms = true"
+        class="inline-flex items-center gap-2 px-4 py-2.5 bg-white border border-slate-200 rounded-full hover:border-slate-300 hover:bg-slate-50 hover:text-slate-800 transition-colors shadow-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-300 flex-1 sm:flex-none justify-center min-w-[120px]"
+      >
+        <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
         </svg>
-        <span>Ver condiciones generales</span>
+        <span class="font-medium whitespace-nowrap">Condiciones</span>
       </button>
     </section>
 
-    <div class="mt-5 sm:mt-6 text-center">
-      <p class="text-[#00184C] font-semibold text-sm text-center mb-3 sm:mb-4">
+    <div class="mt-6 sm:mt-7 text-center opacity-60 hover:opacity-100 transition-opacity">
+      <p class="text-slate-400 text-xs sm:text-sm font-medium mb-3">
         Lleva tu asistencia a la mano durante tu viaje
       </p>
-      <div class="flex items-center justify-center gap-3">
+      <div class="flex flex-wrap items-center justify-center gap-2 sm:gap-3">
         <a
           href="#"
           aria-label="Descargar en App Store"
-          class="inline-flex items-center justify-center h-10 sm:h-9 px-3 rounded-lg bg-black hover:bg-slate-800 transition-colors"
+          class="inline-block transition-opacity hover:opacity-80"
         >
-          <svg class="h-10 sm:h-9 w-auto" viewBox="0 0 120 40" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-            <path d="M24.6 19.4c0-3.3 2.7-4.9 2.8-5-1.5-2.2-3.9-2.5-4.7-2.5-2-.2-3.9 1.2-4.9 1.2-1 0-2.6-1.2-4.2-1.1-2.2 0-4.2 1.3-5.3 3.2-2.3 3.9-.6 9.7 1.6 12.9 1.1 1.6 2.4 3.3 4 3.2 1.6-.1 2.2-1 4.1-1 1.9 0 2.5 1 4.2 1 1.7 0 2.8-1.6 3.9-3.1 1.2-1.8 1.7-3.5 1.7-3.6-.1-.1-3.3-1.3-3.2-5.2zM21.4 9.6c.9-1 1.4-2.5 1.3-4-1.2.1-2.7.8-3.6 1.9-.8.9-1.5 2.4-1.3 3.8 1.4.1 2.8-.7 3.6-1.7z" fill="#fff"/>
-            <text x="36" y="17" fill="#fff" font-family="-apple-system, BlinkMacSystemFont, 'Helvetica Neue', sans-serif" font-size="9" font-weight="500">Descargar en</text>
-            <text x="36" y="31" fill="#fff" font-family="-apple-system, BlinkMacSystemFont, 'Helvetica Neue', sans-serif" font-size="14" font-weight="700" letter-spacing="-0.3">App Store</text>
+          <!-- App Store badge: SVG inlined para garantizar carga en build de prod -->
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 360 108"
+            width="120"
+            height="36"
+            class="h-10 sm:h-9 w-auto"
+            role="img"
+            aria-label="Descargar en App Store"
+          >
+            <title>Descargar en App Store</title>
+            <!-- Apple mark (white on black) -->
+            <g transform="translate(20, 22)" fill="#000">
+              <path d="M50.5 49.4c-.1-9.3 7.6-13.7 8-13.9-4.3-6.3-11.1-7.2-13.5-7.3-5.7-.6-11.2 3.4-14.1 3.4-3 0-7.4-3.3-12.2-3.2-6.3.1-12.1 3.7-15.3 9.3-6.5 11.3-1.7 28 4.7 37.1 3.1 4.5 6.8 9.5 11.7 9.3 4.7-.2 6.5-3 12.1-3 5.6 0 7.3 3 12.2 2.9 5 0 8.2-4.5 11.3-9 3.5-5.2 5-10.3 5-10.5-.1-.1-9.9-3.8-9.9-15.1zM40.7 21.2c2.6-3.1 4.3-7.5 3.8-11.8-3.7.1-8.2 2.5-10.8 5.6-2.4 2.7-4.4 7.1-3.9 11.3 4 .3 8.3-2 10.9-5.1z" />
+            </g>
+            <!-- Text block -->
+            <g transform="translate(108, 0)" fill="#000" font-family="-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Helvetica Neue', Helvetica, Arial, sans-serif">
+              <text x="0" y="50" font-size="22" font-weight="400" letter-spacing="-0.2">Descargar en</text>
+              <text x="0" y="86" font-size="38" font-weight="700" letter-spacing="-1.2">App Store</text>
+            </g>
           </svg>
         </a>
 
         <a
           href="#"
           aria-label="Descargar en Google Play"
-          class="inline-flex items-center justify-center h-10 sm:h-9 px-3 rounded-lg bg-black hover:bg-slate-800 transition-colors"
+          class="inline-block transition-opacity hover:opacity-80"
         >
-          <svg class="h-10 sm:h-9 w-auto" viewBox="0 0 130 40" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-            <path d="M5 3.5c-.3.3-.5.8-.5 1.4v30.2c0 .6.2 1.1.5 1.4l15.7-16.5L5 3.5z" fill="#5BC9F4"/>
-            <path d="M26.4 25.7l-5.7-5.7L5 36.5c.5.5 1.3.6 2.2.1l19.2-10.9z" fill="#FBC72E"/>
-            <path d="M26.4 14.3L7.2 3.4c-.9-.5-1.7-.4-2.2.1L20.7 20l5.7-5.7z" fill="#E53935"/>
-            <path d="M26.4 14.3L20.7 20l5.7 5.7 4.7-2.7c1.4-.8 1.4-2.9 0-3.7l-4.7-2.7z" fill="#43A047"/>
-            <text x="36" y="17" fill="#fff" font-family="Roboto, 'Helvetica Neue', Arial, sans-serif" font-size="8" font-weight="400">DISPONIBLE EN</text>
-            <text x="36" y="31" fill="#fff" font-family="Roboto, 'Helvetica Neue', Arial, sans-serif" font-size="13" font-weight="700" letter-spacing="0.3">Google Play</text>
+          <!-- Google Play badge: SVG inlined para garantizar carga en build de prod -->
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 420 124"
+            width="135"
+            height="40"
+            class="h-10 sm:h-9 w-auto"
+            role="img"
+            aria-label="Descargar en Google Play"
+          >
+            <title>Descargar en Google Play</title>
+            <!-- Multicolor Google Play triangle (the actual mark) -->
+            <g transform="translate(18, 18)">
+              <!-- Back slope (cyan) -->
+              <path d="M0 4.2c0-1.6.6-3 1.5-4L50.6 44 0 83.8c-1-.9-1.5-2.3-1.5-4V4.2z" fill="#00D4FF" />
+              <!-- Right slope (yellow) -->
+              <path d="M50.6 44L0 83.8c.6 1.4 1.7 2.4 3 2.7l57-32.4-10-10.1z" fill="#FFCE00" />
+              <!-- Top-left slope (red) -->
+              <path d="M0 .2C.7 0 1.3 0 2 0c.9 0 1.8.2 2.5.6l54.5 31L50.6 44 0 .2z" fill="#FF3A44" />
+              <!-- Front-right (green) -->
+              <path d="M50.6 44l10-10.1 13.5 7.7c2.7 1.5 2.7 5.4 0 6.9l-13.5 7.7-10-12.2z" fill="#00F076" />
+            </g>
+            <!-- Text block -->
+            <g transform="translate(120, 0)" fill="#000" font-family="Roboto, 'Helvetica Neue', Arial, sans-serif">
+              <text x="0" y="48" font-size="22" font-weight="400" letter-spacing="0.4">DISPONIBLE EN</text>
+              <text x="0" y="90" font-size="42" font-weight="700" letter-spacing="-0.5">Google Play</text>
+            </g>
           </svg>
         </a>
       </div>
     </div>
 
-    <div class="mt-5 sm:mt-6 pt-4 border-t border-slate-100 flex flex-col items-center gap-3 sm:gap-2">
+    <div class="mt-6 sm:mt-8 pt-5 border-t-2 border-slate-100 flex flex-col items-center gap-4">
       <div class="flex items-center gap-2 text-xs text-slate-400 text-center">
         <svg class="hidden sm:block w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
@@ -262,15 +336,17 @@ const summaryRows = computed(() => [
         <span>Tus documentos ya están en tu correo</span>
       </div>
 
+      <!-- CTA principal: mayor jerarquía visual con navy + acento cian -->
       <button
         type="button"
         @click="$emit('restart-flow')"
-        class="bg-[#F9D35A] text-[#00184C] font-bold text-base flex items-center justify-center gap-2.5 px-8 py-3.5 rounded-full transition-all duration-200 ease-out shadow-sm hover:-translate-y-px hover:brightness-95 hover:shadow-md active:translate-y-0 active:scale-[0.98] w-full sm:w-auto"
+        class="relative bg-[#00184C] text-white font-bold text-base flex items-center justify-center gap-3 px-12 py-4 rounded-full transition-all duration-200 ease-out shadow-xl ring-4 ring-[#00184C]/20 hover:-translate-y-0.5 hover:bg-[#00184C] hover:shadow-2xl hover:ring-[#43D3FF]/50 active:translate-y-0 active:scale-[0.98] w-full sm:w-auto min-w-[260px]"
       >
-        <span>Empieza otra compra</span>
-        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-5 h-5 text-current transform rotate-45">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 19.5l15-15m0 0H8.25m11.25 0v11.25" />
+        <span class="absolute inset-0 rounded-full bg-gradient-to-r from-[#00184C] via-[#00184C] to-[#43D3FF]/20 opacity-0 hover:opacity-100 transition-opacity pointer-events-none" aria-hidden="true"></span>
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-5 h-5 relative z-10" style="color: #43D3FF;">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99" />
         </svg>
+        <span class="relative z-10">Empieza otra compra</span>
       </button>
     </div>
 

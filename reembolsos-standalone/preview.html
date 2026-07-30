@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Reembolsos · Continental Assist — Preview</title>
+
+  <!-- Tailwind CSS via CDN (Play CDN: permite arbitrary classes JIT) -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- Vue 3 via CDN (build global) -->
+  <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
+
+  <!-- Tokens del design system (CSS variables, idénticos al proyecto real) -->
+  <style>
+    :root {
+      --ds-primary: #00184C;
+      --ds-primary-soft: #002a6e;
+      --ds-secondary: #43D3FF;
+      --ds-cta: #F9D35A;
+      --ds-bg-alt: #EDF4F9;
+    }
+    html, body { font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', sans-serif; }
+    h1, h2, h3, h4 { font-weight: 700; letter-spacing: -0.02em; }
+  </style>
+</head>
+
+<body class="bg-white text-slate-900 antialiased">
+  <div id="app"></div>
+
+  <script>
+    const { createApp, ref, computed } = Vue
+
+    // ────────────────────────────────────────────────────────────
+    // COMPONENTE 1: InfoCard (columna izquierda)
+    // Réplica exacta de ReembolsosInfoCard.vue
+    // ────────────────────────────────────────────────────────────
+    const ReembolsosInfoCard = {
+      template: `
+        <aside class="bg-white rounded-3xl shadow-sm border border-slate-100/70 p-6 sm:p-7 flex flex-col" aria-label="Información del módulo de reembolsos">
+          <div class="flex justify-center mb-5">
+            <img
+              src="src/assets/Asesor.png"
+              alt="Asesor de Continental Assist"
+              width="96"
+              height="96"
+              class="w-24 h-24 object-contain"
+            />
+          </div>
+
+          <h1 class="text-lg sm:text-xl font-bold leading-tight tracking-tight" :style="{ color: 'var(--ds-primary)' }">
+            ¡Hola, bienvenido a nuestro módulo de reembolsos!
+          </h1>
+
+          <p class="mt-2 text-sm text-slate-500 leading-relaxed">
+            Radica tu solicitud en pocos minutos. Estamos para acompañarte en cada paso.
+          </p>
+
+          <ul class="mt-5 space-y-2.5">
+            <li class="flex items-start gap-2.5 text-sm text-slate-600">
+              <span class="mt-0.5 shrink-0 w-4.5 h-4.5 rounded-full flex items-center justify-center" :style="{ backgroundColor: 'rgba(67, 211, 255, 0.1)' }">
+                <svg class="w-2.5 h-2.5" :style="{ color: 'var(--ds-secondary)' }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7" />
+                </svg>
+              </span>
+              <span>
+                Proceso <strong class="font-semibold text-slate-800">100% en línea</strong>, sin filas ni papeleo.
+              </span>
+            </li>
+            <li class="flex items-start gap-2.5 text-sm text-slate-600">
+              <span class="mt-0.5 shrink-0 w-4.5 h-4.5 rounded-full flex items-center justify-center" :style="{ backgroundColor: 'rgba(67, 211, 255, 0.1)' }">
+                <svg class="w-2.5 h-2.5" :style="{ color: 'var(--ds-secondary)' }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7" />
+                </svg>
+              </span>
+              <span>
+                Respuesta en <strong class="font-semibold text-slate-800">24 h a 5 días hábiles</strong> según el caso.
+              </span>
+            </li>
+            <li class="flex items-start gap-2.5 text-sm text-slate-600">
+              <span class="mt-0.5 shrink-0 w-4.5 h-4.5 rounded-full flex items-center justify-center" :style="{ backgroundColor: 'rgba(67, 211, 255, 0.1)' }">
+                <svg class="w-2.5 h-2.5" :style="{ color: 'var(--ds-secondary)' }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7" />
+                </svg>
+              </span>
+              <span>
+                <strong class="font-semibold text-slate-800">Soporte humano</strong> cuando lo necesites.
+              </span>
+            </li>
+          </ul>
+
+          <div class="mt-auto pt-5 mt-6 border-t border-slate-100 flex items-center gap-3">
+            <span class="shrink-0 w-9 h-9 rounded-xl flex items-center justify-center" :style="{ backgroundColor: 'var(--ds-primary)' }">
+              <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+              </svg>
+            </span>
+            <div class="min-w-0">
+              <p class="text-[11px] text-slate-400 font-medium leading-tight">¿Tienes dudas? Escríbenos</p>
+              <a href="mailto:reembolsos@continentalassist.com" class="block text-sm font-semibold transition-colors duration-200 truncate" :style="{ color: 'var(--ds-primary)' }" onmouseover="this.style.color='var(--ds-secondary)'" onmouseout="this.style.color='var(--ds-primary)'">
+                reembolsos@continentalassist.com
+              </a>
+            </div>
+          </div>
+        </aside>
+      `
+    }
+
+    // ────────────────────────────────────────────────────────────
+    // COMPONENTE 2: Home (columna derecha — ¿Qué quieres hacer hoy?)
+    // Réplica exacta de ReembolsosHome.vue
+    // ────────────────────────────────────────────────────────────
+    const ReembolsosHome = {
+      components: { ReembolsosInfoCard },
+      setup() {
+        const showComingSoon = ref('')
+        return { showComingSoon }
+      },
+      template: `
+        <section class="bg-white rounded-3xl shadow-sm border border-slate-100/70 p-8 sm:p-10 lg:p-12" aria-labelledby="reembolsos-home-title">
+          <p class="text-[11px] font-bold tracking-[0.18em] uppercase" :style="{ color: 'var(--ds-secondary)' }">
+            Portal de reembolsos
+          </p>
+          <h2 id="reembolsos-home-title" class="mt-3 text-3xl sm:text-4xl font-bold leading-tight tracking-tight" :style="{ color: 'var(--ds-primary)' }">
+            ¿Qué quieres hacer hoy?
+          </h2>
+          <p class="mt-3 text-sm sm:text-base text-slate-500">
+            Elige una opción para empezar.
+          </p>
+
+          <div class="mt-10 grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-5">
+            <!-- Card 1: Crear reembolso -->
+            <button
+              type="button"
+              @click="showComingSoon = 'crear'"
+              class="group relative text-left bg-white rounded-2xl border border-slate-200/80 p-6 sm:p-7 transition-all duration-200 ease-out hover:border-[#43D3FF]/60 hover:shadow-md hover:-translate-y-px focus:outline-none focus-visible:ring-2 focus-visible:ring-[#43D3FF] focus-visible:ring-offset-2"
+            >
+              <div
+                class="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#43D3FF] to-[#00184C] flex items-center justify-center mb-5 shadow-sm transition-transform duration-200 group-hover:scale-105"
+                aria-hidden="true"
+              >
+                <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 5v14M5 12h14" />
+                </svg>
+              </div>
+              <h3 class="text-lg sm:text-xl font-bold tracking-tight" :style="{ color: 'var(--ds-primary)' }">
+                Crear reembolso
+              </h3>
+              <p class="mt-2 text-sm text-slate-500 leading-relaxed">
+                Radica una nueva solicitud. Te guiamos paso a paso; toma unos minutos.
+              </p>
+              <span
+                class="mt-6 inline-flex items-center gap-2 text-sm font-bold transition-all duration-200 group-hover:gap-2.5"
+                :style="{ color: 'var(--ds-secondary)' }"
+              >
+                Empezar solicitud
+                <svg class="w-3.5 h-3.5 transform rotate-45" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4.5 19.5l15-15m0 0H8.25m11.25 0v11.25" />
+                </svg>
+              </span>
+            </button>
+
+            <!-- Card 2: Consultar reembolso -->
+            <button
+              type="button"
+              @click="showComingSoon = 'consultar'"
+              class="group relative text-left bg-white rounded-2xl border border-slate-200/80 p-6 sm:p-7 transition-all duration-200 ease-out hover:border-[#43D3FF]/60 hover:shadow-md hover:-translate-y-px focus:outline-none focus-visible:ring-2 focus-visible:ring-[#43D3FF] focus-visible:ring-offset-2"
+            >
+              <div
+                class="w-12 h-12 rounded-2xl flex items-center justify-center mb-5 border border-[#43D3FF]/20 transition-transform duration-200 group-hover:scale-105"
+                :style="{ backgroundColor: 'rgba(67, 211, 255, 0.12)' }"
+                aria-hidden="true"
+              >
+                <svg class="w-5 h-5" :style="{ color: 'var(--ds-primary)' }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M21 21l-4.35-4.35M11 19a8 8 0 100-16 8 8 0 000 16z" />
+                </svg>
+              </div>
+              <h3 class="text-lg sm:text-xl font-bold tracking-tight" :style="{ color: 'var(--ds-primary)' }">
+                Consultar reembolso
+              </h3>
+              <p class="mt-2 text-sm text-slate-500 leading-relaxed">
+                ¿Ya radicaste? Mira el estado de tu caso con tu código de seguimiento.
+              </p>
+              <span
+                class="mt-6 inline-flex items-center gap-2 text-sm font-bold transition-all duration-200 group-hover:gap-2.5"
+                :style="{ color: 'var(--ds-secondary)' }"
+              >
+                Consultar estado
+                <svg class="w-3.5 h-3.5 transform rotate-45" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4.5 19.5l15-15m0 0H8.25m11.25 0v11.25" />
+                </svg>
+              </span>
+            </button>
+          </div>
+
+          <!-- Coming soon toast -->
+          <Transition name="toast">
+            <div
+              v-if="showComingSoon"
+              class="mt-6 p-4 rounded-2xl flex items-start gap-3"
+              :style="{ backgroundColor: 'rgba(67, 211, 255, 0.08)', border: '1px solid rgba(67, 211, 255, 0.2)' }"
+              role="status"
+            >
+              <span class="shrink-0 w-5 h-5 rounded-full text-white text-[11px] font-bold flex items-center justify-center mt-0.5" :style="{ backgroundColor: 'var(--ds-primary)' }">i</span>
+              <div class="flex-1 min-w-0">
+                <p class="text-sm" :style="{ color: 'var(--ds-primary)' }">
+                  <strong>Pantalla de {{ showComingSoon === 'crear' ? 'Crear Reembolso' : 'Consultar Reembolso' }}.</strong>
+                  En este preview solo está renderizada la home. La vista completa está en
+                  <code class="px-1.5 py-0.5 rounded text-xs font-mono" :style="{ backgroundColor: 'rgba(0, 24, 76, 0.06)' }">src/views/reembolsos/{{ showComingSoon === 'crear' ? 'ReembolsosCreate.vue' : 'ReembolsosConsult.vue' }}</code>
+                </p>
+                <button @click="showComingSoon = ''" class="mt-1.5 text-xs font-semibold hover:underline" :style="{ color: 'var(--ds-secondary)' }">
+                  Cerrar
+                </button>
+              </div>
+            </div>
+          </Transition>
+        </section>
+      `
+    }
+
+    // ────────────────────────────────────────────────────────────
+    // COMPONENTE 3: View (layout wrapper con 2 columnas)
+    // Réplica exacta de ReembolsosView.vue (versión home)
+    // ────────────────────────────────────────────────────────────
+    const ReembolsosView = {
+      components: { ReembolsosInfoCard, ReembolsosHome },
+      template: `
+        <div
+          class="min-h-screen flex flex-col"
+          style="background: linear-gradient(135deg, #EDF4F9 0%, #F7FBFD 50%, #FFFFFF 100%);"
+        >
+          <main class="flex-1 w-full">
+            <div class="w-full px-4 sm:px-6 lg:px-8 max-w-6xl mx-auto pt-6 sm:pt-8 lg:pt-10 pb-10 sm:pb-14 lg:pb-16">
+              <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+                <div class="lg:col-span-4 lg:sticky lg:top-10 lg:self-start">
+                  <ReembolsosInfoCard />
+                </div>
+                <div class="lg:col-span-8">
+                  <ReembolsosHome />
+                </div>
+              </div>
+            </div>
+          </main>
+
+          <footer class="w-full py-6 text-center">
+            <p class="text-xs text-slate-400">
+              Continental Assist · Acompañándote donde estés.
+            </p>
+          </footer>
+        </div>
+      `
+    }
+
+    // ────────────────────────────────────────────────────────────
+    // MOUNT
+    // ────────────────────────────────────────────────────────────
+    const app = createApp({
+      components: { ReembolsosView },
+      template: `<ReembolsosView />`
+    })
+    app.mount('#app')
+  </script>
+</body>
+</html>

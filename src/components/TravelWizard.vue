@@ -6,6 +6,7 @@ import { getPlanPrice as planPrice, getPlanName as planName } from '@/data/plans
 import { showToast } from '@/composables/useToast.js'
 import { STEPS, TOTAL_STEPS } from '@/composables/useWizardSteps.js'
 import { useWizardStore } from '@/stores/useWizardStore.js'
+import { useCheckoutStore } from '@/stores/useCheckoutStore.js'
 import LandingPage from './LandingPage.vue'
 import StepRoute from './steps/StepRoute.vue'
 import StepDates from './steps/StepDates.vue'
@@ -18,6 +19,7 @@ import SuccessStep from './steps/SuccessStep.vue'
 import TourOverlay from './ui/TourOverlay.vue'
 
 const wizardStore = useWizardStore()
+const checkoutStore = useCheckoutStore()
 const router = useRouter()
 const {
   currentStep,
@@ -26,6 +28,7 @@ const {
   showLanding,
   formData
 } = storeToRefs(wizardStore)
+const { finalTotal } = storeToRefs(checkoutStore)
 
 const showWizard = computed(() => !showLanding.value)
 
@@ -118,7 +121,7 @@ function beforeUnloadHandler(e) {
                   <StepDates @next="nextStep" />
                 </div>
                 <div v-else-if="currentStep === STEPS.TRAVELERS">
-                  <TravelersBirthdateStep :modelValue="formData" @next="nextStep" />
+                  <TravelersBirthdateStep v-model="formData" @next="nextStep" />
                 </div>
                 <div v-else-if="currentStep === STEPS.PLANS">
                   <StepPlans v-model="formData.selectedPlan" :destination="formData.destination" @next="nextStep" />
@@ -154,6 +157,7 @@ function beforeUnloadHandler(e) {
                   <SuccessStep
                     :formData="formData"
                     :selectedPlan="{ name: getPlanName(), price: getPlanPrice() }"
+                    :totalPaid="finalTotal"
                     @restart-flow="restart"
                   />
                 </div>

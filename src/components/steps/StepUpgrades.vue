@@ -17,7 +17,7 @@ const imageMap = {
 const emit = defineEmits(['update:modelValue', 'next'])
 
 const props = defineProps({
-  travelers: { type: [String, Number], default: 'solo' },
+  travelers: { type: [String, Number, Array], default: 'solo' },
   travelersCount: { type: Number, default: 1 },
   personalData: { type: Array, default: () => [] },
   modelValue: { type: Object, default: () => ({}) }
@@ -37,7 +37,21 @@ function buildEmpty(count) {
 
 const travelersUpgrades = ref(buildEmpty(travelerCount.value))
 
+// Flag para evitar el loop de reactividad entre watchers:
+//   toggleUpgrade muta travelersUpgrades
+//     → watch(travelersUpgrades) emite update:modelValue
+//       → watch(props.modelValue) reasigna travelersUpgrades
+//         → watch(travelersUpgrades) emite de nuevo ...
+// Usamos este guard para que el watcher entrante no se re-emita
+// a sí mismo. El primer set (desde el padre) se aplica; los
+// siguientes (los que disparamos nosotros) se ignoran.
+let isInternalSync = false
+
 watch(() => props.modelValue, (val) => {
+  if (isInternalSync) {
+    isInternalSync = false
+    return
+  }
   if (!val || Object.keys(val).length === 0) {
     travelersUpgrades.value = buildEmpty(travelerCount.value)
     return
@@ -47,6 +61,7 @@ watch(() => props.modelValue, (val) => {
 }, { deep: true })
 
 watch(travelersUpgrades, (val) => {
+  isInternalSync = true
   emit('update:modelValue', val)
 }, { deep: true })
 
@@ -132,11 +147,9 @@ function handleNext() {
           :class="isSelected(travelerId, upgrade.id)
             ? 'border-2 border-blue-600 bg-blue-50'
             : 'border border-slate-200 hover:border-slate-300'"
-          @click="toggleUpgrade(travelerId, upgrade.id)"
-          role="checkbox"
-          :aria-checked="isSelected(travelerId, upgrade.id)"
+          role="group"
           :aria-label="`${upgrade.title} para ${getTravelerName(travelerId)}`"
-          tabindex="0"
+          @click="toggleUpgrade(travelerId, upgrade.id)"
           @keydown.space.prevent="toggleUpgrade(travelerId, upgrade.id)"
           @keydown.enter.prevent="toggleUpgrade(travelerId, upgrade.id)"
         >
@@ -173,7 +186,9 @@ function handleNext() {
                 :aria-checked="isSelected(travelerId, upgrade.id)"
                 :aria-label="`Activar ${upgrade.title}`"
                 @click.stop="toggleUpgrade(travelerId, upgrade.id)"
-                class="shrink-0 relative inline-flex items-center w-11 h-6 rounded-full transition-colors duration-200 focus:outline-none focus-visible:ring-2"
+                @keydown.space.stop.prevent="toggleUpgrade(travelerId, upgrade.id)"
+                @keydown.enter.stop.prevent="toggleUpgrade(travelerId, upgrade.id)"
+                class="shrink-0 relative inline-flex items-center w-11 h-6 rounded-full transition-colors duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#43D3FF]/40"
                 :style="isSelected(travelerId, upgrade.id)
                   ? { backgroundColor: '#00184C' }
                   : { backgroundColor: '#E2E8F0' }"
@@ -219,10 +234,29 @@ function handleNext() {
       </div>
     </div>
 
+    <!-- Sugerencia opcional (no bloqueante): los upgrades son opcionales.
+         El usuario puede continuar sin elegir ninguno. -->
+    <div
+      v-if="!hasAnyUpgrades"
+      id="upgrades-help"
+      class="w-full max-w-md mx-auto flex items-start gap-2.5 px-3 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-slate-600 text-xs"
+      role="status"
+      aria-live="polite"
+    >
+      <svg class="w-4 h-4 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+      </svg>
+      <p>
+        <span class="font-semibold">Tip:</span> las coberturas adicionales son opcionales.
+        Puedes continuar al pago con tu plan base o agregar una si lo necesitas.
+      </p>
+    </div>
+
     <div class="w-full flex items-center justify-center pt-2">
       <button type="button"
         @click="handleNext"
-        class="bg-[#FFCC00] hover:bg-[#E6B800] text-slate-900 font-semibold text-base flex items-center justify-center gap-2 px-8 py-4 rounded-full transition-all duration-200 ease-out shadow-sm hover:-translate-y-px hover:shadow-md active:translate-y-0 active:scale-[0.98] w-full max-w-md disabled:bg-slate-100 disabled:text-slate-400 disabled:cursor-not-allowed disabled:hover:translate-y-0 disabled:hover:shadow-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-[#FFCC00] focus-visible:ring-offset-2"
+        :aria-describedby="!hasAnyUpgrades ? 'upgrades-help' : undefined"
+        class="bg-[#FFCC00] hover:bg-[#E6B800] text-slate-900 font-semibold text-base flex items-center justify-center gap-2 px-8 py-4 rounded-full transition-all duration-200 ease-out shadow-sm hover:-translate-y-px hover:shadow-md active:translate-y-0 active:scale-[0.98] w-full max-w-md focus:outline-none focus-visible:ring-2 focus-visible:ring-[#FFCC00] focus-visible:ring-offset-2"
       >
         <span class="hidden md:inline">Continúa al pago</span>
         <span class="md:hidden">Ir al pago</span>

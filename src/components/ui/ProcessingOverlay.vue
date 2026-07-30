@@ -2,7 +2,6 @@
 import { storeToRefs } from 'pinia'
 import { useCheckoutStore } from '@/stores/useCheckoutStore.js'
 import AppSpinner from './AppSpinner.vue'
-import spinnerGif from '@/assets/images/spinner/spinner.gif'
 
 const checkoutStore = useCheckoutStore()
 const { isProcessing, processingStep } = storeToRefs(checkoutStore)
@@ -16,45 +15,38 @@ const { isProcessing, processingStep } = storeToRefs(checkoutStore)
     <Transition name="processing-fade">
       <div
         v-if="isProcessing"
-        class="fixed inset-0 z-[60] bg-white/95 backdrop-blur-md flex items-center justify-center p-4"
+        class="fixed inset-0 z-[60] bg-white flex items-center justify-center p-4"
         role="alert"
         aria-live="assertive"
         aria-busy="true"
       >
-        <div class="text-center space-y-8 max-w-sm">
+        <div class="flex flex-col items-center space-y-7 max-w-sm">
           <!--
             Logo: momento crítico del flujo (procesamiento de pago). Refuerza
-            la identidad de marca mientras el usuario espera. El header del
-            GlobalLayout se ve difuminado detrás del overlay, así que este
-            logo propio se vuelve el foco visual.
+            la identidad de marca mientras el usuario espera.
+
+            Importante: el fondo del overlay es 100% opaco (bg-white) para
+            que no se transparente el logo del header que vive detrás. Eso
+            elimina el efecto de "dos logos" en pantalla.
           -->
           <img
             src="@/assets/images/uploads/Logotipo PNG.png"
             alt="Continental Assist"
-            class="h-14 md:h-20 w-auto mx-auto opacity-95"
+            class="h-12 md:h-16 w-auto"
           />
 
           <!--
-            Spinner con marca: aquí SÍ vale la pena usar el GIF.
-            Es el momento más importante del flujo (procesamiento del pago).
-            El GIF transmite profesionalismo y refuerza la identidad de marca.
-            Para usuarios con prefers-reduced-motion, fallback al AppSpinner SVG
-            (más sutil, sin animación continua).
+            Spinner limpio: usamos el SVG nativo (AppSpinner) en vez del GIF
+            con marca de agua, porque el GIF traía el isotipo "Continental Assist"
+            adentro y eso duplicaba visualmente el logo que ya está arriba.
+            SVG puro = un solo logo visible en pantalla.
+            Para usuarios con prefers-reduced-motion, el animation: spin
+            de Tailwind se desactiva automáticamente (configurado en tailwind.config).
           -->
-          <div class="relative mx-auto w-32 h-32 md:w-36 md:h-36">
-            <img
-              :src="spinnerGif"
-              alt="Procesando tu pago"
-              width="144"
-              height="144"
-              class="w-32 h-32 md:w-36 md:h-36 object-contain object-center motion-reduce:hidden"
-            />
-            <AppSpinner
-              size="lg"
-              class="absolute inset-0 m-auto hidden motion-reduce:block text-[#00184C]"
-            />
+          <div class="flex justify-center">
+            <AppSpinner size="2xl" class="text-[#00184C]" />
           </div>
-          <div>
+          <div class="text-center">
             <p class="text-lg font-bold text-slate-900">{{ processingStep || 'Procesando…' }}</p>
             <p class="text-xs text-slate-500 mt-2">No cierres esta ventana.</p>
           </div>

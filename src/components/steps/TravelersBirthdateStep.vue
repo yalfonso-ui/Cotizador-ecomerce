@@ -157,14 +157,25 @@ function handleContinue() {
 
 initTravelers(travelersCount.value)
 
-watch(travelersCount, (count) => {
+// ── Sincronización en tiempo real con el sidebar ──
+// El requisito es que el contador de viajeros del resumen lateral
+// se actualice en cuanto el usuario defina la cantidad o edite
+// una fecha de nacimiento, sin esperar al "Continuar".
+// Para eso emitimos update:modelValue en cada cambio relevante
+// (cantidad, fechas) en lugar de solo al final.
+function syncModelValue() {
   emit('update:modelValue', {
     ...props.modelValue,
-    travelersCount: count,
+    travelersCount: travelersCount.value,
     birthdates: birthdates.value,
     ages: ages.value
   })
-})
+}
+
+watch(travelersCount, () => syncModelValue())
+
+// Re-emitir también cuando cambian los birthdates, en tiempo real.
+watch(birthdates, () => syncModelValue(), { deep: true })
 </script>
 
 <template>
