@@ -495,7 +495,7 @@ watch(travelers_data, () => {
 </script>
 
 <template>
-  <div class="w-full max-w-3xl mx-auto px-4 md:px-8">
+  <div class="w-full max-w-3xl mx-auto px-4 md:px-8 pt-6 md:pt-10">
     <div class="lg:hidden sticky top-0 z-20 -mx-4 px-4 py-2 bg-white/90 backdrop-blur-md border-b border-slate-100 mb-3">
       <button
         type="button"
@@ -569,7 +569,7 @@ watch(travelers_data, () => {
           <span class="ds-eyebrow">Casi listos para protegerte</span>
           <h1 class="ds-heading-1">Cuéntanos de <span style="color: #43D3FF;">ti</span></h1>
         </header>
-        <div class="bg-white border border-slate-200 rounded-2xl overflow-hidden w-full">
+        <div class="bg-white border border-slate-200 rounded-2xl overflow-hidden w-full shadow-md">
           <div class="px-5 pt-5 border-b border-slate-100">
             <SubStepIndicator :current-sub-step="activeTab + 1" :steps="tabs" />
           </div>

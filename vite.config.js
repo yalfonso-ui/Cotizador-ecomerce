@@ -3,6 +3,7 @@ import vue from '@vitejs/plugin-vue'
 import path from 'path'
 
 export default defineConfig({
+  base: process.env.GITHUB_PAGES ? '/Ecommerce-lemonade/' : '/',
   plugins: [vue()],
   resolve: {
     alias: {

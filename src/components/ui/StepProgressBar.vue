@@ -32,36 +32,20 @@ const isVisible = computed(() => {
   <Transition name="progress-fade">
     <div
       v-if="isVisible"
-      class="sticky top-16 z-30 bg-white/80 backdrop-blur-sm"
-      role="region"
-      aria-label="Progreso de la compra"
+      class="absolute bottom-0 left-0 right-0 h-0.5 bg-slate-200/60 overflow-hidden"
+      role="progressbar"
+      :aria-valuenow="stepNumber"
+      :aria-valuemin="1"
+      :aria-valuemax="VISIBLE_TOTAL"
+      :aria-label="`Paso ${stepNumber} de ${VISIBLE_TOTAL}`"
     >
-      <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-1.5 pb-2.5">
-        <div class="flex items-center gap-3">
-          <span
-            class="text-[10px] font-semibold text-slate-400 uppercase tracking-widest tabular-nums shrink-0"
-            aria-live="polite"
-          >
-            {{ stepNumber }} / {{ VISIBLE_TOTAL }}
-          </span>
-          <div
-            class="h-1 flex-1 bg-slate-100 rounded-full overflow-hidden"
-            role="progressbar"
-            :aria-valuenow="stepNumber"
-            :aria-valuemin="1"
-            :aria-valuemax="VISIBLE_TOTAL"
-            :aria-label="`Paso ${stepNumber} de ${VISIBLE_TOTAL}`"
-          >
-            <div
-              class="h-full rounded-full transition-all duration-500 ease-out"
-              :style="{
-                width: progressPercent + '%',
-                background: 'linear-gradient(90deg, #00184C 0%, #43D3FF 100%)'
-              }"
-            ></div>
-          </div>
-        </div>
-      </div>
+      <div
+        class="h-full transition-all duration-500 ease-out"
+        :style="{
+          width: progressPercent + '%',
+          background: 'linear-gradient(90deg, #00184C 0%, #43D3FF 100%)'
+        }"
+      ></div>
     </div>
   </Transition>
 </template>
@@ -69,11 +53,10 @@ const isVisible = computed(() => {
 <style scoped>
 .progress-fade-enter-active,
 .progress-fade-leave-active {
-  transition: opacity 0.25s ease, transform 0.25s ease;
+  transition: opacity 0.25s ease;
 }
 .progress-fade-enter-from,
 .progress-fade-leave-to {
   opacity: 0;
-  transform: translateY(-2px);
 }
 </style>

@@ -63,7 +63,7 @@ function handleContinue() {
 </script>
 
 <template>
-  <div class="ds-focus-column space-y-8">
+  <div class="ds-focus-column space-y-8 pt-6 md:pt-10">
     <div class="space-y-2">
       <span class="ds-eyebrow">Marca las</span>
       <h1 class="ds-heading-1">Fechas de tu<span style="color: #43D3FF;"> viaje</span></h1>
@@ -95,7 +95,7 @@ function handleContinue() {
         <svg class="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
         </svg>
-        <span class="text-xs font-semibold text-slate-600 uppercase tracking-wider">Vas a estar cubierto por</span>
+        <span class="text-xs font-semibold text-slate-600 uppercase tracking-wider">Tendrás cobertura para</span>
         <span class="text-base font-black text-slate-900">{{ tripDays }} días</span>
       </div>
       <p v-else key="help" class="ds-helper text-center">

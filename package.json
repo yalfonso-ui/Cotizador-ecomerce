@@ -8,7 +8,8 @@
     "preview": "vite preview",
     "share": "npx localtunnel --port 5173",
     "share:cf": "cloudflared tunnel --config cloudflared/config.yml run",
-    "share:dev": "concurrently -k -n vite,cf \"vite\" \"cloudflared tunnel --config cloudflared/config.yml run\""
+    "share:cf:quick": "cloudflared tunnel --url http://localhost:5173",
+    "share:cf:dev": "concurrently -k -n vite,cf \"vite\" \"cloudflared tunnel --url http://localhost:5173\""
   },
   "dependencies": {
     "@primevue/themes": "^4.5.4",

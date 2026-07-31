@@ -1,7 +1,7 @@
 <script setup>
 import { storeToRefs } from 'pinia'
 import { useCheckoutStore } from '@/stores/useCheckoutStore.js'
-import AppSpinner from './AppSpinner.vue'
+import spinnerGif from '@/assets/images/spinner/spinner.gif'
 
 const checkoutStore = useCheckoutStore()
 const { isProcessing, processingStep } = storeToRefs(checkoutStore)
@@ -22,29 +22,16 @@ const { isProcessing, processingStep } = storeToRefs(checkoutStore)
       >
         <div class="flex flex-col items-center space-y-7 max-w-sm">
           <!--
-            Logo: momento crítico del flujo (procesamiento de pago). Refuerza
-            la identidad de marca mientras el usuario espera.
-
-            Importante: el fondo del overlay es 100% opaco (bg-white) para
-            que no se transparente el logo del header que vive detrás. Eso
-            elimina el efecto de "dos logos" en pantalla.
-          -->
-          <img
-            src="@/assets/images/uploads/Logotipo PNG.png"
-            alt="Continental Assist"
-            class="h-12 md:h-16 w-auto"
-          />
-
-          <!--
-            Spinner limpio: usamos el SVG nativo (AppSpinner) en vez del GIF
-            con marca de agua, porque el GIF traía el isotipo "Continental Assist"
-            adentro y eso duplicaba visualmente el logo que ya está arriba.
-            SVG puro = un solo logo visible en pantalla.
-            Para usuarios con prefers-reduced-motion, el animation: spin
-            de Tailwind se desactiva automáticamente (configurado en tailwind.config).
+            Spinner: GIF corporativo en src/assets/images/spinner/spinner.gif
+            El fondo del overlay es 100% opaco (bg-white) para que no se
+            transparente el header que vive detrás.
           -->
           <div class="flex justify-center">
-            <AppSpinner size="2xl" class="text-[#00184C]" />
+            <img
+              :src="spinnerGif"
+              alt="Procesando tu pago"
+              class="h-16 md:h-20 w-auto"
+            />
           </div>
           <div class="text-center">
             <p class="text-lg font-bold text-slate-900">{{ processingStep || 'Procesando…' }}</p>

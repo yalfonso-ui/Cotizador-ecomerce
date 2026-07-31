@@ -107,7 +107,7 @@ function handleContinue() {
 </script>
 
 <template>
-  <div class="w-full max-w-3xl mx-auto space-y-10 pt-0" data-route-root>
+  <div class="w-full max-w-3xl mx-auto space-y-10 pt-6 md:pt-10" data-route-root>
     <header class="text-center space-y-2 pt-0">
       <p class="text-xs font-medium text-slate-500">Cuéntanos</p>
       <h1 class="text-3xl md:text-4xl font-bold text-slate-900 tracking-tight">

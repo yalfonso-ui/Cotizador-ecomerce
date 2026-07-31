@@ -64,6 +64,28 @@ npm run share:cf
 
 `cloudflared` imprimirá en consola el estado de la conexión. Una vez diga `Connection established`, abre el hostname público en tu navegador — debería apuntar a `localhost:5173` con HTTPS válido.
 
+### Opción rápida: tunnel efímero sin cuenta Cloudflare
+
+Si solo necesitas compartir la app por unos minutos (revisión rápida, demo, etc.) puedes usar un **quick tunnel** de Cloudflare. No requiere cuenta ni configuración previa, simplemente genera un URL temporal `*.trycloudflare.com`.
+
+```bash
+# Opción 1 — Una sola terminal, levanta Vite y tunnel juntos
+npm run share:cf:dev
+
+# Opción 2 — Dos terminales separadas
+# Terminal 1
+npm run dev
+# Terminal 2
+npm run share:cf:quick
+```
+
+`cloudflared` imprimirá una URL como `https://<palabras-aleatorias>.trycloudflare.com` — esa es tu URL pública con HTTPS válido. Cópiala y compártela.
+
+**Limitaciones del quick tunnel:**
+- El URL cambia cada vez que reinicias `cloudflared`
+- No hay dashboard de Cloudflare para monitorearlo
+- Adecuado para demos y previews rápidas, **no para producción**
+
 ## 5. Verificar
 
 - En <https://one.dash.cloudflare.com/> → **Networks** → **Connectors** → **Tunnels**, tu tunnel debe aparecer con status **HEALTHY**.

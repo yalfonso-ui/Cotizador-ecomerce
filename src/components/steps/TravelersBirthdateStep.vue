@@ -179,10 +179,10 @@ watch(birthdates, () => syncModelValue(), { deep: true })
 </script>
 
 <template>
-  <div class="ds-focus-column space-y-8">
+  <div class="ds-focus-column space-y-8 pt-6 md:pt-10">
     <div class="space-y-2">
-      <span class="ds-eyebrow">Tu equipo de viaje</span>
-      <h1 class="ds-heading-1">¿Quiénes viajan<span style="color: #43D3FF;"> contigo</span>? </h1>
+      <span class="ds-eyebrow">Tu equipo de viajeros</span>
+      <h1 class="ds-heading-1">¿Cuántos<span style="color: #43D3FF;"> viajan</span>? </h1>
     </div>
 
     <div
@@ -202,7 +202,7 @@ watch(birthdates, () => syncModelValue(), { deep: true })
       <div
         v-for="(b, index) in birthdates"
         :key="index"
-        class="w-full bg-white border-2 border-slate-200 rounded-xl p-4 space-y-3"
+        class="w-full bg-white border border-slate-200 rounded-xl p-4 space-y-3"
       >
         <div class="flex items-center justify-between">
           <div class="flex items-center gap-2.5">
@@ -295,7 +295,7 @@ watch(birthdates, () => syncModelValue(), { deep: true })
         class="bg-[#F9D35A] text-[#00184C] font-bold text-base flex items-center justify-center gap-2.5 px-8 py-3.5 rounded-full transition-all hover:brightness-95 shadow-sm w-full max-w-md mx-auto disabled:bg-slate-200 disabled:text-slate-400"
     >
       <span v-if="allValid">
-        <span class="hidden md:inline">Sigue con tus coberturas</span>
+        <span class="hidden md:inline">Elige tu plan</span>
         <span class="md:hidden">Ver coberturas</span>
       </span>
       <span v-else>

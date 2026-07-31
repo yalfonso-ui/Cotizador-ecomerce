@@ -133,7 +133,7 @@ onUnmounted(() => {
     -->
     <header
       v-if="!isProcessing"
-      class="fixed top-0 left-0 right-0 z-50 bg-white border-b border-slate-100"
+      class="fixed top-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-md border-b border-slate-100 shadow-md"
     >
       <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-3 text-xs">
 
@@ -261,6 +261,13 @@ onUnmounted(() => {
         </div>
       </div>
     </div>
+
+    <!--
+      Barra de progreso del flujo integrada en el borde inferior del navbar.
+      Es un absolute child del header fixed, así no ocupa espacio vertical
+      y nunca compite con el contenido debajo.
+    -->
+    <StepProgressBar />
     </header>
 
     <!-- MAIN CONTENT (wrapped slot) -->
@@ -272,7 +279,6 @@ onUnmounted(() => {
       El body sigue siendo el scroll container, y el sticky funciona bien.
     -->
     <main class="pt-16">
-      <StepProgressBar />
       <slot />
     </main>
 

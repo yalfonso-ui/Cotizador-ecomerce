@@ -322,7 +322,7 @@ async function handleSubmit() {
 </script>
 
 <template>
-  <div class="max-w-5xl mx-auto space-y-5 px-4 sm:px-6">
+  <div class="max-w-5xl mx-auto space-y-5 px-4 sm:px-6 pt-6 md:pt-10">
     <div class="lg:hidden sticky top-0 z-20 -mx-4 px-4 py-3 bg-white/85 backdrop-blur-md border-b border-slate-100/80">
       <button
         type="button"
@@ -477,7 +477,7 @@ async function handleSubmit() {
           <h1 class="ds-heading-1">Confirma tu <span style="color: #43D3FF;">pago</span></h1>
         </header>
 
-        <div class="bg-white border-2 rounded-2xl p-4 md:p-5 space-y-3 shadow-sm" :class="submitAttempted && !isFormValid ? 'border-red-200' : 'border-slate-200'">
+        <div class="bg-white border border-slate-200 rounded-2xl p-4 md:p-5 space-y-3 shadow-sm" :class="submitAttempted && !isFormValid ? 'border-red-200' : ''">
           <div class="flex items-center gap-2.5 pb-3 border-b border-slate-100">
             <div class="w-8 h-8 rounded-lg flex items-center justify-center" style="background-color: rgba(67, 211, 255, 0.12);">
               <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true" style="color: #43D3FF;">

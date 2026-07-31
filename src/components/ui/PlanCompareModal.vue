@@ -93,23 +93,15 @@ onUnmounted(() => {
           aria-labelledby="compare-title"
         >
           <!-- Header -->
-          <header class="px-6 md:px-10 pt-8 pb-5 flex-shrink-0 border-b border-slate-100">
-            <div class="flex items-start justify-between gap-4">
-              <div>
-                <p class="text-[10px] font-bold uppercase tracking-[0.18em] mb-1.5" style="color: #43D3FF;">
-                  Comparación
-                </p>
-                <h2 id="compare-title" class="text-xl md:text-2xl font-bold text-slate-900 tracking-tight">
-                  ¿Cuál te conviene más?
-                </h2>
-                <p class="text-sm text-slate-500 mt-1 leading-snug">
-                  Mira las diferencias y elige el que mejor se adapte a tu viaje.
-                </p>
-              </div>
+          <header class="px-6 md:px-10 pt-5 pb-3 flex-shrink-0 border-b border-slate-100">
+            <div class="flex items-center justify-between gap-4">
+              <h2 id="compare-title" class="text-lg md:text-xl font-bold text-slate-900 tracking-tight">
+                ¿Cuál te conviene más?
+              </h2>
               <button
                 type="button"
                 @click="close"
-                class="shrink-0 flex items-center justify-center w-10 h-10 rounded-full text-slate-400 hover:text-slate-900 hover:bg-slate-100 active:scale-95 transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-[#00184C] focus-visible:ring-offset-2"
+                class="shrink-0 flex items-center justify-center w-9 h-9 rounded-full text-slate-400 hover:text-slate-900 hover:bg-slate-100 active:scale-95 transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-[#00184C] focus-visible:ring-offset-2"
                 aria-label="Cerrar modal"
               >
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
@@ -122,8 +114,8 @@ onUnmounted(() => {
           <!-- Body -->
           <div class="flex-1 overflow-y-auto">
             <!-- Sticky plan headers (se quedan fijos al scrollear las filas) -->
-            <div class="sticky top-0 z-10 bg-white/95 backdrop-blur-sm border-b border-slate-200 shadow-sm">
-              <div class="min-w-[720px] px-6 md:px-10 py-5">
+            <div class="sticky top-0 z-20 bg-white/95 backdrop-blur-sm border-b border-slate-200 shadow-sm">
+              <div class="min-w-[720px] px-6 md:px-10 py-2">
                 <div class="grid gap-3" :style="gridStyle">
                   <!-- Columna fantasma para alinear con las features -->
                   <div></div>
@@ -137,51 +129,27 @@ onUnmounted(() => {
                       ? 'bg-[#EDF4F9] ring-1 ring-[#00184C]/10'
                       : 'hover:bg-slate-50'"
                   >
-                    <!-- Badge: Tu plan / Recomendado / vacío -->
-                    <div class="h-[18px] mb-2.5 flex items-center justify-center">
-                      <span
-                        v-if="plan.id === selectedPlanId"
-                        class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider text-white"
-                        style="background-color: #00184C;"
-                      >
-                        <svg class="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7" />
-                        </svg>
-                        Tu plan
-                      </span>
-                      <span
-                        v-else-if="plan.id === recommendedPlanId && plan.id !== selectedPlanId"
-                        class="inline-flex items-center px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider"
-                        style="color: #00184C; background-color: rgba(67, 211, 255, 0.18); border: 1px solid rgba(67, 211, 255, 0.4);"
-                      >
-                        Recomendado
-                      </span>
-                    </div>
-
                     <!-- Nombre del plan -->
-                    <p class="text-base font-bold text-slate-900 tracking-tight text-center leading-tight">
+                    <p class="text-base font-extrabold text-slate-900 tracking-tight text-center leading-tight">
                       {{ plan.name }}
                     </p>
 
-                    <!-- Cobertura (hero) -->
-                    <div class="mt-3 text-center">
-                      <p class="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Cobertura médica</p>
-                      <p class="text-lg md:text-xl font-black tabular-nums mt-0.5 leading-none" style="color: #00184C;">
-                        ${{ plan.coverage }}
-                      </p>
-                    </div>
-
-                    <!-- Precio -->
-                    <p class="mt-2.5 text-sm font-bold text-slate-900 tabular-nums text-center">
-                      ${{ plan.price }} <span class="text-[10px] font-medium text-slate-500">USD</span>
+                    <!-- Cobertura destacada -->
+                    <p class="mt-1 text-base font-extrabold tabular-nums text-center leading-none" style="color: #00184C;">
+                      ${{ plan.coverage }}
                     </p>
 
-                    <!-- CTA -->
+                    <!-- Precio discreto -->
+                    <p class="mt-1 text-[13px] font-medium text-slate-500 tabular-nums text-center">
+                      ${{ plan.price }} <span class="text-[10px] font-normal text-slate-400">USD</span>
+                    </p>
+
+                    <!-- Botón Elegir plan -->
                     <button
                       v-if="plan.id === selectedPlanId"
                       type="button"
                       disabled
-                      class="mt-3 w-full px-3 py-2 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 cursor-default flex items-center justify-center gap-1"
+                      class="mt-2.5 w-full inline-flex items-center justify-center gap-1 px-3 py-2 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 cursor-default"
                     >
                       <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7" />
@@ -192,10 +160,10 @@ onUnmounted(() => {
                       v-else
                       type="button"
                       @click="handleSelect(plan.id)"
-                      class="mt-3 w-full px-3 py-2 rounded-full text-xs font-bold transition-all active:scale-95 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#00184C] focus-visible:ring-offset-2 hover:brightness-95"
+                      class="mt-2.5 w-full px-3 py-2 rounded-full text-xs font-bold transition-all active:scale-95 shadow-sm hover:shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-[#00184C] focus-visible:ring-offset-2 hover:brightness-95"
                       style="background-color: #F9D35A; color: #00184C;"
                     >
-                      Elegir este
+                      Elegir plan
                     </button>
                   </div>
                 </div>
@@ -203,9 +171,9 @@ onUnmounted(() => {
             </div>
 
             <!-- Filas de comparación -->
-            <div class="min-w-[720px] px-6 md:px-10 pb-3">
+            <div class="min-w-[720px] px-6 md:px-10 pb-2">
               <template v-for="group in COMPARISON" :key="group.category">
-                <div class="pt-7 pb-2 flex items-center gap-2.5">
+                <div class="pt-2.5 pb-1 flex items-center gap-2.5">
                   <span class="w-1.5 h-1.5 rounded-full" style="background-color: #43D3FF;"></span>
                   <h3 class="text-[11px] font-bold text-slate-500 uppercase tracking-[0.15em]">
                     {{ group.category }}
@@ -215,10 +183,10 @@ onUnmounted(() => {
                 <div
                   v-for="benefit in group.benefits"
                   :key="benefit.name"
-                  class="grid gap-3 py-3.5 border-b border-slate-100"
+                  class="grid gap-3 py-1.5 border-b border-slate-100"
                   :style="gridStyle"
                 >
-                  <div class="text-sm text-slate-700 self-center leading-snug">
+                  <div class="text-[13px] text-slate-700 self-center leading-snug">
                     {{ benefit.name }}
                   </div>
                   <div
@@ -246,7 +214,7 @@ onUnmounted(() => {
                       <span class="inline-block w-3 h-[2px] bg-slate-300 rounded-full" aria-label="No incluido"></span>
                     </template>
                     <template v-else>
-                      <span class="text-sm font-bold text-slate-900 tabular-nums">
+                      <span class="text-[13px] font-bold text-slate-900 tabular-nums">
                         {{ benefit.values[plan.id] }}
                       </span>
                     </template>
@@ -256,19 +224,7 @@ onUnmounted(() => {
             </div>
           </div>
 
-          <!-- Footer -->
-          <footer class="px-6 md:px-10 py-4 border-t border-slate-100 bg-slate-50/50 flex-shrink-0 flex items-center justify-between gap-4">
-            <p class="text-xs text-slate-500 leading-snug">
-              Precios en dólares estadounidenses · Coberturas por evento
-            </p>
-            <button
-              type="button"
-              @click="close"
-              class="px-5 py-2 rounded-full text-sm font-semibold text-slate-700 hover:bg-slate-100 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-300"
-            >
-              Volver
-            </button>
-          </footer>
+          <!-- Footer eliminado para dar más espacio al contenido -->
         </div>
       </div>
     </Transition>
