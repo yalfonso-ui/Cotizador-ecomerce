@@ -3,6 +3,7 @@ import { ref, computed, onMounted, onUnmounted, nextTick } from 'vue'
 import PlanCompareModal from '@/components/ui/PlanCompareModal.vue'
 import MultitripInfoModal from '@/components/ui/MultitripInfoModal.vue'
 import QuoteEmailModal from '@/components/ui/QuoteEmailModal.vue'
+import StepHeader from '@/components/ui/StepHeader.vue'
 import { PLANS as allPlans } from '@/data/plans.js'
 import { showToast } from '@/composables/useToast.js'
 
@@ -191,6 +192,7 @@ onUnmounted(() => {
 
 <template>
   <div class="w-full max-w-6xl mx-auto px-4 sm:px-6 pt-6 md:pt-10 pb-28">
+    <StepHeader />
     <div class="space-y-6">
       <!-- Header -->
       <div class="space-y-2 text-center">
@@ -239,16 +241,24 @@ onUnmounted(() => {
             @scroll="updateScrollState"
             class="flex flex-nowrap gap-4 overflow-x-auto snap-x snap-proximity w-full pb-8 min-h-[480px] hide-scroll-bar"
           >
+          <TransitionGroup
+            appear
+            enter-active-class="plan-card-enter"
+            tag="div"
+            class="contents"
+          >
           <article
-            v-for="plan in plans"
+            v-for="(plan, index) in plans"
             :key="plan.id"
             class="shrink-0 w-full sm:w-[calc(50%-1rem)] md:w-[calc(33.333%-1.5rem)] snap-center mx-4 relative rounded-2xl bg-white flex flex-col transition-all duration-200 overflow-hidden border"
             :class="[
               selectedPlan === plan.id
                 ? 'border-[#00184C] shadow-xl ring-1 ring-[#00184C]/15'
                 : 'border-slate-200 shadow-md hover:shadow-lg hover:border-slate-300',
-              selectedForComparison.includes(plan.id) ? 'bg-slate-50/60' : 'bg-white'
+              selectedForComparison.includes(plan.id) ? 'bg-slate-50/60' : 'bg-white',
+              plan.recommended ? 'plan-card-delight' : ''
             ]"
+            :style="{ '--plan-delay': `${index * 100}ms` }"
           >
             <!-- Ribbon "Recomendado" en la parte superior (jerarquía alta) -->
             <div
@@ -370,6 +380,7 @@ onUnmounted(() => {
               </button>
             </div>
           </article>
+          </TransitionGroup>
           </div>
         </div>
       </div>
@@ -493,3 +504,60 @@ onUnmounted(() => {
     />
   </div>
 </template>
+
+<style scoped>
+/*
+ * Micro-interacción fintech: entrada en cascada + delight cyan en recomendada.
+ * Se ejecuta al montar el step (o cuando el currentStep cambia a PLANS).
+ * Respeta prefers-reduced-motion.
+ */
+
+@keyframes plan-card-slide-up {
+  from {
+    opacity: 0;
+    transform: translateY(40px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.plan-card-enter {
+  animation: plan-card-slide-up 600ms cubic-bezier(0.4, 0, 0.2, 1) both;
+  animation-delay: var(--plan-delay, 0ms);
+}
+
+/* Delight: scale + glow cyan + borde destellando en la recomendada */
+@keyframes plan-card-delight-glow {
+  0% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 rgba(67, 211, 255, 0);
+    border-color: rgba(67, 211, 255, 0);
+  }
+  20% {
+    transform: scale(1.02);
+    box-shadow: 0 0 0 6px rgba(67, 211, 255, 0.4),
+                0 0 24px 4px rgba(67, 211, 255, 0.3);
+    border-color: #43D3FF;
+  }
+  100% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 rgba(67, 211, 255, 0);
+    border-color: rgba(67, 211, 255, 0);
+  }
+}
+
+.plan-card-delight {
+  animation: plan-card-delight-glow 1000ms ease-out 700ms 1 both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .plan-card-enter,
+  .plan-card-delight {
+    animation: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+  }
+}
+</style>

@@ -2,6 +2,7 @@
 import { ref, computed, watch } from 'vue'
 import { getTravelerCount as resolveCount } from '@/composables/useTravelerInfo.js'
 import { UPGRADE_OPTIONS as allUpgrades } from '@/data/upgrades.js'
+import StepHeader from '@/components/ui/StepHeader.vue'
 
 import preexistenciasImg from '@/assets/images/imagenes/Preexistencias.png'
 import deportesImg from '@/assets/images/imagenes/Deportes y aventura.png'
@@ -115,6 +116,7 @@ function handleNext() {
 
 <template>
   <div class="ds-focus-column max-w-5xl mx-auto space-y-8 w-full pt-6 md:pt-10">
+    <StepHeader />
     <div class="space-y-2">
       <span class="ds-eyebrow">Un paso más para tu tranquilidad</span>
       <h1 class="ds-heading-1">Lleva tu cobertura mucho<span style="color: #43D3FF;">  más lejos</span> </h1>

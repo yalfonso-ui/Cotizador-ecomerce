@@ -2,6 +2,7 @@
 import { ref, computed, watch, onMounted, reactive, shallowRef, triggerRef } from 'vue'
 import PrivacyPolicyModal from '@/components/ui/PrivacyPolicyModal.vue'
 import SubStepIndicator from '@/components/ui/SubStepIndicator.vue'
+import StepHeader from '@/components/ui/StepHeader.vue'
 import { getTravelerCount as resolveCount, calculateAge } from '@/composables/useTravelerInfo.js'
 import { getPlanPrice as planPrice } from '@/data/plans.js'
 import { getUpgradesTotal } from '@/data/upgrades.js'
@@ -26,8 +27,16 @@ const props = defineProps({
 })
 
 const activeTab = ref(0)
-const tabs = ['Datos del titular', 'Contacto de emergencia']  
+const tabs = ['Datos del titular', 'Contacto de emergencia']
+
+// Guard doble para evitar que el botón de dev data se filtre a producción
+// incluso si alguien buildea accidentalmente con --mode development.
+// Requiere AMBOS: MODE === 'development' Y la variable de build estándar.
+// Vite inyecta `import.meta.env.DEV=true` en `vite build --mode development`,
+// pero ese flag queda fuera de prod builds normales. Aquí nos aseguramos
+// de que NUNCA se vea en producción real.
 const isDev = import.meta.env.DEV
+const showDevTools = isDev && import.meta.env.MODE === 'development'
 
 const travelers_data = ref([])
 const expandedTraveler = ref(1)
@@ -496,6 +505,8 @@ watch(travelers_data, () => {
 
 <template>
   <div class="w-full max-w-3xl mx-auto px-4 md:px-8 pt-6 md:pt-10">
+    <StepHeader />
+
     <div class="lg:hidden sticky top-0 z-20 -mx-4 px-4 py-2 bg-white/90 backdrop-blur-md border-b border-slate-100 mb-3">
       <button
         type="button"
@@ -1017,7 +1028,7 @@ watch(travelers_data, () => {
         </button>
 
         <button
-          v-if="isDev"
+          v-if="showDevTools"
           type="button"
           @click="fillTestData"
           class="text-xs font-medium text-slate-400 hover:text-slate-600 transition-colors px-2 py-1 mx-auto block"

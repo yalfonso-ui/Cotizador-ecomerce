@@ -1,4 +1,5 @@
 import { defineStore } from 'pinia'
+import { useCardValidator } from '@/composables/useCardValidator.js'
 
 export const useCheckoutStore = defineStore('checkout', {
   state: () => ({
@@ -33,40 +34,80 @@ export const useCheckoutStore = defineStore('checkout', {
   getters: {
     cardNumberDigits: (state) => state.cardNumber.replace(/\s+/g, ''),
 
-    // Validaciones flexibles: cualquier input con al menos N caracteres
-    // cuenta como "lleno" para que el botón "Activar cobertura" se habilite.
-    // No se valida formato de tarjeta, mes de expiración ni longitud
-    // exacta del CVV — eso lo hace el backend (paymentService).
-    cardNumberValid: (state) => {
-      const digits = state.cardNumber.replace(/\s+/g, '')
-      return digits.length > 0
+    // ── Validación delegada a useCardValidator ──
+    // El store expone los hints del composable para que la UI los
+    // muestre inline (verde/ámbar/rojo según status).
+    cardNumberValidation() {
+      const validator = useCardValidator()
+      return validator.validateNumber(this.cardNumberDigits)
     },
-    cardNameValid: (state) => (state.cardName || '').trim().length > 0,
-    expiryValid: (state) => (state.expiryDate || '').replace(/\D/g, '').length > 0,
-    cvvValid: (state) => (state.cvv || '').trim().length > 0,
+    cardNameValidation() {
+      const trimmed = (this.cardName || '').trim()
+      if (!trimmed) return { isValid: false, hint: '', status: 'empty' }
+      if (trimmed.length < 3) return { isValid: false, hint: 'Mínimo 3 caracteres', status: 'too-short' }
+      return { isValid: true, hint: '', status: 'valid' }
+    },
+    expiryValidation() {
+      const validator = useCardValidator()
+      return validator.validateExpiry(this.expiryDate)
+    },
+    cvvValidation() {
+      const validator = useCardValidator()
+      return validator.validateCvv(this.cvv, this.cardBrand)
+    },
 
-    // El formulario pasa al checkout si los 4 campos no están vacíos.
+    // isValid booleano por campo — para habilitar el botón "Pagar".
+    cardNumberValid() {
+      const v = this.cardNumberValidation
+      return v.status === 'valid'
+    },
+    cardNameValid() {
+      return this.cardNameValidation.isValid
+    },
+    expiryValid() {
+      const v = this.expiryValidation
+      return v.status === 'valid'
+    },
+    cvvValid() {
+      return this.cvvValidation.isValid
+    },
+
+    // El formulario pasa al checkout si los 4 campos son estructuralmente válidos.
     isFormValid() {
       return this.cardNumberValid && this.cardNameValid && this.expiryValid && this.cvvValid
     },
 
-    // Ya no se exponen errores de formato (el backend los maneja). Estos
-    // getters quedan como `false` por compat con el template, pero
-    // nunca se activan en el flujo normal.
-    cardNumberError() { return false },
-    cardNameError() { return false },
-    expiryError() { return false },
-    cvvError() { return false },
+    // Errores "duros" (solo se muestran tras touched o submit).
+    // Antes eran siempre false; ahora sí se activan cuando hay un problema real.
+    cardNumberError() {
+      const v = this.cardNumberValidation
+      return ['wrong-length', 'luhn-fail', 'unknown-brand'].includes(v.status)
+    },
+    cardNameError() {
+      return this.cardNameValidation.status === 'too-short'
+    },
+    expiryError() {
+      const v = this.expiryValidation
+      return ['invalid', 'invalid-month', 'expired'].includes(v.status)
+    },
+    cvvError() {
+      return this.cvvValidation.status === 'too-long'
+    },
 
     cardBrand(state) {
+      const validator = useCardValidator()
       const digits = state.cardNumber.replace(/\s+/g, '')
-      if (!digits) return null
-      if (/^4/.test(digits)) return 'visa'
-      if (/^(5[1-5]|2(2[2-9]|[3-6]\d|7[01]|720))/.test(digits)) return 'mastercard'
-      if (/^3[47]/.test(digits)) return 'amex'
-      if (/^(6011|65|64[4-9]|622)/.test(digits)) return 'discover'
-      if (/^(36|30[0-5]|38|39)/.test(digits)) return 'diners'
-      return null
+      return validator.detectBrand(digits)
+    },
+
+    cardBrandLabel() {
+      const validator = useCardValidator()
+      return validator.getBrandLabel(this.cardBrand)
+    },
+
+    expectedCvvLength() {
+      const validator = useCardValidator()
+      return validator.getExpectedCvvLength(this.cardBrand)
     }
   },
 

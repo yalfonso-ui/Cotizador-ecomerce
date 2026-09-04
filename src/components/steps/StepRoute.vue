@@ -2,6 +2,7 @@
 import { ref, computed, onMounted, watch } from 'vue'
 import CountrySelect from '@/components/ui/CountrySelect.vue'
 import AppSpinner from '@/components/ui/AppSpinner.vue'
+import StepHeader from '@/components/ui/StepHeader.vue'
 import { useIpGeolocation } from '@/composables/useIpGeolocation.js'
 
 interface Country {
@@ -114,6 +115,8 @@ function handleContinue() {
         Define tu <span style="color: #43D3FF;">ruta</span>
       </h1>
     </header>
+
+    <StepHeader />
 
     <!-- Indicador de detección de IP (auto-hide cuando completa) -->
     <Transition
