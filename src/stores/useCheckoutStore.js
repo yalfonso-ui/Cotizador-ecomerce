@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia'
 import { useCardValidator } from '@/composables/useCardValidator.js'
+import { DEMO_CARD } from '@/config/demoCard.js'
 
 export const useCheckoutStore = defineStore('checkout', {
   state: () => ({
@@ -8,14 +9,11 @@ export const useCheckoutStore = defineStore('checkout', {
 
     // Sensitive (NOT persisted — cleared on refresh).
     // ── DEMO DATA precargada ──
-    // Para acelerar la prueba del flujo end-to-end sin tener que tipear
-    // datos reales cada vez. Solo aplica al carrito vacío en el primer
-    // submit. Si el usuario modifica algo, ya no se vuelve a precargar.
     // Visa demo "4242 4242 4242 4242" → siempre pasa el paymentService.
-    cardNumber: '4242 4242 4242 4242',
-    cardName: 'JUAN PEREZ',
-    expiryDate: '12/28',
-    cvv: '123',
+    cardNumber: DEMO_CARD.number,
+    cardName: DEMO_CARD.name,
+    expiryDate: DEMO_CARD.expiry,
+    cvv: DEMO_CARD.cvv,
     cardNumberTouched: false,
     cardNameTouched: false,
     expiryTouched: false,

@@ -2,6 +2,7 @@
 import { computed } from 'vue'
 import { STEPS } from '@/composables/useWizardSteps.js'
 import { useCurrencyStore, formatCurrency } from '@/stores/useCurrencyStore.js'
+import CurrencySwitcher from '@/components/ui/CurrencySwitcher.vue'
 
 interface Country {
   code: string
@@ -103,6 +104,8 @@ const formattedPrice = computed(() => {
     </template>
 
     <div class="flex-1"></div>
+
+    <CurrencySwitcher />
 
     <span v-if="formattedPrice" class="font-bold text-[#00184C] shrink-0">{{ formattedPrice }}</span>
   </div>

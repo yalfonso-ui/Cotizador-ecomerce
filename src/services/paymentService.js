@@ -25,9 +25,9 @@ const HAS_API = Boolean(PAYMENT_API_URL)
 const DEV_MOCK_ENABLED = IS_DEV && !HAS_API
 // En producción, si no hay API configurada, simula un pago exitoso para que
 // el revisor pueda probar el flujo end-to-end sin montar un backend.
-// (No se usa en builds reales en producción — el equipo puede desactivarlo
-// seteando VITE_PAYMENT_API_URL antes del build, o VITE_PAYMENT_MOCK=off.)
 const PROD_MOCK_ENABLED = !HAS_API && import.meta.env.VITE_PAYMENT_MOCK !== 'off'
+
+import { isDemoVisa } from '@/config/demoCard.js'
 
 // Timeout duro para evitar que un fetch colgado deje al usuario con
 // el overlay de "Procesando…" para siempre.
@@ -64,16 +64,14 @@ const REQUEST_TIMEOUT_MS = 15000
  */
 export async function processPayment(payload) {
   // ── Demo discriminador: Visa 4242 4242 4242 4242 → OK, cualquier
-  // otra BIN → error controlado tipo 'B' (datos de tarjeta). Permite
-  // probar ambos caminos del flujo de error (resiliencia + retry)
-  // sin depender de una pasarela real ni de un mock server.
-  const isDemoVisa = (payload?.cardNumber || '').replace(/\s+/g, '') === '4242424242424242'
+  // otra BIN → error controlado tipo 'B' (datos de tarjeta).
+  const demoVisa = isDemoVisa(payload?.cardNumber)
 
   // ── Dev mode sin API configurada: simular éxito/demo ──
   // Solo se activa con `npm run dev` y sin VITE_PAYMENT_API_URL.
   if (DEV_MOCK_ENABLED) {
     await new Promise(resolve => setTimeout(resolve, 1500))
-    if (isDemoVisa) {
+    if (demoVisa) {
       console.info('[paymentService] Dev mode — tarjeta demo Visa 4242 → pago exitoso')
       return {
         success: true,
@@ -94,7 +92,7 @@ export async function processPayment(payload) {
   if (!PAYMENT_API_URL) {
     if (PROD_MOCK_ENABLED) {
       await new Promise(resolve => setTimeout(resolve, 1500))
-      if (isDemoVisa) {
+      if (demoVisa) {
         console.info('[paymentService] PROD_MOCK — tarjeta demo Visa 4242 → pago exitoso')
         return {
           success: true,

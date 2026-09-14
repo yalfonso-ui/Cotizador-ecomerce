@@ -371,7 +371,6 @@ async function processPaymentFlow() {
 
 <template>
   <div class="max-w-5xl mx-auto space-y-5 px-4 sm:px-6 pt-6 md:pt-10">
-    <!-- StepHeader eliminado: la barra de progreso global es el único indicador -->
 
     <div class="lg:hidden sticky top-0 z-20 -mx-4 px-4 py-3 bg-white/85 backdrop-blur-md border-b border-slate-100/80">
       <button
@@ -587,28 +586,20 @@ async function processPaymentFlow() {
           <!-- Banner de modo demo: tarjeta Visa precargada -->
           <div
             v-if="!cardNumberTouched"
-            class="flex items-start gap-2 p-2.5 rounded-lg text-xs"
+            class="flex items-center gap-2 p-2.5 rounded-lg text-xs"
             style="background-color: rgba(67, 211, 255, 0.1); color: #00184C;"
             role="note"
             aria-live="polite"
           >
-            <svg class="w-4 h-4 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
-            <div class="flex-1">
-              <p class="font-bold">Modo demo · Visa precargada</p>
-              <p class="text-[11px] opacity-80 mt-0.5">
-                Usa la tarjeta <span class="font-mono font-bold">4242 4242 4242 4242</span> precargada.
-                Cambia cualquier dato para simular un pago fallido y probar el flujo de error.
-              </p>
-            </div>
+            <span class="flex-1 font-bold">Demo · Visa 4242 precargada — cambia cualquier dato para probar error.</span>
             <button
               type="button"
               @click="clearDemoCardData"
-              class="text-[11px] font-bold underline shrink-0 mt-0.5 hover:opacity-80"
-            >
-              Limpiar
-            </button>
+              class="text-[11px] font-bold underline shrink-0 hover:opacity-80"
+            >Limpiar</button>
           </div>
 
           <div>

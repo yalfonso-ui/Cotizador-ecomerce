@@ -505,7 +505,6 @@ watch(travelers_data, () => {
 
 <template>
   <div class="w-full max-w-3xl mx-auto px-4 md:px-8 pt-6 md:pt-10">
-    <!-- StepHeader eliminado -->
 
     <div class="lg:hidden sticky top-0 z-20 -mx-4 px-4 py-2 bg-white/90 backdrop-blur-md border-b border-slate-100 mb-3">
       <button

@@ -65,7 +65,6 @@ function handleContinue() {
 
 <template>
   <div class="ds-focus-column space-y-8 pt-6 md:pt-10">
-    <!-- StepHeader eliminado -->
     <div class="space-y-2">
       <span class="ds-eyebrow">Marca las</span>
       <h1 class="ds-heading-1">Fechas de tu<span style="color: #43D3FF;"> viaje</span></h1>
@@ -101,7 +100,7 @@ function handleContinue() {
         <span class="text-base font-black text-slate-900">{{ tripDays }} días</span>
       </div>
       <p v-else key="help" class="ds-helper text-center">
-        Elige tu salida y regreso para continuar.
+        Selecciona las fechas de tu viaje para ver tu cobertura.
       </p>
     </Transition>
 

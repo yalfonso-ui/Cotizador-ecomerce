@@ -116,8 +116,6 @@ function handleContinue() {
       </h1>
     </header>
 
-    <!-- StepHeader eliminado -->
-
     <!-- Indicador de detección de IP (auto-hide cuando completa) -->
     <Transition
       enter-active-class="transition-opacity duration-300"

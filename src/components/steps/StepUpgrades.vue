@@ -1,4 +1,15 @@
 <script setup>
+/**
+ * StepUpgrades — Selección de coberturas adicionales por viajero.
+ *
+ * NOTA DE DISEÑO (isInternalSync):
+ * El patrón `isInternalSync` evita un loop infinito de reactividad entre
+ * los watchers双向 de `travelersUpgrades ↔ modelValue`. Este flag es
+ * un antipattern reconocido pero funcional; refactorizarlo requiere
+ * rediseñar el estado del wizard (un sprint dedicado con tests).
+ * No tocar sin revisar la cadena completa: toggleUpgrade → watch(local)
+ *   → emit → watch(parent) → reasignación → watch(local).
+ */
 import { ref, computed, watch } from 'vue'
 import { getTravelerCount as resolveCount } from '@/composables/useTravelerInfo.js'
 import { UPGRADE_OPTIONS as allUpgrades } from '@/data/upgrades.js'
@@ -176,7 +187,6 @@ function handleNext() {
 
 <template>
   <div class="ds-focus-column max-w-5xl mx-auto space-y-8 w-full pt-6 md:pt-10">
-    <!-- StepHeader eliminado -->
     <div class="space-y-2">
       <span class="ds-eyebrow">Un paso más para tu tranquilidad</span>
       <h1 class="ds-heading-1">Lleva tu cobertura mucho<span style="color: #43D3FF;">  más lejos</span> </h1>

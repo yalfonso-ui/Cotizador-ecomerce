@@ -187,7 +187,6 @@ onUnmounted(() => {
 
 <template>
   <div class="w-full max-w-6xl mx-auto px-4 sm:px-6 pt-6 md:pt-10 pb-28">
-    <!-- StepHeader eliminado -->
     <div class="space-y-6">
       <!-- Header -->
       <div class="space-y-2 text-center">
