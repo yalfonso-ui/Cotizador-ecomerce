@@ -132,9 +132,13 @@ let isArrowScrolling = false
 
 const currentSlideIndex = ref(0)
 
+function getCards() {
+  if (!carouselRef.value) return []
+  return Array.from(carouselRef.value.querySelectorAll(':scope > div.contents > article'))
+}
+
 function scrollToSlide(index) {
-  if (!carouselRef.value) return
-  const cards = carouselRef.value.children
+  const cards = getCards()
   if (!cards[index]) return
   const card = cards[index]
   const container = carouselRef.value
@@ -173,7 +177,7 @@ function updateScrollState() {
     canScrollLeft.value = el.scrollLeft > 2
     canScrollRight.value = el.scrollLeft < el.scrollWidth - el.clientWidth - 2
     // Calcular slide visible actual para dots
-    const children = Array.from(el.children)
+    const children = getCards()
     const containerCenter = el.scrollLeft + el.offsetWidth / 2
     let closestIdx = 0
     let closestDist = Infinity
