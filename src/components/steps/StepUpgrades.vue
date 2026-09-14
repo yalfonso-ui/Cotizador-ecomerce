@@ -245,7 +245,7 @@ function handleNext() {
           @keydown.enter.prevent="toggleUpgrade(travelerId, upgrade.id)"
         >
           <div
-            class="w-20 h-20 rounded-lg flex items-center justify-center shrink-0 overflow-hidden transition-colors duration-200"
+            class="w-16 h-16 sm:w-20 sm:h-20 rounded-lg flex items-center justify-center shrink-0 overflow-hidden transition-colors duration-200"
             :style="isSelected(travelerId, upgrade.id)
               ? { backgroundColor: 'rgba(67, 211, 255, 0.12)' }
               : { backgroundColor: '#EDF4F9' }"

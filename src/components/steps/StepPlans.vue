@@ -238,7 +238,7 @@ onUnmounted(() => {
           <div
             ref="carouselRef"
             @scroll="updateScrollState"
-            class="flex flex-nowrap gap-4 overflow-x-auto snap-x snap-proximity w-full pb-8 min-h-[480px] hide-scroll-bar"
+            class="flex flex-nowrap gap-4 overflow-x-auto snap-x snap-proximity w-full pb-8 min-h-[420px] md:min-h-[480px] hide-scroll-bar"
           >
           <TransitionGroup
             appear

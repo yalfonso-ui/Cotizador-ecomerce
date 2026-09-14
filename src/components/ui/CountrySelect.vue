@@ -326,7 +326,7 @@ const hasSelection = computed(() => {
         </button>
       </div>
 
-      <div :data-list="rootId" class="bg-white border border-slate-200/80 rounded-2xl max-h-72 overflow-y-auto">
+      <div :data-list="rootId" class="bg-white border border-slate-200/80 rounded-2xl max-h-[55vh] md:max-h-72 overflow-y-auto overscroll-contain">
         <button
           v-for="country in filtered"
           :key="country.code"

@@ -729,7 +729,7 @@ watch(travelers_data, () => {
                       <div class="relative flex">
                         <!-- Prefijo de país persistente, no editable -->
                         <span
-                          class="inline-flex items-center px-3 rounded-l-xl border border-r-0 border-slate-200 bg-slate-100 text-slate-700 text-sm font-semibold tabular-nums"
+                          class="inline-flex items-center px-2 sm:px-3 rounded-l-xl border border-r-0 border-slate-200 bg-slate-100 text-slate-700 text-xs sm:text-sm font-semibold tabular-nums shrink-0"
                           style="color: #00184C;"
                           :title="getPhoneCountry(traveler)"
                         >
@@ -744,7 +744,7 @@ watch(travelers_data, () => {
                           inputmode="tel"
                           :placeholder="getPhonePlaceholder()"
                           maxlength="18"
-                          class="w-full h-12 px-4 bg-slate-50 border border-slate-200 rounded-r-xl text-slate-700 placeholder:text-slate-300 transition-all duration-200 focus:bg-white focus:border-[#43D3FF] focus:ring-4 focus:ring-[#43D3FF]/15 outline-none pr-9 text-base tabular-nums tracking-wide"
+                          class="w-full h-12 px-4 bg-slate-50 border border-slate-200 rounded-r-xl text-slate-700 placeholder:text-slate-300 transition-all duration-200 focus:bg-white focus:border-[#43D3FF] focus:ring-4 focus:ring-[#43D3FF]/15 outline-none pr-9 text-sm sm:text-base tabular-nums tracking-normal sm:tracking-wide"
                           :class="[isFieldTouched(traveler.id, 'phone') && isFieldValid(traveler, 'phone') ? 'border-emerald-500 ring-2 ring-emerald-400/30 bg-emerald-50/40' : 'border-slate-200', isFieldTouched(traveler.id, 'phone') && !isFieldValid(traveler, 'phone') ? 'border-red-300 ring-4 ring-red-50' : '']"
                         />
                         <svg v-if="isFieldTouched(traveler.id, 'phone') && isFieldValid(traveler, 'phone')" class="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-emerald-500 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
@@ -902,7 +902,7 @@ watch(travelers_data, () => {
                 <label for="emergency-phone" class="text-xs font-bold text-slate-500 uppercase tracking-wide mb-1.5 block text-left">Teléfono</label>
                 <div class="relative flex">
                   <span
-                    class="inline-flex items-center px-3 rounded-l-xl border border-r-0 border-slate-200 bg-slate-100 text-slate-700 text-sm font-semibold tabular-nums"
+                    class="inline-flex items-center px-2 sm:px-3 rounded-l-xl border border-r-0 border-slate-200 bg-slate-100 text-slate-700 text-xs sm:text-sm font-semibold tabular-nums shrink-0"
                     style="color: #00184C;"
                     title="Colombia"
                   >
@@ -917,7 +917,7 @@ watch(travelers_data, () => {
                     inputmode="tel"
                     placeholder="300 987 6543"
                     maxlength="18"
-                    class="w-full h-12 px-4 bg-slate-50 border border-slate-200 rounded-r-xl text-slate-700 placeholder:text-slate-300 transition-all focus:bg-white focus:border-[#43D3FF] focus:ring-4 focus:ring-[#43D3FF]/15 outline-none pr-9 text-base tabular-nums tracking-wide"
+                    class="w-full h-12 px-4 bg-slate-50 border border-slate-200 rounded-r-xl text-slate-700 placeholder:text-slate-300 transition-all focus:bg-white focus:border-[#43D3FF] focus:ring-4 focus:ring-[#43D3FF]/15 outline-none pr-9 text-sm sm:text-base tabular-nums tracking-normal sm:tracking-wide"
                     :class="[emergencyPhoneTouched && emergencyPhoneValid ? 'border-emerald-500 ring-2 ring-emerald-400/30 bg-emerald-50/40' : 'border-slate-200', emergencyPhoneTouched && !emergencyPhoneValid ? 'border-red-300 ring-4 ring-red-50' : '']"
                   />
                   <svg v-if="emergencyPhoneTouched && emergencyPhoneValid" class="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-emerald-500 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">

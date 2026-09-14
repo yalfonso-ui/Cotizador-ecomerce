@@ -410,17 +410,17 @@ const summaryRows = computed(() => [
             </button>
           </div>
 
-          <div class="relative grid grid-cols-3 divide-x divide-white/10 text-center border-t border-white/10">
+          <div class="relative grid grid-cols-1 sm:grid-cols-3 divide-y sm:divide-y-0 sm:divide-x divide-white/10 text-center border-t border-white/10">
             <div class="px-3 py-4">
-              <p class="text-[10px] font-bold uppercase tracking-[0.18em]" style="color: rgba(67, 211, 255, 0.85);">Plan</p>
+              <p class="text-[10px] font-bold uppercase tracking-[0.12em] sm:tracking-[0.18em]" style="color: rgba(67, 211, 255, 0.85);">Plan</p>
               <p class="mt-1.5 font-extrabold text-white text-sm">{{ planName }}</p>
             </div>
             <div class="px-3 py-4">
-              <p class="text-[10px] font-bold uppercase tracking-[0.18em]" style="color: rgba(67, 211, 255, 0.85);">Duración</p>
+              <p class="text-[10px] font-bold uppercase tracking-[0.12em] sm:tracking-[0.18em]" style="color: rgba(67, 211, 255, 0.85);">Duración</p>
               <p class="mt-1.5 font-extrabold text-white text-sm tabular-nums">{{ tripDaysDisplay }}</p>
             </div>
             <div class="px-3 py-4">
-              <p class="text-[10px] font-bold uppercase tracking-[0.18em]" style="color: rgba(67, 211, 255, 0.85);">Cobertura</p>
+              <p class="text-[10px] font-bold uppercase tracking-[0.12em] sm:tracking-[0.18em]" style="color: rgba(67, 211, 255, 0.85);">Cobertura</p>
               <p class="mt-1.5 font-extrabold text-white text-sm tabular-nums">{{ coverageDisplay }}</p>
             </div>
           </div>

@@ -109,8 +109,15 @@ const dragStyle = computed(() => {
   return { transform: `translateY(${dragOffset.value}px)`, transition: 'none' }
 })
 
+const sheetRef = ref(null)
+
 function onTouchStart(e) {
   if (e.touches.length !== 1) return
+  // Solo permitir drag si el sheet esta scrolleado al tope
+  if (sheetRef.value && sheetRef.value.scrollTop > 4) {
+    isDragging = false
+    return
+  }
   dragStartY = e.touches[0].clientY
   isDragging = true
 }
@@ -118,6 +125,12 @@ function onTouchStart(e) {
 function onTouchMove(e) {
   if (!isDragging) return
   const delta = e.touches[0].clientY - dragStartY
+  // Solo permitir swipe hacia abajo (cerrar)
+  if (delta < 0) {
+    dragOffset.value = 0
+    isDragging = false
+    return
+  }
   dragCurrentY = Math.max(0, delta)
   dragOffset.value = dragCurrentY
 }
@@ -619,7 +632,7 @@ async function processPaymentFlow() {
                 autocomplete="cc-number"
                 :aria-invalid="cardNumberTouched && cardNumberError"
                 :aria-describedby="cardNumberTouched && (cardNumberError || cardNumberValidation?.hint) ? 'card-number-hint' : undefined"
-                class="w-full h-12 px-4 pr-20 bg-slate-50 border-2 rounded-xl text-slate-700 placeholder:text-slate-300 transition-all duration-200 focus:bg-white focus:ring-4 outline-none text-base tracking-wider"
+                class="w-full h-12 px-4 pr-16 sm:pr-20 bg-slate-50 border-2 rounded-xl text-slate-700 placeholder:text-slate-300 transition-all duration-200 focus:bg-white focus:ring-4 outline-none text-sm sm:text-base tracking-normal sm:tracking-wider"
                 :class="[
                   cardNumberTouched && cardNumberError ? 'border-red-300 ring-4 ring-red-50' :
                   cardNumberValid ? 'border-emerald-500 ring-2 ring-emerald-400/30 bg-emerald-50/40' :
