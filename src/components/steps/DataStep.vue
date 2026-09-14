@@ -2,7 +2,7 @@
 import { ref, computed, watch, onMounted, reactive, shallowRef, triggerRef } from 'vue'
 import PrivacyPolicyModal from '@/components/ui/PrivacyPolicyModal.vue'
 import SubStepIndicator from '@/components/ui/SubStepIndicator.vue'
-import StepHeader from '@/components/ui/StepHeader.vue'
+
 import { getTravelerCount as resolveCount, calculateAge } from '@/composables/useTravelerInfo.js'
 import { getPlanPrice as planPrice } from '@/data/plans.js'
 import { getUpgradesTotal } from '@/data/upgrades.js'
@@ -505,7 +505,7 @@ watch(travelers_data, () => {
 
 <template>
   <div class="w-full max-w-3xl mx-auto px-4 md:px-8 pt-6 md:pt-10">
-    <StepHeader />
+    <!-- StepHeader eliminado -->
 
     <div class="lg:hidden sticky top-0 z-20 -mx-4 px-4 py-2 bg-white/90 backdrop-blur-md border-b border-slate-100 mb-3">
       <button

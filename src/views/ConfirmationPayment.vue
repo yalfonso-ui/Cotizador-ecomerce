@@ -5,6 +5,7 @@ import { storeToRefs } from 'pinia'
 import { useWizardStore } from '@/stores/useWizardStore.js'
 import { useCheckoutStore } from '@/stores/useCheckoutStore.js'
 import { getPlanPrice, getPlanName, getPlanCoverage } from '@/data/plans.js'
+import { STEPS } from '@/composables/useWizardSteps.js'
 import SuccessStep from '@/components/steps/SuccessStep.vue'
 
 const wizardStore = useWizardStore()
@@ -20,6 +21,15 @@ const selectedPlan = computed(() => ({
 // Total final cobrado en el checkout (plan + adicionales - descuento).
 // Se lee del checkout store donde se congeló al momento del pago exitoso.
 const { finalTotal } = storeToRefs(checkoutStore)
+
+// Forzar currentStep = SUCCESS para que la barra se muestre al 100%.
+onMounted(() => {
+  try {
+    if (wizardStore.currentStep !== STEPS.SUCCESS) {
+      wizardStore.currentStep = STEPS.SUCCESS
+    }
+  } catch (_) {}
+})
 
 function restart() {
   // 1. Limpiar localStorage (datos persistidos del wizard)

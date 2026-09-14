@@ -3,9 +3,11 @@ import { computed } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useWizardStore } from '@/stores/useWizardStore.js'
 import { getPlanPrice } from '@/data/plans.js'
+import { useCurrencyStore, formatCurrency } from '@/stores/useCurrencyStore.js'
 
 const wizardStore = useWizardStore()
 const { formData } = storeToRefs(wizardStore)
+const fx = useCurrencyStore()
 
 const originLabel = computed(() => formData.value.origin?.name || null)
 const destLabel = computed(() => {
@@ -32,10 +34,6 @@ const titularComplete = computed(() => {
 })
 
 const travelersLabel = computed(() => {
-  // Sincronización en tiempo real: en cuanto el usuario defina
-  // viajeros en el Paso 3, mostramos la cantidad en el navbar.
-  // Antes exigía titularComplete; ahora basta con que la cantidad
-  // de viajeros esté definida (>0).
   const n = formData.value.birthdates?.length || formData.value.travelersCount || 0
   if (!n) return null
   return `${n} viajero${n !== 1 ? 's' : ''}`
@@ -44,13 +42,8 @@ const travelersLabel = computed(() => {
 const price = computed(() => getPlanPrice(formData.value.selectedPlan))
 const formattedPrice = computed(() => {
   if (!price.value) return null
-  return new Intl.NumberFormat('es-CO', {
-    style: 'currency',
-    currency: 'USD',
-    minimumFractionDigits: 0
-  }).format(price.value)
+  return formatCurrency(price.value, fx)
 })
-
 </script>
 
 <template>

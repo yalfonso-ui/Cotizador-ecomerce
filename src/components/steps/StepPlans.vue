@@ -3,9 +3,11 @@ import { ref, computed, onMounted, onUnmounted, nextTick } from 'vue'
 import PlanCompareModal from '@/components/ui/PlanCompareModal.vue'
 import MultitripInfoModal from '@/components/ui/MultitripInfoModal.vue'
 import QuoteEmailModal from '@/components/ui/QuoteEmailModal.vue'
-import StepHeader from '@/components/ui/StepHeader.vue'
+import CurrencySwitcher from '@/components/ui/CurrencySwitcher.vue'
+
 import { PLANS as allPlans } from '@/data/plans.js'
 import { showToast } from '@/composables/useToast.js'
+import { useCurrencyStore, formatCurrency } from '@/stores/useCurrencyStore.js'
 
 const emit = defineEmits(['update:modelValue', 'next'])
 const props = defineProps({
@@ -22,18 +24,11 @@ const selectedForComparison = ref([])
 const MAX_COMPARE = 3
 const MIN_COMPARE = 2
 
-// Tasa USD -> COP (editable aquí). 1 USD ≈ 4.000 COP (tasa referencial Colombia).
-const USD_TO_COP = 4000
+const fx = useCurrencyStore()
 
-const copFmt = new Intl.NumberFormat('es-CO', {
-  style: 'currency',
-  currency: 'COP',
-  maximumFractionDigits: 0
-})
-
-function toCOP(usd) {
-  return copFmt.format(Math.round((Number(usd) || 0) * USD_TO_COP))
-}
+// Precios en USD (base). El formateador convierte a la moneda activa del store.
+function fmt(usd) { return formatCurrency(usd, fx) }
+function toCOP(usd) { return fx.convert(usd) }
 
 const destinationLabel = computed(() => {
   const dests = Array.isArray(props.destination) ? props.destination : [props.destination]
@@ -192,12 +187,17 @@ onUnmounted(() => {
 
 <template>
   <div class="w-full max-w-6xl mx-auto px-4 sm:px-6 pt-6 md:pt-10 pb-28">
-    <StepHeader />
+    <!-- StepHeader eliminado -->
     <div class="space-y-6">
       <!-- Header -->
       <div class="space-y-2 text-center">
         <span class="ds-eyebrow">Tu respaldo, a tu medida</span>
         <h1 class="ds-heading-1">Elige la cobertura<span style="color: #43D3FF;"> ideal para ti</span></h1>
+      </div>
+
+      <!-- Selector de moneda (sincroniza con landing/checkout/summary) -->
+      <div class="flex items-center justify-center pt-1">
+        <CurrencySwitcher />
       </div>
 
       <!-- ── BROWSE VIEW (5 plans, 3 visible + 4th peek) ── -->
@@ -309,18 +309,18 @@ onUnmounted(() => {
             <!-- Price section: clickable for plan selection -->
             <div @click="selectPlan(plan.id)" class="cursor-pointer px-6">
 
-              <!-- Precio hero (COP) -->
+              <!-- Precio hero (sincronizado con CurrencySwitcher global) -->
               <div class="text-center border-t border-slate-100 pt-5">
                 <p class="text-[10px] font-bold text-slate-400 uppercase tracking-[0.15em]">
                   Desde
                 </p>
                 <p class="mt-1 font-black text-slate-900 tabular-nums leading-none tracking-tight" style="font-size: 1.75rem;">
-                  {{ toCOP(plan.price) }}
+                  {{ fmt(plan.price) }}
                 </p>
                 <p v-if="plan.anchorPrice" class="mt-1.5 text-xs text-slate-400">
-                  <span class="line-through">{{ toCOP(plan.anchorPrice) }}</span>
+                  <span class="line-through">{{ fmt(plan.anchorPrice) }}</span>
                   <span class="ml-1.5 font-semibold" style="color: #43D3FF;">
-                    Ahorras {{ toCOP(plan.anchorPrice - plan.price) }}
+                    Ahorras {{ fmt(plan.anchorPrice - plan.price) }}
                   </span>
                 </p>
               </div>

@@ -2,7 +2,8 @@
 import { ref, computed, watch } from 'vue'
 import { getTravelerCount as resolveCount } from '@/composables/useTravelerInfo.js'
 import { UPGRADE_OPTIONS as allUpgrades } from '@/data/upgrades.js'
-import StepHeader from '@/components/ui/StepHeader.vue'
+
+import { useCurrencyStore, formatCurrency } from '@/stores/useCurrencyStore.js'
 
 import preexistenciasImg from '@/assets/images/imagenes/Preexistencias.png'
 import deportesImg from '@/assets/images/imagenes/Deportes y aventura.png'
@@ -27,6 +28,17 @@ const props = defineProps({
 const travelerCount = computed(() => resolveCount(props.travelers, props.travelersCount))
 
 const upgradeOptions = allUpgrades
+const fx = useCurrencyStore()
+function fmt(usd) { return formatCurrency(usd, fx) }
+
+// Recomendados para el botón "Agregar todos"
+// Aquí: las upgrades con la mejor relación cobertura/precio. Marcadas
+// como 'recommended' en data/upgrades.js en un futuro PR; mientras
+// tanto, marcamos por defecto las primeras dos (preexistencias y
+// cancelación, que son las que más valoran usuarios LATAM).
+const RECOMMENDED_IDS = ['preexistencias', 'cancelacion-multicausa']
+
+function isRecommended(id) { return RECOMMENDED_IDS.includes(id) }
 
 function buildEmpty(count) {
   const next = {}
@@ -78,6 +90,54 @@ function toggleUpgrade(travelerId, upgradeId) {
   }
 }
 
+const allRecommendedSelectedForTraveler = (travelerId) => {
+  const current = travelersUpgrades.value[travelerId] || []
+  return RECOMMENDED_IDS.every(id => current.includes(id))
+}
+
+const allRecommendedSelectedGlobally = computed(() => {
+  for (let i = 1; i <= travelerCount.value; i++) {
+    if (!allRecommendedSelectedForTraveler(i)) return false
+  }
+  return travelerCount.value > 0
+})
+
+function addAllRecommended(travelerId) {
+  const current = travelersUpgrades.value[travelerId] || []
+  const merged = Array.from(new Set([...current, ...RECOMMENDED_IDS]))
+  travelersUpgrades.value[travelerId] = merged
+}
+
+function clearAllForTraveler(travelerId) {
+  travelersUpgrades.value[travelerId] = []
+}
+
+function clearAllGlobally() {
+  for (let i = 1; i <= travelerCount.value; i++) {
+    travelersUpgrades.value[i] = []
+  }
+}
+
+function toggleAllRecommendedGlobally() {
+  if (allRecommendedSelectedGlobally.value) {
+    clearAllGlobally()
+  } else {
+    for (let i = 1; i <= travelerCount.value; i++) {
+      addAllRecommended(i)
+    }
+  }
+}
+
+function travelerCompletion(travelerId) {
+  // Estado de "viajero listo": al menos 1 upgrade marcada O explícitamente
+  // declinó (no hay declinar explícito; usamos total > 0 como proxy).
+  const total = getTravelerUpgradesTotal(travelerId)
+  return {
+    total,
+    hasChoice: (travelersUpgrades.value[travelerId] || []).length > 0
+  }
+}
+
 function isSelected(travelerId, upgradeId) {
   return travelersUpgrades.value[travelerId]?.includes(upgradeId) || false
 }
@@ -116,7 +176,7 @@ function handleNext() {
 
 <template>
   <div class="ds-focus-column max-w-5xl mx-auto space-y-8 w-full pt-6 md:pt-10">
-    <StepHeader />
+    <!-- StepHeader eliminado -->
     <div class="space-y-2">
       <span class="ds-eyebrow">Un paso más para tu tranquilidad</span>
       <h1 class="ds-heading-1">Lleva tu cobertura mucho<span style="color: #43D3FF;">  más lejos</span> </h1>
@@ -136,9 +196,28 @@ function handleNext() {
         <div class="flex items-center justify-between flex-1">
           <h3 class="text-sm font-bold text-slate-900">{{ getTravelerName(travelerId) }}</h3>
           <div v-if="getTravelerUpgradesTotal(travelerId) > 0" class="text-sm font-bold text-slate-900">
-            +${{ getTravelerUpgradesTotal(travelerId).toFixed(2) }} USD
+            +{{ fmt(getTravelerUpgradesTotal(travelerId)) }}
           </div>
         </div>
+        <button
+          v-if="!allRecommendedSelectedForTraveler(travelerId)"
+          type="button"
+          @click.stop="addAllRecommended(travelerId)"
+          class="text-[10px] font-semibold uppercase tracking-wider px-2.5 py-1 rounded-full transition-colors whitespace-nowrap"
+          style="background-color: #43D3FF; color: #00184C;"
+        >
+          + Agregar recomendados
+        </button>
+        <span
+          v-else
+          class="text-[10px] font-semibold uppercase tracking-wider px-2.5 py-1 rounded-full inline-flex items-center gap-1"
+          style="background-color: rgba(67, 211, 255, 0.18); color: #00184C;"
+        >
+          <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7" />
+          </svg>
+          Recomendados ✓
+        </span>
       </div>
 
       <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -231,7 +310,7 @@ function handleNext() {
           <p class="text-[11px] text-slate-500 mt-0.5">Se suma al precio del plan</p>
         </div>
         <div class="text-right">
-          <p class="text-xl font-black text-slate-900">${{ grandTotal.toFixed(2) }} <span class="text-xs text-slate-500 font-semibold">USD</span></p>
+          <p class="text-xl font-black text-slate-900">{{ fmt(grandTotal) }}</p>
         </div>
       </div>
     </div>

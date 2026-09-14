@@ -1,6 +1,7 @@
 <script setup>
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import { useModalFocus } from '@/composables/useModalFocus.js'
+import { useCurrencyStore, formatCurrency } from '@/stores/useCurrencyStore.js'
 
 const props = defineProps({
   modelValue: { type: Boolean, default: false },
@@ -21,6 +22,9 @@ const localSelected = ref([...props.selectedUpgrades])
 watch(() => props.selectedUpgrades, (val) => {
   localSelected.value = [...val]
 }, { deep: true })
+
+const fx = useCurrencyStore()
+function fmt(usd) { return formatCurrency(usd, fx) }
 
 const upgrades = [
   {
@@ -204,7 +208,7 @@ onUnmounted(() => {
                       :class="isSelected(upgrade.id) ? '' : ''"
                       :style="{ color: '#00184C', opacity: isSelected(upgrade.id) ? '1' : '0.6' }"
                     >
-                      ${{ upgrade.price.toFixed(2) }} USD
+                      {{ fmt(upgrade.price) }}
                     </p>
                   </div>
                 </div>
@@ -242,9 +246,8 @@ onUnmounted(() => {
                   :class="localSelected.length > 0 ? '' : ''"
                   :style="{ color: '#00184C', opacity: localSelected.length > 0 ? '1' : '0.5' }"
                 >
-                  ${{ totalPrice.toFixed(2) }}
+                  {{ fmt(totalPrice) }}
                 </span>
-                <span class="text-xs font-semibold text-slate-500">USD</span>
               </div>
               <p class="text-[11px] text-slate-500 font-medium">
                 <span v-if="localSelected.length === 0">Sin extras aún</span>

@@ -151,22 +151,8 @@ onUnmounted(() => {
           />
         </a>
 
-        <!-- RIGHT: Reembolsos link + separator + idioma + Summary + Edit -->
+        <!-- RIGHT: idioma + Summary + Edit -->
         <div class="flex items-center gap-2 sm:gap-3 shrink-0">
-          <!--
-            Link "Reembolsos" (sección transversal de la app).
-            Sin recuadro, sin fondo hover: solo texto limpio con
-            hover:opacity-70.
-          -->
-          <RouterLink
-            v-if="!isQuoteFlow"
-            to="/reembolsos"
-            class="hidden sm:inline-flex items-center gap-1.5 text-xs font-semibold text-slate-600 hover:opacity-70 active:scale-[0.98] transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-[#43D3FF] focus-visible:ring-offset-1"
-            aria-label="Ir al módulo de reembolsos"
-          >
-            <span>Reembolsos</span>
-          </RouterLink>
-
           <!--
             Controles contextuales del módulo /reembolsos.
             Solo el selector de idioma — visible cuando el usuario

@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { STEPS } from '@/composables/useWizardSteps.js'
+import { useCurrencyStore, formatCurrency } from '@/stores/useCurrencyStore.js'
 
 interface Country {
   code: string
@@ -19,6 +20,8 @@ const props = defineProps<{
 const emit = defineEmits<{
   edit: [step: number]
 }>()
+
+const fx = useCurrencyStore()
 
 const originLabel = computed(() => props.origin?.name || null)
 const destLabel = computed(() => {
@@ -39,7 +42,7 @@ const travelersSet = computed(() => props.travelersCount > 0 && datesComplete.va
 
 const formattedPrice = computed(() => {
   if (!props.price) return null
-  return new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'USD', minimumFractionDigits: 0 }).format(props.price)
+  return formatCurrency(props.price, fx)
 })
 </script>
 

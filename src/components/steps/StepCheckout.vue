@@ -1,16 +1,17 @@
 <script setup>
-import { ref, computed, watch, onMounted, onBeforeUnmount } from 'vue'
+import { ref, computed, watch, onMounted, onBeforeUnmount, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
 import { storeToRefs } from 'pinia'
 import DiscountCodeField from '@/components/ui/DiscountCodeField.vue'
 import AppSpinner from '@/components/ui/AppSpinner.vue'
 import AppAlert from '@/components/ui/AppAlert.vue'
-import StepHeader from '@/components/ui/StepHeader.vue'
+
 import { useCheckoutStore } from '@/stores/useCheckoutStore.js'
 import { useWizardStore } from '@/stores/useWizardStore.js'
 import { getPlanPrice as planPrice, getPlanName as planName, getPlanCoverage as planCoverage } from '@/data/plans.js'
 import { getUpgradesTotal } from '@/data/upgrades.js'
 import { formatDate as fmtDate } from '@/composables/useDateFormatter.js'
+import { useCurrencyStore, formatCurrency } from '@/stores/useCurrencyStore.js'
 import { getTravelerCount as resolveCount } from '@/composables/useTravelerInfo.js'
 import { showToast } from '@/composables/useToast.js'
 import { STEPS } from '@/composables/useWizardSteps.js'
@@ -24,6 +25,8 @@ const props = defineProps({
 
 const checkoutStore = useCheckoutStore()
 const wizardStore = useWizardStore()
+const fx = useCurrencyStore()
+function fmt(usd) { return formatCurrency(usd, fx) }
 const {
   cardNumber,
   cardName,
@@ -263,6 +266,15 @@ function handleRetryPayment() {
   processPaymentFlow()
 }
 
+function clearDemoCardData() {
+  checkoutStore.cardNumber = ''
+  checkoutStore.cardName = ''
+  checkoutStore.expiryDate = ''
+  checkoutStore.cvv = ''
+  checkoutStore.cardNumberTouched = true // esconde el banner demo
+  nextTick(() => document.getElementById('card-number')?.focus())
+}
+
 async function processPaymentFlow() {
   if (isProcessing.value) return
 
@@ -359,7 +371,7 @@ async function processPaymentFlow() {
 
 <template>
   <div class="max-w-5xl mx-auto space-y-5 px-4 sm:px-6 pt-6 md:pt-10">
-    <StepHeader />
+    <!-- StepHeader eliminado: la barra de progreso global es el único indicador -->
 
     <div class="lg:hidden sticky top-0 z-20 -mx-4 px-4 py-3 bg-white/85 backdrop-blur-md border-b border-slate-100/80">
       <button
@@ -488,7 +500,7 @@ async function processPaymentFlow() {
           <div class="mt-5 pt-4 border-t border-slate-100 flex items-center justify-between">
             <span class="text-xs text-slate-500 font-medium uppercase tracking-wider">Total</span>
             <span class="text-lg font-bold tabular-nums" style="color: #00184C;">
-              ${{ finalPrice.toFixed(2) }} USD
+{{ fmt(finalPrice) }}
             </span>
           </div>
 
@@ -570,6 +582,33 @@ async function processPaymentFlow() {
               </svg>
             </div>
             <h3 class="text-sm font-bold text-slate-800">Tu método de pago</h3>
+          </div>
+
+          <!-- Banner de modo demo: tarjeta Visa precargada -->
+          <div
+            v-if="!cardNumberTouched"
+            class="flex items-start gap-2 p-2.5 rounded-lg text-xs"
+            style="background-color: rgba(67, 211, 255, 0.1); color: #00184C;"
+            role="note"
+            aria-live="polite"
+          >
+            <svg class="w-4 h-4 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <div class="flex-1">
+              <p class="font-bold">Modo demo · Visa precargada</p>
+              <p class="text-[11px] opacity-80 mt-0.5">
+                Usa la tarjeta <span class="font-mono font-bold">4242 4242 4242 4242</span> precargada.
+                Cambia cualquier dato para simular un pago fallido y probar el flujo de error.
+              </p>
+            </div>
+            <button
+              type="button"
+              @click="clearDemoCardData"
+              class="text-[11px] font-bold underline shrink-0 mt-0.5 hover:opacity-80"
+            >
+              Limpiar
+            </button>
           </div>
 
           <div>
@@ -773,6 +812,16 @@ async function processPaymentFlow() {
             <span class="font-semibold">Parece que los datos de la tarjeta no coinciden.</span>
             Verifica que el número, el nombre del titular y la fecha sean correctos.
             Tu información está segura — ningún cargo se realizó.
+            <button
+              type="button"
+              @click="handleRetryPayment"
+              class="mt-2.5 inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-white border border-red-200 text-red-700 text-xs font-bold hover:bg-red-50 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-red-400"
+            >
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99" />
+              </svg>
+              Reintentar pago
+            </button>
           </template>
           <template v-else-if="paymentError === 'TIMEOUT'">
             <span class="font-semibold">La conexión tardó demasiado.</span>
@@ -835,8 +884,8 @@ async function processPaymentFlow() {
           </template>
           <template v-else>
             <span>
-              <span class="hidden md:inline">Activa tu cobertura · ${{ finalPrice.toFixed(2) }} USD</span>
-              <span class="md:hidden">Pagar ${{ finalPrice.toFixed(2) }} USD</span>
+              <span class="hidden md:inline">Activa tu cobertura · {{ fmt(finalPrice) }}</span>
+              <span class="md:hidden">Pagar {{ fmt(finalPrice) }}</span>
             </span>
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-5 h-5 text-current transform rotate-45">
               <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 19.5l15-15m0 0H8.25m11.25 0v11.25" />
@@ -925,19 +974,19 @@ async function processPaymentFlow() {
           <div class="space-y-2 pt-2 border-t border-slate-100">
             <div class="flex items-center justify-between">
               <span class="text-sm" style="color: #00184C; opacity: 0.7;">Plan base</span>
-              <span class="text-sm font-semibold" style="color: #00184C;">${{ getPlanPrice() }} USD</span>
+              <span class="text-sm font-semibold" style="color: #00184C;">{{ fmt(getPlanPrice()) }}</span>
             </div>
             <div v-if="upgradesTotal > 0" class="flex items-center justify-between">
               <span class="text-sm" style="color: #00184C; opacity: 0.7;">Coberturas adicionales</span>
-              <span class="text-sm font-semibold" style="color: #00184C;">+${{ upgradesTotal }} USD</span>
+              <span class="text-sm font-semibold" style="color: #00184C;">+{{ fmt(upgradesTotal) }}</span>
             </div>
             <div v-if="appliedDiscount" class="flex items-center justify-between">
               <span class="text-sm" style="color: #00184C;">Descuento ({{ appliedDiscount.discountPercent }}%)</span>
-              <span class="text-sm font-semibold" style="color: #00184C;">-${{ discountAmount.toFixed(2) }} USD</span>
+              <span class="text-sm font-semibold" style="color: #00184C;">-{{ fmt(discountAmount) }}</span>
             </div>
             <div class="flex items-center justify-between pt-2 border-t border-slate-200">
               <span class="text-base font-bold" style="color: #00184C;">Total a pagar</span>
-              <span class="text-xl font-bold" style="color: #00184C;">${{ finalPrice.toFixed(2) }} USD</span>
+              <span class="text-xl font-bold" style="color: #00184C;">{{ fmt(finalPrice) }}</span>
             </div>
           </div>
         </div>

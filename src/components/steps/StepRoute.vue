@@ -2,7 +2,7 @@
 import { ref, computed, onMounted, watch } from 'vue'
 import CountrySelect from '@/components/ui/CountrySelect.vue'
 import AppSpinner from '@/components/ui/AppSpinner.vue'
-import StepHeader from '@/components/ui/StepHeader.vue'
+
 import { useIpGeolocation } from '@/composables/useIpGeolocation.js'
 
 interface Country {
@@ -116,7 +116,7 @@ function handleContinue() {
       </h1>
     </header>
 
-    <StepHeader />
+    <!-- StepHeader eliminado -->
 
     <!-- Indicador de detección de IP (auto-hide cuando completa) -->
     <Transition

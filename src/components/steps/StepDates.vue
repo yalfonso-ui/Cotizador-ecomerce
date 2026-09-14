@@ -3,7 +3,7 @@ import { ref, computed } from 'vue'
 import { formatDate as fmtDate } from '@/composables/useDateFormatter.js'
 import DateRangePicker from '@/components/ui/DateRangePicker.vue'
 import AppSpinner from '@/components/ui/AppSpinner.vue'
-import StepHeader from '@/components/ui/StepHeader.vue'
+
 
 const emit = defineEmits(['next', 'prev'])
 
@@ -65,7 +65,7 @@ function handleContinue() {
 
 <template>
   <div class="ds-focus-column space-y-8 pt-6 md:pt-10">
-    <StepHeader />
+    <!-- StepHeader eliminado -->
     <div class="space-y-2">
       <span class="ds-eyebrow">Marca las</span>
       <h1 class="ds-heading-1">Fechas de tu<span style="color: #43D3FF;"> viaje</span></h1>

@@ -1,8 +1,12 @@
 <script setup>
 import { ref, onMounted, onBeforeUnmount } from 'vue'
 import AppSpinner from './ui/AppSpinner.vue'
+import { useCurrencyStore } from '@/stores/useCurrencyStore.js'
 
 const emit = defineEmits(['start'])
+const currency = useCurrencyStore()
+const setUSD = () => currency.setCurrency('USD')
+const setCOP = () => currency.setCurrency('COP')
 
 // Estado de loading para la micro-interacción fintech.
 // Cuando el usuario hace click en "Cotizar tu viaje" / "Cotizar ahora":
@@ -172,6 +176,7 @@ onBeforeUnmount(() => {
   <div class="min-h-screen flex flex-col" style="background-color: #0F2B55;">
     <!-- ════════════════════ HEADER ════════════════════ -->
     <header
+      v-if="false"
       class="sticky top-0 z-40 backdrop-blur-md border-b border-white/10"
       style="background-color: rgba(15, 43, 85, 0.92);"
     >
@@ -200,6 +205,28 @@ onBeforeUnmount(() => {
 
         <!-- Botones de acción -->
         <div class="flex items-center gap-2 sm:gap-3 shrink-0">
+          <!-- Selector de moneda (versionado para header oscuro) -->
+          <div class="hidden md:inline-flex items-center gap-0.5 p-1 rounded-full border border-white/15" style="background-color: rgba(255,255,255,0.06);">
+            <button
+              type="button"
+              @click="setUSD"
+              :class="[
+                'px-2.5 py-1 text-[11px] font-bold rounded-full transition-all',
+                currency.isUSD ? 'bg-white text-[#00184C] shadow-sm' : 'text-white/80 hover:text-white'
+              ]"
+              aria-pressed="currency.isUSD"
+            >USD</button>
+            <button
+              type="button"
+              @click="setCOP"
+              :class="[
+                'px-2.5 py-1 text-[11px] font-bold rounded-full transition-all',
+                currency.isCOP ? 'bg-white text-[#00184C] shadow-sm' : 'text-white/80 hover:text-white'
+              ]"
+              aria-pressed="currency.isCOP"
+            >COP</button>
+          </div>
+
           <button
             type="button"
             class="hidden sm:inline-flex items-center px-4 py-2 text-sm font-semibold text-white border border-white/25 rounded-full hover:bg-white/10 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#43D3FF]"
@@ -613,6 +640,22 @@ onBeforeUnmount(() => {
         </div>
       </div>
     </footer>
+
+    <!-- FAB flotante: el CTA principal sigue accesible desde cualquier
+         sección de la landing (la navbar ya está oculta). -->
+    <button
+      type="button"
+      @click="handleStart"
+      :disabled="isLoading"
+      class="fixed bottom-6 right-6 z-50 inline-flex items-center gap-2 px-5 py-3 text-sm font-bold rounded-full shadow-2xl transition-all hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.98] focus:outline-none focus-visible:ring-2 focus-visible:ring-white/40 disabled:opacity-80 disabled:cursor-wait"
+      style="background-color: #FDB714; color: #00184C; box-shadow: 0 12px 32px rgba(253, 183, 20, 0.35), 0 4px 12px rgba(0,0,0,0.2);"
+      aria-label="Cotizar tu viaje"
+    >
+      <span>Cotizar tu viaje</span>
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-4 h-4 transform rotate-45">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 19.5l15-15m0 0H8.25m11.25 0v11.25" />
+      </svg>
+    </button>
   </div>
 </template>
 

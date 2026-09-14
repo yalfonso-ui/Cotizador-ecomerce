@@ -1,7 +1,7 @@
 <script setup>
 import { ref, computed, watch } from 'vue'
 import { calculateAge } from '@/composables/useTravelerInfo.js'
-import StepHeader from '@/components/ui/StepHeader.vue'
+
 
 const props = defineProps({
   modelValue: { type: Object, default: () => ({}) }
@@ -181,7 +181,7 @@ watch(birthdates, () => syncModelValue(), { deep: true })
 
 <template>
   <div class="ds-focus-column space-y-8 pt-6 md:pt-10">
-    <StepHeader />
+    <!-- StepHeader eliminado -->
     <div class="space-y-2">
       <span class="ds-eyebrow">Tu equipo de viajeros</span>
       <h1 class="ds-heading-1">¿Cuántos<span style="color: #43D3FF;"> viajan</span>? </h1>

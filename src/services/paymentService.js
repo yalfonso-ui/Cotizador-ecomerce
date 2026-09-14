@@ -63,29 +63,51 @@ const REQUEST_TIMEOUT_MS = 15000
  * @returns {Promise<PaymentResult>}
  */
 export async function processPayment(payload) {
-  // ── Dev mode sin API configurada: simular éxito ──
+  // ── Demo discriminador: Visa 4242 4242 4242 4242 → OK, cualquier
+  // otra BIN → error controlado tipo 'B' (datos de tarjeta). Permite
+  // probar ambos caminos del flujo de error (resiliencia + retry)
+  // sin depender de una pasarela real ni de un mock server.
+  const isDemoVisa = (payload?.cardNumber || '').replace(/\s+/g, '') === '4242424242424242'
+
+  // ── Dev mode sin API configurada: simular éxito/demo ──
   // Solo se activa con `npm run dev` y sin VITE_PAYMENT_API_URL.
   if (DEV_MOCK_ENABLED) {
-    console.info('[paymentService] Dev mode activo — simulando pago exitoso')
     await new Promise(resolve => setTimeout(resolve, 1500))
+    if (isDemoVisa) {
+      console.info('[paymentService] Dev mode — tarjeta demo Visa 4242 → pago exitoso')
+      return {
+        success: true,
+        transactionId: `dev_${Date.now()}`,
+        redirectUrl: '/confirmacion-pago',
+        voucherCode: `DEV-${Math.random().toString(36).slice(2, 8).toUpperCase()}`
+      }
+    }
+    console.info('[paymentService] Dev mode — tarjeta NO-demo → simulando error B (datos incorrectos)')
     return {
-      success: true,
-      transactionId: `dev_${Date.now()}`,
-      redirectUrl: '/confirmacion-pago',
-      voucherCode: `DEV-${Math.random().toString(36).slice(2, 8).toUpperCase()}`
+      success: false,
+      errorCode: 'B',
+      message: 'No pudimos procesar el pago con esta tarjeta. Verifica los datos e intenta de nuevo.'
     }
   }
 
   // ── Producción sin API configurada: error de configuración ──
   if (!PAYMENT_API_URL) {
     if (PROD_MOCK_ENABLED) {
-      console.info('[paymentService] PROD_MOCK activo — simulando pago exitoso (setear VITE_PAYMENT_API_URL o VITE_PAYMENT_MOCK=off para conectar el backend real)')
       await new Promise(resolve => setTimeout(resolve, 1500))
+      if (isDemoVisa) {
+        console.info('[paymentService] PROD_MOCK — tarjeta demo Visa 4242 → pago exitoso')
+        return {
+          success: true,
+          transactionId: `demo_${Date.now()}`,
+          redirectUrl: '/confirmacion-pago',
+          voucherCode: `DEMO-${Math.random().toString(36).slice(2, 8).toUpperCase()}`
+        }
+      }
+      console.info('[paymentService] PROD_MOCK — tarjeta NO-demo → simulando error B')
       return {
-        success: true,
-        transactionId: `demo_${Date.now()}`,
-        redirectUrl: '/confirmacion-pago',
-        voucherCode: `DEMO-${Math.random().toString(36).slice(2, 8).toUpperCase()}`
+        success: false,
+        errorCode: 'B',
+        message: 'No pudimos procesar el pago con esta tarjeta. Verifica los datos e intenta de nuevo.'
       }
     }
     return {
