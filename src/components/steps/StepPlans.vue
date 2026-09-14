@@ -264,7 +264,7 @@ onUnmounted(() => {
           <div
             ref="carouselRef"
             @scroll="updateScrollState"
-            class="flex flex-nowrap gap-4 overflow-x-auto snap-x snap-proximity w-full pb-8 min-h-[420px] md:min-h-[480px] hide-scroll-bar"
+            class="flex flex-nowrap gap-4 overflow-x-auto snap-x snap-proximity w-full pb-4 md:pb-8 min-h-[420px] md:min-h-[480px] hide-scroll-bar"
           >
           <TransitionGroup
             appear
@@ -275,7 +275,7 @@ onUnmounted(() => {
           <article
             v-for="(plan, index) in plans"
             :key="plan.id"
-            class="shrink-0 w-full sm:w-[calc(50%-1rem)] md:w-[calc(33.333%-1.5rem)] snap-center mx-4 relative rounded-2xl bg-white flex flex-col transition-all duration-200 overflow-hidden border"
+            class="shrink-0 w-[calc(100%-2rem)] sm:w-[calc(50%-1rem)] md:w-[calc(33.333%-1.5rem)] snap-center mx-2 sm:mx-4 relative rounded-2xl bg-white flex flex-col transition-all duration-200 overflow-hidden border"
             :class="[
               selectedPlan === plan.id
                 ? 'border-[#00184C] shadow-xl ring-1 ring-[#00184C]/15'
@@ -412,7 +412,7 @@ onUnmounted(() => {
       <!-- /carousel + /mask-wrapper + /relative wrapper -->
 
       <!-- Dot pagination (solo mobile) -->
-      <div class="flex md:hidden items-center justify-center gap-2 py-2" role="tablist" aria-label="Navegación de planes">
+      <div class="flex md:hidden items-center justify-center gap-2 -mt-2 pb-2" role="tablist" aria-label="Navegación de planes">
         <button
           v-for="(plan, i) in plans"
           :key="'dot-' + plan.id"
