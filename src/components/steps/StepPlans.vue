@@ -130,6 +130,18 @@ const canScrollLeft = ref(false)
 const canScrollRight = ref(true)
 let isArrowScrolling = false
 
+const currentSlideIndex = ref(0)
+
+function scrollToSlide(index) {
+  if (!carouselRef.value) return
+  const cards = carouselRef.value.children
+  if (!cards[index]) return
+  const card = cards[index]
+  const container = carouselRef.value
+  const scrollLeft = card.offsetLeft - (container.offsetWidth - card.offsetWidth) / 2
+  container.scrollTo({ left: scrollLeft, behavior: 'smooth' })
+}
+
 function scrollCarousel(direction) {
   if (!carouselRef.value) return
   const amount = direction === 'right' ? 300 : -300
@@ -160,6 +172,20 @@ function updateScrollState() {
     if (!el) return
     canScrollLeft.value = el.scrollLeft > 2
     canScrollRight.value = el.scrollLeft < el.scrollWidth - el.clientWidth - 2
+    // Calcular slide visible actual para dots
+    const children = Array.from(el.children)
+    const containerCenter = el.scrollLeft + el.offsetWidth / 2
+    let closestIdx = 0
+    let closestDist = Infinity
+    children.forEach((child, i) => {
+      const childCenter = child.offsetLeft + child.offsetWidth / 2
+      const dist = Math.abs(containerCenter - childCenter)
+      if (dist < closestDist) {
+        closestDist = dist
+        closestIdx = i
+      }
+    })
+    currentSlideIndex.value = closestIdx
   })
 }
 
@@ -384,6 +410,23 @@ onUnmounted(() => {
         </div>
       </div>
       <!-- /carousel + /mask-wrapper + /relative wrapper -->
+
+      <!-- Dot pagination (solo mobile) -->
+      <div class="flex md:hidden items-center justify-center gap-2 py-2" role="tablist" aria-label="Navegación de planes">
+        <button
+          v-for="(plan, i) in plans"
+          :key="'dot-' + plan.id"
+          type="button"
+          role="tab"
+          :aria-selected="currentSlideIndex === i"
+          :aria-label="`Ir al plan ${plan.name}`"
+          @click="scrollToSlide(i)"
+          class="rounded-full transition-all duration-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#00184C] focus-visible:ring-offset-2"
+          :class="currentSlideIndex === i
+            ? 'w-7 h-2.5 bg-[#00184C]'
+            : 'w-2.5 h-2.5 bg-slate-300 hover:bg-slate-400'"
+        />
+      </div>
 
     <!-- Bottom group: multitrip + send quote -->
     <div class="max-w-5xl mx-auto border-t border-slate-100 py-4 sm:py-6">
