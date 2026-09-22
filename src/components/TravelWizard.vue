@@ -222,4 +222,30 @@ function beforeUnloadHandler(e) {
   opacity: 0;
   transform: translateY(-4px);
 }
+
+/* Mobile: transiciones más cortas y con menos desplazamiento para evitar jank */
+@media (max-width: 767px) {
+  .slide-left-enter-active,
+  .slide-left-leave-active,
+  .slide-right-enter-active,
+  .slide-right-leave-active {
+    transition: all 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  .slide-left-enter-from {
+    opacity: 0;
+    transform: translateX(24px);
+  }
+  .slide-left-leave-to {
+    opacity: 0;
+    transform: translateX(-24px);
+  }
+  .slide-right-enter-from {
+    opacity: 0;
+    transform: translateX(-24px);
+  }
+  .slide-right-leave-to {
+    opacity: 0;
+    transform: translateX(24px);
+  }
+}
 </style>

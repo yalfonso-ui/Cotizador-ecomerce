@@ -285,6 +285,8 @@ const hasSelection = computed(() => {
       <div
         v-if="mode === 'multi' && selectedMulti.length > 0"
         class="flex items-center justify-between gap-3 py-2"
+        aria-live="polite"
+        aria-atomic="false"
       >
         <div class="flex flex-wrap items-center gap-1.5 min-w-0 flex-1">
           <button

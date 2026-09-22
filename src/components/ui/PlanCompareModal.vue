@@ -404,7 +404,7 @@ onUnmounted(() => {
                     <template v-if="slot.plan">
                       <p class="text-base font-extrabold text-slate-900 tracking-tight leading-tight">
                         {{ slot.plan.name }}
-                        <span v-if="slot.isRecommended" class="ml-1 text-[10px] font-bold px-1.5 py-0.5 rounded" style="background-color: #43D3FF; color: #00184C;">★</span>
+                        <span v-if="slot.isRecommended" class="ml-1 inline-block align-middle px-1.5 py-0.5 text-[9px] font-bold rounded uppercase tracking-wider" style="background-color: #00184C; color: #43D3FF;">★ Recomendado</span>
                       </p>
                       <p class="mt-1 text-base font-extrabold tabular-nums leading-none" style="color: #00184C;">
                         ${{ slot.plan.coverage }}
@@ -454,9 +454,10 @@ onUnmounted(() => {
                 </div>
 
                 <div
-                  v-for="benefit in group.benefits"
+                  v-for="(benefit, bIdx) in group.benefits"
                   :key="benefit.name"
                   class="grid gap-3 py-1.5 border-b border-slate-100"
+                  :class="bIdx % 2 === 0 ? 'bg-white' : 'bg-slate-50/50'"
                   :style="gridStyle"
                 >
                   <div class="text-[13px] text-slate-700 self-center leading-snug">
@@ -466,6 +467,7 @@ onUnmounted(() => {
                     v-for="plan in comparePlans"
                     :key="plan.id"
                     class="text-center self-center"
+                    :class="plan.id === recommendedPlanId ? 'bg-[#43D3FF]/8 rounded mx-1' : ''"
                   >
                     <template v-if="benefit.values[plan.id] === 'check'">
                       <span

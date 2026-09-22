@@ -133,7 +133,7 @@ onUnmounted(() => {
     -->
     <header
       v-if="!isProcessing"
-      class="fixed top-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-md border-b border-slate-100 shadow-md"
+      class="fixed top-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-md border-b border-slate-100 shadow-md safe-area-top"
     >
       <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-3 text-xs">
 
@@ -264,7 +264,7 @@ onUnmounted(() => {
       va con el scroll en vez de quedarse pegado a top-16.
       El body sigue siendo el scroll container, y el sticky funciona bien.
     -->
-    <main class="pt-16">
+    <main class="pt-[calc(5rem+env(safe-area-inset-top))] md:pt-[calc(6rem+env(safe-area-inset-top))]">
       <slot />
     </main>
 

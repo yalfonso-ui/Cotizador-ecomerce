@@ -257,48 +257,63 @@ function commitRange(start, end) {
 const handleDateClick = (day, month, year) => {
   const selectedDate = new Date(year, month, day, 0, 0, 0)
 
-  // CASE 1: no range yet, or a full range is already committed
-  // → this click is the new Salida
-  if (!startDate.value || endDate.value) {
-    // Same-day shortcut: clicking the existing start while committed → 1-day range
-    if (endDate.value && startDate.value && sameDay(selectedDate, startDate.value)) {
+  // CASE 1: full range already committed (Salida + Regreso)
+  // → click INSIDE the range: acortar el Regreso (más intuitivo)
+  if (startDate.value && endDate.value) {
+    // Same-day shortcut on existing start: collapse to 1-day range
+    if (sameDay(selectedDate, startDate.value)) {
       commitRange(selectedDate, selectedDate)
       return
     }
-    // Clicking within the existing committed range → assign new start directly,
-    // skip the RESETTING animation to avoid unnecessary flicker (the range
-    // doesn't need to fade out since the new start is inside it).
-    if (endDate.value && startDate.value && selectedDate > startDate.value && selectedDate < endDate.value) {
-      clearResetTimer()
-      startDate.value = selectedDate
-      endDate.value = null
-      hoveredDate.value = null
-      phase.value = STATE.PICKING_START
-      pulseStartKey.value++
-      emit('update:modelValue', [selectedDate])
-      announce(`Nueva salida: ${formatDisplay(selectedDate)}. Elige el regreso.`)
+    // Same-day shortcut on existing end: collapse to 1-day range
+    if (sameDay(selectedDate, endDate.value)) {
+      commitRange(selectedDate, selectedDate)
       return
     }
-    // Clicking outside (or with no prior range) → animated reset with fade-out
+    // Click inside the existing range → adjust the end to the clicked date
+    // This shrinks the range and keeps the original start intact.
+    if (selectedDate > startDate.value && selectedDate < endDate.value) {
+      endDate.value = selectedDate
+      hoveredDate.value = null
+      phase.value = STATE.COMMITTED
+      pulseStartKey.value++
+      emit('update:modelValue', [startDate.value, selectedDate])
+      announce(`Rango ajustado: del ${formatDisplay(startDate.value)} al ${formatDisplay(selectedDate)}.`)
+      return
+    }
+    // Click OUTSIDE (before start or after end): start fresh
     startFreshAt(selectedDate)
     return
   }
 
-  // CASE 2: only Salida is set (Regreso not yet chosen) and user clicked a LATER day
+  // CASE 2: no range yet, or range was reset (only Salida set)
+  if (!startDate.value || phase.value === STATE.RESETTING) {
+    // Same-day shortcut on existing start while committed → 1-day range
+    if (startDate.value && sameDay(selectedDate, startDate.value)) {
+      commitRange(selectedDate, selectedDate)
+      return
+    }
+    // Any other click starts a new range
+    startFreshAt(selectedDate)
+    return
+  }
+
+  // CASE 3: only Salida is set (Regreso not yet chosen) — user is selecting the end
   if (selectedDate > startDate.value) {
+    // Clicked a LATER day → commit the range
     commitRange(startDate.value, selectedDate)
     return
   }
 
-  // CASE 3: clicked an EARLIER date than the current Salida
-  // → discard the previous Salida, this becomes the new one (animated reset)
+  // CASE 4: clicked an EARLIER date than the current Salida
+  // → discard the previous Salida, this becomes the new one
   if (selectedDate < startDate.value) {
     startFreshAt(selectedDate)
     return
   }
 
-  // CASE 4: clicked the SAME day as the current Salida
-  // → single-day range (auto-commit since "Salida = Regreso" is unambiguous)
+  // CASE 5: clicked the SAME day as the current Salida
+  // → single-day range
   commitRange(selectedDate, selectedDate)
 }
 
@@ -572,27 +587,27 @@ watch(() => props.modelValue, (newVal) => {
         <button
           type="button"
           @click="prevMonths"
-          class="w-7 h-7 rounded-full flex items-center justify-center text-slate-400 hover:bg-slate-100 hover:text-[#00184C] active:scale-95 transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-[#00184C]/20"
+          class="w-11 h-11 md:w-7 md:h-7 rounded-full flex items-center justify-center text-slate-400 hover:bg-slate-100 hover:text-[#00184C] active:scale-95 transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-[#00184C]/20"
           aria-label="Meses anteriores"
         >
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+          <svg class="w-5 h-5 md:w-4 md:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
           </svg>
         </button>
 
         <div class="flex items-center gap-2">
           <span class="text-xs font-semibold text-slate-700 tabular-nums">{{ firstMonthLabel }}</span>
-          <span class="text-xs text-slate-400">—</span>
-          <span class="text-xs font-semibold text-slate-700 tabular-nums">{{ secondMonthLabel }}</span>
+          <span v-if="!isMobile" class="text-xs text-slate-400">—</span>
+          <span v-if="!isMobile" class="text-xs font-semibold text-slate-700 tabular-nums">{{ secondMonthLabel }}</span>
         </div>
 
         <button
           type="button"
           @click="nextMonths"
-          class="w-7 h-7 rounded-full flex items-center justify-center text-slate-400 hover:bg-slate-100 hover:text-[#00184C] active:scale-95 transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-[#00184C]/20"
+          class="w-11 h-11 md:w-7 md:h-7 rounded-full flex items-center justify-center text-slate-400 hover:bg-slate-100 hover:text-[#00184C] active:scale-95 transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-[#00184C]/20"
           aria-label="Meses siguientes"
         >
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+          <svg class="w-5 h-5 md:w-4 md:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
           </svg>
         </button>
@@ -611,8 +626,8 @@ watch(() => props.modelValue, (newVal) => {
         </div>
       </Transition>
 
-      <!-- Months grid inline -->
-      <div class="grid grid-cols-2 gap-2 p-2.5">
+      <!-- Months grid inline: 1 mes en mobile (mejor hit target), 2 meses en desktop (planning cross-month) -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-2 p-2.5">
         <!-- First month -->
         <div class="space-y-1">
           <div class="grid grid-cols-7 gap-0.5">
@@ -633,7 +648,7 @@ watch(() => props.modelValue, (newVal) => {
               @mouseenter="onDayHover(day.date)"
               @mouseleave="onDayLeave"
               :disabled="isDisabled(day.date) || !day.isCurrentMonth"
-              class="relative h-7 w-full flex items-center justify-center text-xs font-medium transition-all duration-150 ease-out focus:outline-none focus-visible:ring-2 focus-visible:ring-[#00184C]/30 disabled:cursor-not-allowed rounded-full"
+              class="relative h-14 md:h-7 w-full flex items-center justify-center text-base md:text-xs font-medium transition-all duration-150 ease-out focus:outline-none focus-visible:ring-2 focus-visible:ring-[#00184C]/30 disabled:cursor-not-allowed rounded-full min-h-[48px] md:min-h-0"
               :class="dayClass(day)"
             >
               <span class="relative z-10">{{ day.date.getDate() }}</span>
@@ -641,8 +656,8 @@ watch(() => props.modelValue, (newVal) => {
           </div>
         </div>
 
-        <!-- Second month -->
-        <div class="space-y-1">
+        <!-- Second month: solo desktop (mobile usa navegación prev/next mes a mes) -->
+        <div v-if="!isMobile" class="space-y-1">
           <div class="grid grid-cols-7 gap-0.5">
             <span
               v-for="(day, idx) in WEEKDAYS"
@@ -661,7 +676,7 @@ watch(() => props.modelValue, (newVal) => {
               @mouseenter="onDayHover(day.date)"
               @mouseleave="onDayLeave"
               :disabled="isDisabled(day.date) || !day.isCurrentMonth"
-              class="relative h-7 w-full flex items-center justify-center text-xs font-medium transition-all duration-150 ease-out focus:outline-none focus-visible:ring-2 focus-visible:ring-[#00184C]/30 disabled:cursor-not-allowed rounded-full"
+              class="relative h-11 md:h-7 w-full flex items-center justify-center text-base md:text-xs font-medium transition-all duration-150 ease-out focus:outline-none focus-visible:ring-2 focus-visible:ring-[#00184C]/30 disabled:cursor-not-allowed rounded-full min-h-[44px] md:min-h-0"
               :class="dayClass(day)"
             >
               <span class="relative z-10">{{ day.date.getDate() }}</span>
@@ -727,7 +742,7 @@ watch(() => props.modelValue, (newVal) => {
               </div>
 
               <div
-                class="grid grid-cols-7 gap-x-1 gap-y-2"
+                class="grid grid-cols-7 gap-x-0.5 gap-y-2"
                 :class="hasActiveRange ? 'md:gap-0' : 'md:gap-1'"
               >
                 <button
@@ -738,7 +753,7 @@ watch(() => props.modelValue, (newVal) => {
                   @mouseenter="onDayHover(day.date)"
                   @mouseleave="onDayLeave"
                   :disabled="isDisabled(day.date) || !day.isCurrentMonth"
-                  class="relative h-11 w-full md:h-10 flex items-center justify-center text-sm font-medium transition-all duration-300 ease-out focus:outline-none focus-visible:ring-2 focus-visible:ring-[#00184C]/30 disabled:cursor-not-allowed"
+                  class="relative h-11 w-full md:h-10 flex items-center justify-center text-sm font-medium transition-all duration-300 ease-out focus:outline-none focus-visible:ring-2 focus-visible:ring-[#00184C]/30 disabled:cursor-not-allowed rounded-full touch-manipulation"
                   :class="[
                     dayClass(day),
                     currentState === 'resetting' && startDate && sameDay(day.date, startDate) ? 'ds-day-resetting' : '',
@@ -789,9 +804,11 @@ watch(() => props.modelValue, (newVal) => {
         </Transition>
 
         <!-- Footer: muestra el rango y la cantidad de días seleccionados.
-             Visible desde que se elige la salida (preview) hasta después de confirmar. -->
+             Visible desde que se elige la salida (preview) hasta después de confirmar.
+             IMPORTANTE: se muestra también cuando solo está la Salida (sin hover en mobile),
+             para que el usuario siempre vea feedback de su selección parcial. -->
         <div
-          v-if="hasActiveRange"
+          v-if="startDate"
           class="flex items-center justify-between gap-3 px-4 md:px-5 py-3 border-t border-slate-100 bg-slate-50/60"
           aria-live="polite"
         >
@@ -808,7 +825,19 @@ watch(() => props.modelValue, (newVal) => {
           </div>
 
           <div class="flex items-center gap-2 shrink-0">
+            <!-- Solo Salida seteada (sin Regreso): mensaje de espera -->
             <div
+              v-if="startDate && !endDate"
+              class="flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-[#43D3FF]/20 text-[#00184C]"
+            >
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <span>Elige regreso</span>
+            </div>
+            <!-- Rango confirmado: muestra días -->
+            <div
+              v-else
               class="flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold tabular-nums transition-colors duration-200"
               :class="endDate ? 'bg-[#00184C] text-white' : 'bg-[#43D3FF]/20 text-[#00184C]'"
             >

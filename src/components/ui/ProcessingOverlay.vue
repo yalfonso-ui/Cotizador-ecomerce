@@ -15,7 +15,7 @@ const { isProcessing, processingStep } = storeToRefs(checkoutStore)
     <Transition name="processing-fade">
       <div
         v-if="isProcessing"
-        class="fixed inset-0 z-[60] bg-white flex items-center justify-center p-4"
+        class="fixed inset-0 z-[60] bg-white flex items-center justify-center p-4 safe-area-top safe-area-x"
         role="alert"
         aria-live="assertive"
         aria-busy="true"

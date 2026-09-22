@@ -6,7 +6,7 @@ export const PLANS = [
     anchorPrice: null,
     coverage: '10,000',
     currency: 'USD',
-    description: 'Cobertura esencial para escapadas cortas',
+    description: 'Escapadas cortas',
     features: ['Emergencias médicas', 'Repatriación', 'Asistencia 24/7'],
     recommended: false,
     bestFor: ['mx', 'co', 'pe', 'ec']
@@ -18,7 +18,7 @@ export const PLANS = [
     anchorPrice: null,
     coverage: '15,000',
     currency: 'USD',
-    description: 'Protección balanceada para viajes típicos',
+    description: 'Viajes típicos',
     features: ['Todo de Lite', 'Teleconsulta', 'COVID-19'],
     recommended: false,
     bestFor: ['cl', 'ar', 'br']
@@ -30,7 +30,7 @@ export const PLANS = [
     anchorPrice: 59,
     coverage: '50,000',
     currency: 'USD',
-    description: 'Para aventureros y nómadas digitales',
+    description: 'Aventureros y nómadas',
     features: ['Todo de Essential', 'Cancelación', 'Equipaje'],
     recommended: true,
     bestFor: ['us', 'ca', 'mx']
@@ -42,7 +42,7 @@ export const PLANS = [
     anchorPrice: 89,
     coverage: '100,000',
     currency: 'USD',
-    description: 'Cobertura completa sin preocupaciones',
+    description: 'Sin preocupaciones',
     features: ['Todo de Explorer', 'Concierge', 'Actividades'],
     recommended: false,
     bestFor: ['es', 'fr', 'it', 'gb', 'de', 'jp']
@@ -54,7 +54,7 @@ export const PLANS = [
     anchorPrice: 129,
     coverage: '250,000',
     currency: 'USD',
-    description: 'Máxima protección y beneficios VIP',
+    description: 'VIP',
     features: ['Todo de Premium', 'Asistencia premium', 'Límite sin tope'],
     recommended: false,
     bestFor: ['ch', 'au', 'no']

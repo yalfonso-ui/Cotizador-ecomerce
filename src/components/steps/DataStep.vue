@@ -13,6 +13,19 @@ import { useBirthdateMask } from '@/composables/useBirthdateMask.js'
 
 const emit = defineEmits(['next', 'go-to-step'])
 
+// ── Scroll-into-view on focus ──
+// When a field receives focus, scroll it so it's centered above the keyboard.
+// Uses 'instant' for desktop (no smooth jump) and waits one tick so the
+// keyboard animation completes before scrolling on mobile.
+function scrollIntoViewOnFocus(e) {
+  // Only on mobile (keyboard is up)
+  if (window.matchMedia('(max-width: 767px)').matches) {
+    requestAnimationFrame(() => {
+      e.target.scrollIntoView({ behavior: 'instant', block: 'center' })
+    })
+  }
+}
+
 const props = defineProps({
   modelValue: Object,
   selectedPlan: { type: String, default: null },
@@ -506,7 +519,8 @@ watch(travelers_data, () => {
 <template>
   <div class="w-full max-w-3xl mx-auto px-4 md:px-8 pt-6 md:pt-10">
 
-    <div class="lg:hidden sticky top-0 z-20 -mx-4 px-4 py-2 bg-white/90 backdrop-blur-md border-b border-slate-100 mb-3">
+    <div class="lg:hidden sticky z-20 -mx-4 px-4 py-2 bg-white/90 backdrop-blur-md border-b border-slate-100 mb-3"
+      style="top: calc(4rem + env(safe-area-inset-top));">
       <button
         type="button"
         @click="isMobileSummaryExpanded = !isMobileSummaryExpanded"
@@ -587,17 +601,7 @@ watch(travelers_data, () => {
           <div class="p-5">
             <transition name="fade" mode="out-in">
               <div v-if="activeTab === 0" key="titular" class="space-y-4">
-            <p
-              v-if="titulErrorsCount > 0"
-              class="bg-red-50 border border-red-200 rounded-xl p-3 flex items-start gap-2.5 text-sm text-red-700"
-              role="alert"
-              aria-live="polite"
-            >
-              <svg class="w-4 h-4 text-red-500 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01M5 19h14a2 2 0 001.84-2.75L13.74 4a2 2 0 00-3.48 0L3.16 16.25A2 2 0 005 19z" />
-              </svg>
-              Aún te faltan {{ titulErrorsCount }} {{ titulErrorsCount === 1 ? 'dato por completar' : 'datos por completar' }}.
-            </p>
+            <!-- Validación inline: cada campo muestra su error directamente debajo sin banners intrusivos -->
 
             <article
               v-for="traveler in travelers_data"
@@ -667,6 +671,12 @@ watch(travelers_data, () => {
                           v-model="traveler.name"
                           type="text"
                           placeholder="María García"
+                          autocomplete="name"
+                          autocapitalize="words"
+                          autocorrect="off"
+                          spellcheck="false"
+                          enterkeyhint="next"
+                          @focus="scrollIntoViewOnFocus"
                           @blur="touchField(traveler.id, 'name')"
                           class="w-full h-12 px-4 bg-slate-50 border border-slate-200 rounded-xl text-slate-700 placeholder:text-slate-300 transition-all duration-200 focus:bg-white focus:border-[#43D3FF] focus:ring-4 focus:ring-[#43D3FF]/15 outline-none pr-9 text-base"
                           :class="[isFieldTouched(traveler.id, 'name') && isFieldValid(traveler, 'name') ? 'border-emerald-500 ring-2 ring-emerald-400/30 bg-emerald-50/40' : 'border-slate-200', isFieldTouched(traveler.id, 'name') && !isFieldValid(traveler, 'name') ? 'border-red-300 ring-4 ring-red-50' : '']"
@@ -689,8 +699,14 @@ watch(travelers_data, () => {
                           @input="handleIdNumberInput(traveler, $event)"
                           @blur="touchField(traveler.id, 'idNumber')"
                           type="text"
+                          inputmode="numeric"
+                          pattern="[0-9]*"
                           placeholder="12345678 o AB123456"
                           maxlength="20"
+                          autocomplete="off"
+                          autocapitalize="characters"
+                          enterkeyhint="next"
+                          @focus="scrollIntoViewOnFocus"
                           class="w-full h-12 px-4 bg-slate-50 border border-slate-200 rounded-xl text-slate-700 placeholder:text-slate-300 transition-all duration-200 focus:bg-white focus:border-[#43D3FF] focus:ring-4 focus:ring-[#43D3FF]/15 outline-none pr-9 text-base uppercase"
                           :class="[isFieldTouched(traveler.id, 'idNumber') && isFieldValid(traveler, 'idNumber') ? 'border-emerald-500 ring-2 ring-emerald-400/30 bg-emerald-50/40' : 'border-slate-200', isFieldTouched(traveler.id, 'idNumber') && !isFieldValid(traveler, 'idNumber') ? 'border-red-300 ring-4 ring-red-50' : '']"
                         />
@@ -711,6 +727,10 @@ watch(travelers_data, () => {
                           v-model="traveler.email"
                           type="email"
                           placeholder="maria@email.com"
+                          autocomplete="email"
+                          inputmode="email"
+                          enterkeyhint="next"
+                          @focus="scrollIntoViewOnFocus"
                           @blur="touchField(traveler.id, 'email')"
                           class="w-full h-12 px-4 bg-slate-50 border border-slate-200 rounded-xl text-slate-700 placeholder:text-slate-300 transition-all duration-200 focus:bg-white focus:border-[#43D3FF] focus:ring-4 focus:ring-[#43D3FF]/15 outline-none pr-9 text-base"
                           :class="[isFieldTouched(traveler.id, 'email') && isFieldValid(traveler, 'email') ? 'border-emerald-500 ring-2 ring-emerald-400/30 bg-emerald-50/40' : 'border-slate-200', isFieldTouched(traveler.id, 'email') && !isFieldValid(traveler, 'email') ? 'border-red-300 ring-4 ring-red-50' : '']"
@@ -740,8 +760,11 @@ watch(travelers_data, () => {
                           :value="traveler.phone"
                           @input="applyPhoneMask(traveler, $event.target.value); touchField(traveler.id, 'phone')"
                           @blur="touchField(traveler.id, 'phone')"
+                          @focus="scrollIntoViewOnFocus"
                           type="tel"
                           inputmode="tel"
+                          pattern="[0-9]*"
+                          autocomplete="tel"
                           :placeholder="getPhonePlaceholder()"
                           maxlength="18"
                           class="w-full h-12 px-4 bg-slate-50 border border-slate-200 rounded-r-xl text-slate-700 placeholder:text-slate-300 transition-all duration-200 focus:bg-white focus:border-[#43D3FF] focus:ring-4 focus:ring-[#43D3FF]/15 outline-none pr-9 text-sm sm:text-base tabular-nums tracking-normal sm:tracking-wide"
@@ -783,8 +806,10 @@ watch(travelers_data, () => {
                           :aria-readonly="isBirthdateLocked(traveler) ? 'true' : 'false'"
                           @input="applyBirthdateMask(traveler, $event.target.value); touchField(traveler.id, 'birthdate')"
                           @blur="touchField(traveler.id, 'birthdate')"
-                          @focus="isBirthdateLocked(traveler) && toggleBirthdateLock(traveler)"
+                          @focus="scrollIntoViewOnFocus($event); isBirthdateLocked(traveler) && toggleBirthdateLock(traveler)"
                           inputmode="numeric"
+                          pattern="[0-9]*"
+                          autocomplete="bday"
                           maxlength="10"
                           placeholder="DD/MM/AAAA"
                           class="w-full h-12 px-4 border rounded-xl text-slate-700 placeholder:text-slate-300 transition-all duration-200 outline-none pr-9 text-base tabular-nums tracking-wide"
@@ -855,19 +880,7 @@ watch(travelers_data, () => {
           </div>
 
           <div v-else key="emergencia" class="space-y-4">
-            <div
-              v-if="emergenciaErrorsCount > 0"
-              class="bg-red-50 border border-red-200 rounded-xl p-3 flex items-start gap-2.5"
-              role="alert"
-              aria-live="polite"
-            >
-              <svg class="w-4 h-4 text-red-500 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01M5 19h14a2 2 0 001.84-2.75L13.74 4a2 2 0 00-3.48 0L3.16 16.25A2 2 0 005 19z" />
-              </svg>
-              <p class="text-sm text-red-700">
-                Aún te faltan {{ emergenciaErrorsCount }} {{ emergenciaErrorsCount === 1 ? 'dato' : 'datos' }} para completar.
-              </p>
-            </div>
+            <!-- Validación inline: cada campo muestra su error directamente debajo sin banners -->
 
             <div class="flex items-center gap-2.5 mb-5 pb-4 border-b border-slate-100 text-left">
               <div class="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" style="background-color: rgba(67, 211, 255, 0.12);">
@@ -887,6 +900,9 @@ watch(travelers_data, () => {
                     v-model="emergencyName"
                     type="text"
                     placeholder="Juan García"
+                    autocomplete="name"
+                    autocapitalize="words"
+                    @focus="scrollIntoViewOnFocus"
                     @blur="emergencyNameTouched = true"
                     class="w-full h-12 px-4 bg-slate-50 border border-slate-200 rounded-xl text-slate-700 placeholder:text-slate-300 transition-all duration-200 focus:bg-white focus:border-[#43D3FF] focus:ring-4 focus:ring-[#43D3FF]/15 outline-none pr-9 text-base"
                     :class="[emergencyNameTouched && emergencyNameValid ? 'border-emerald-500 ring-2 ring-emerald-400/30 bg-emerald-50/40' : 'border-slate-200', emergencyNameTouched && !emergencyNameValid ? 'border-red-300 ring-4 ring-red-50' : '']"
@@ -913,8 +929,11 @@ watch(travelers_data, () => {
                     :value="emergencyPhone"
                     @input="onEmergencyPhoneInput($event.target.value); emergencyPhoneTouched = true"
                     @blur="emergencyPhoneTouched = true"
+                    @focus="scrollIntoViewOnFocus"
                     type="tel"
                     inputmode="tel"
+                    pattern="[0-9]*"
+                    autocomplete="tel"
                     placeholder="300 987 6543"
                     maxlength="18"
                     class="w-full h-12 px-4 bg-slate-50 border border-slate-200 rounded-r-xl text-slate-700 placeholder:text-slate-300 transition-all focus:bg-white focus:border-[#43D3FF] focus:ring-4 focus:ring-[#43D3FF]/15 outline-none pr-9 text-sm sm:text-base tabular-nums tracking-normal sm:tracking-wide"
@@ -933,6 +952,10 @@ watch(travelers_data, () => {
                   v-model="emergencyEmail"
                   type="email"
                   placeholder="contacto@email.com"
+                  autocomplete="email"
+                  inputmode="email"
+                  enterkeyhint="next"
+                  @focus="scrollIntoViewOnFocus"
                   class="w-full h-12 px-4 bg-slate-50 border border-slate-200 rounded-xl text-slate-700 placeholder:text-slate-300 transition-all focus:bg-white focus:border-[#43D3FF] focus:ring-4 focus:ring-[#43D3FF]/15 outline-none text-base"
                 />
               </div>

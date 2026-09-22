@@ -14,7 +14,9 @@ export default defineConfig({
     allowedHosts: [
       'localhost',
       '127.0.0.1',
-      '.trycloudflare.com'  // acepta cualquier subdominio de trycloudflare.com
+      '.trycloudflare.com',          // Cloudflare quick tunnels
+      '.loca.lt',                    // localtunnel
+      '.serveousercontent.com'       // serveo.net
     ]
   }
 })

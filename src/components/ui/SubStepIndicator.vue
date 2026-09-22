@@ -18,7 +18,7 @@ function isActive(idx) {
 </script>
 
 <template>
-  <ol class="flex items-center gap-3" role="list">
+  <ol class="flex items-center gap-3 overflow-x-auto hide-scroll-bar" role="list">
     <template v-for="(step, index) in steps" :key="index">
       <li
         class="flex items-center gap-2.5 min-w-0 transition-all duration-300"

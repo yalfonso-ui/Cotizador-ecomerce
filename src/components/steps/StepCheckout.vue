@@ -14,6 +14,7 @@ import { formatDate as fmtDate } from '@/composables/useDateFormatter.js'
 import { useCurrencyStore, formatCurrency } from '@/stores/useCurrencyStore.js'
 import { getTravelerCount as resolveCount } from '@/composables/useTravelerInfo.js'
 import { showToast } from '@/composables/useToast.js'
+import { useHaptic } from '@/composables/useHaptic.js'
 import { STEPS } from '@/composables/useWizardSteps.js'
 import { processPayment } from '@/services/paymentService.js'
 
@@ -23,10 +24,20 @@ const props = defineProps({
   data: { type: Object, default: () => ({}) }
 })
 
+// ── Scroll-into-view on focus (mobile) ──
+function scrollIntoViewOnFocus(e) {
+  if (window.matchMedia('(max-width: 767px)').matches) {
+    requestAnimationFrame(() => {
+      e.target.scrollIntoView({ behavior: 'instant', block: 'center' })
+    })
+  }
+}
+
 const checkoutStore = useCheckoutStore()
 const wizardStore = useWizardStore()
 const fx = useCurrencyStore()
 function fmt(usd) { return formatCurrency(usd, fx) }
+const haptic = useHaptic()
 const {
   cardNumber,
   cardName,
@@ -266,9 +277,11 @@ async function handleSubmit() {
   checkoutStore.markAllTouched()
 
   if (!isFormValid.value) {
+    haptic.error()
     showToast('Revisa los datos de pago para finalizar tu compra', { variant: 'error', duration: 3000 })
     return
   }
+  haptic.success()
   processPaymentFlow()
 }
 
@@ -385,7 +398,8 @@ async function processPaymentFlow() {
 <template>
   <div class="max-w-5xl mx-auto space-y-5 px-4 sm:px-6 pt-6 md:pt-10">
 
-    <div class="lg:hidden sticky top-0 z-20 -mx-4 px-4 py-3 bg-white/85 backdrop-blur-md border-b border-slate-100/80">
+    <div class="lg:hidden sticky z-20 -mx-4 px-4 py-3 bg-white/85 backdrop-blur-md border-b border-slate-100/80"
+      style="top: calc(4rem + env(safe-area-inset-top));">
       <button
         type="button"
         @click="isMobileSummaryExpanded = true"
@@ -625,8 +639,10 @@ async function processPaymentFlow() {
                 :value="cardNumber"
                 @input="onCardNumberInput"
                 @blur="onCardNumberBlur"
+                @focus="scrollIntoViewOnFocus"
                 type="text"
                 inputmode="numeric"
+                pattern="[0-9]*"
                 placeholder="1234 5678 9012 3456"
                 maxlength="23"
                 autocomplete="cc-number"
@@ -692,6 +708,7 @@ async function processPaymentFlow() {
               :value="cardName"
               @input="onCardNameInput"
               @blur="onCardNameBlur"
+              @focus="scrollIntoViewOnFocus"
               type="text"
               placeholder="Como aparece en tu tarjeta"
               autocomplete="cc-name"
@@ -723,8 +740,10 @@ async function processPaymentFlow() {
                 :value="expiryDate"
                 @input="onExpiryInput"
                 @blur="onExpiryBlur"
+                @focus="scrollIntoViewOnFocus"
                 type="text"
                 inputmode="numeric"
+                pattern="[0-9]*"
                 placeholder="MM/AA"
                 maxlength="5"
                 autocomplete="cc-exp"
@@ -765,8 +784,10 @@ async function processPaymentFlow() {
                 :value="cvv"
                 @input="onCvvInput"
                 @blur="onCvvBlur"
+                @focus="scrollIntoViewOnFocus"
                 type="text"
                 inputmode="numeric"
+                pattern="[0-9]*"
                 :placeholder="expectedCvvLength === 4 ? '1234' : '123'"
                 :maxlength="expectedCvvLength"
                 autocomplete="cc-csc"
@@ -876,11 +897,13 @@ async function processPaymentFlow() {
           </template>
         </AppAlert>
 
+        <!-- Botón Pagar: sticky-bottom en mobile, inline con shadow-sm en desktop -->
+        <div class="sticky md:static bottom-3 left-0 right-0 z-30 md:z-auto mx-auto max-w-md backdrop-blur-md md:backdrop-blur-none">
         <button
           type="button"
           @click="handleSubmit"
           :disabled="isProcessing"
-          class="bg-[#F9D35A] text-[#00184C] font-bold text-base flex items-center justify-center gap-2.5 px-8 py-3.5 rounded-full transition-all duration-200 ease-out shadow-sm hover:-translate-y-px hover:brightness-95 hover:shadow-md active:translate-y-0 active:scale-[0.98] w-full max-w-md mx-auto disabled:bg-slate-200 disabled:text-slate-400 disabled:cursor-not-allowed disabled:hover:translate-y-0 disabled:hover:shadow-sm disabled:shadow-none"
+          class="bg-[#F9D35A] text-[#00184C] font-bold text-base flex items-center justify-center gap-2.5 px-8 py-3.5 rounded-full transition-all duration-200 ease-out shadow-xl md:shadow-sm hover:-translate-y-px hover:brightness-95 hover:shadow-2xl md:hover:shadow-md active:translate-y-0 active:scale-[0.98] w-full disabled:bg-slate-200 disabled:text-slate-400 disabled:cursor-not-allowed disabled:hover:translate-y-0 disabled:hover:shadow-sm disabled:shadow-none"
         >
           <template v-if="isProcessing">
             <AppSpinner size="lg" />
@@ -896,6 +919,7 @@ async function processPaymentFlow() {
             </svg>
           </template>
         </button>
+        </div>
 
         <div class="flex items-center justify-center gap-2 text-xs pt-2" style="color: #00184C; opacity: 0.5;">
           <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">

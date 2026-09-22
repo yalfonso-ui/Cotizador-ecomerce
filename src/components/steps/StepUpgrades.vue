@@ -209,25 +209,6 @@ function handleNext() {
             +{{ fmt(getTravelerUpgradesTotal(travelerId)) }}
           </div>
         </div>
-        <button
-          v-if="!allRecommendedSelectedForTraveler(travelerId)"
-          type="button"
-          @click.stop="addAllRecommended(travelerId)"
-          class="text-[10px] font-semibold uppercase tracking-wider px-2.5 py-1 rounded-full transition-colors whitespace-nowrap"
-          style="background-color: #43D3FF; color: #00184C;"
-        >
-          + Agregar recomendados
-        </button>
-        <span
-          v-else
-          class="text-[10px] font-semibold uppercase tracking-wider px-2.5 py-1 rounded-full inline-flex items-center gap-1"
-          style="background-color: rgba(67, 211, 255, 0.18); color: #00184C;"
-        >
-          <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7" />
-          </svg>
-          Recomendados ✓
-        </span>
       </div>
 
       <div class="grid grid-cols-1 md:grid-cols-2 gap-4">

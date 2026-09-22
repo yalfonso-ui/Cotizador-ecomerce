@@ -1,12 +1,12 @@
 <script setup>
 import { ref, computed, onMounted, onUnmounted, nextTick } from 'vue'
-import PlanCompareModal from '@/components/ui/PlanCompareModal.vue'
-import MultitripInfoModal from '@/components/ui/MultitripInfoModal.vue'
 import QuoteEmailModal from '@/components/ui/QuoteEmailModal.vue'
+import CompareTableModal from '@/components/ui/CompareTableModal.vue'
 import CurrencySwitcher from '@/components/ui/CurrencySwitcher.vue'
 
 import { PLANS as allPlans } from '@/data/plans.js'
 import { showToast } from '@/composables/useToast.js'
+import { useHaptic } from '@/composables/useHaptic.js'
 import { useCurrencyStore, formatCurrency } from '@/stores/useCurrencyStore.js'
 
 const emit = defineEmits(['update:modelValue', 'next', 'go-to-step'])
@@ -16,18 +16,11 @@ const props = defineProps({
 })
 
 const selectedPlan = ref(null)
-const isCompareModalOpen = ref(false)
-const isMultitripModalOpen = ref(false)
+const isCompareTableOpen = ref(false)
 const isQuoteEmailModalOpen = ref(false)
 
-// FASE 6: Slots del modal comparador (3 columnas independientes)
-// Cada slot puede contener un plan ID distinto, permitiendo comparación
-// libre sin perder los otros al cambiar uno.
-// Precargamos el plan recomendado en slot 0 para que el modal nunca abra vacío.
-const compareSlotIds = ref([null, null, null])
-const slotsInitialized = ref(false)
-
 const fx = useCurrencyStore()
+const haptic = useHaptic()
 
 // Precios en USD (base). El formateador convierte a la moneda activa del store.
 function fmt(usd) { return formatCurrency(usd, fx) }
@@ -66,45 +59,23 @@ const PLAN_MAX_DAYS = {
   elite: 365
 }
 
-function initCompareSlots() {
-  if (slotsInitialized.value) return
-  compareSlotIds.value = [recommendedPlanId.value, null, null]
-  slotsInitialized.value = true
-}
-
-function handleColumnChange(columnIndex, planId) {
-  if (columnIndex < 0 || columnIndex > 2) return
-  if (!planId) return
-  slotsInitialized.value = true
-  const next = [...compareSlotIds.value]
-  next[columnIndex] = planId
-  compareSlotIds.value = next
-}
-
 function selectPlan(planId) {
   // QA-17 FIX: Si el plan ya está seleccionado, no navegar
   if (selectedPlan.value === planId) return
+  haptic.tap()
   selectedPlan.value = planId
   emit('update:modelValue', planId)
   emit('next', { selectedPlan: planId })
 }
 
-function openCompareModal() {
-  // Inicializar slots con el recomendado al abrir por primera vez
-  initCompareSlots()
-  isCompareModalOpen.value = true
+function openCompareTable() {
+  isCompareTableOpen.value = true
 }
 
-// Cuando el usuario elige un plan desde el modal de comparación:
-// emitimos `next` para navegar de inmediato al siguiente paso.
-function handleSelectFromCompare(planId) {
+function handleSelectFromTable(planId) {
   selectedPlan.value = planId
   emit('update:modelValue', planId)
   emit('next', { selectedPlan: planId })
-}
-
-function openMultitripInfo() {
-  isMultitripModalOpen.value = true
 }
 
 function handleSaveQuote() {
@@ -138,7 +109,9 @@ function scrollToSlide(index) {
   const card = cards[index]
   const container = carouselRef.value
   const scrollLeft = card.offsetLeft - (container.offsetWidth - card.offsetWidth) / 2
-  container.scrollTo({ left: scrollLeft, behavior: 'smooth' })
+  // snap-mandatory handles the snap on finger lift; using 'instant' avoids a
+  // double-jump that would happen with 'smooth' + mandatory snap combined.
+  container.scrollTo({ left: scrollLeft, behavior: 'instant' })
 }
 
 function scrollCarousel(direction) {
@@ -248,7 +221,7 @@ onUnmounted(() => {
         <button
           v-show="canScrollRight"
           type="button"
-          @click.stop="scrollCarousel('right')"
+          @click.stop="haptic.tap(); scrollCarousel('right')"
           @mousedown.stop
           @touchstart.stop
           aria-label="Desplazar planes a la derecha"
@@ -266,7 +239,7 @@ onUnmounted(() => {
           <div
             ref="carouselRef"
             @scroll="updateScrollState"
-            class="flex flex-nowrap gap-4 overflow-x-auto snap-x snap-proximity w-full pb-4 md:pb-8 min-h-[420px] md:min-h-[480px] hide-scroll-bar"
+            class="flex flex-nowrap gap-3 md:gap-4 overflow-x-auto snap-x snap-mandatory w-full pb-4 md:pb-8 min-h-[420px] md:min-h-[480px] hide-scroll-bar touch-pan-x"
           >
           <TransitionGroup
             appear
@@ -277,7 +250,7 @@ onUnmounted(() => {
           <article
             v-for="(plan, index) in plans"
             :key="plan.id"
-            class="shrink-0 w-[calc(100%-2rem)] sm:w-[calc(50%-1rem)] md:w-[calc(33.333%-1.5rem)] snap-center mx-2 sm:mx-4 relative rounded-2xl bg-white flex flex-col transition-all duration-200 overflow-hidden border"
+            class="shrink-0 w-[calc(85vw)] xs:w-[calc(80vw)] sm:w-[calc(50%-1rem)] md:w-[calc(33.333%-1.5rem)] snap-center mx-auto relative rounded-2xl bg-white flex flex-col transition-all duration-200 overflow-hidden border"
             :class="[
               plan.recommended
                 ? 'border-2 border-[#00184C] shadow-lg ring-1 ring-[#43D3FF]/30'
@@ -368,8 +341,8 @@ onUnmounted(() => {
               </ul>
             </div>
 
-            <!-- CTA -->
-            <div class="mt-auto p-6 pt-5">
+            <!-- CTA: oculto en mobile (md:flex). En mobile, el CTA único es el sticky "Comparar planes" -->
+            <div class="mt-auto p-6 pt-5 hidden md:block">
               <button
                 v-if="selectedPlan === plan.id"
                 type="button"
@@ -403,7 +376,7 @@ onUnmounted(() => {
       <!-- /carousel + /mask-wrapper + /relative wrapper -->
 
       <!-- Dot pagination (solo mobile) -->
-      <div class="flex md:hidden items-center justify-center gap-2 -mt-2 pb-2" role="tablist" aria-label="Navegación de planes">
+      <div class="flex md:hidden items-center justify-center gap-2 -mt-2 pb-24" role="tablist" aria-label="Navegación de planes">
         <button
           v-for="(plan, i) in plans"
           :key="'dot-' + plan.id"
@@ -411,93 +384,62 @@ onUnmounted(() => {
           role="tab"
           :aria-selected="currentSlideIndex === i"
           :aria-label="`Ir al plan ${plan.name}`"
-          @click="scrollToSlide(i)"
-          class="rounded-full transition-all duration-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#00184C] focus-visible:ring-offset-2"
-          :class="currentSlideIndex === i
-            ? 'w-7 h-2.5 bg-[#00184C]'
-            : 'w-2.5 h-2.5 bg-slate-300 hover:bg-slate-400'"
-        />
-      </div>
-
-    <!-- Bottom group: multitrip + send quote -->
-    <div class="max-w-5xl mx-auto border-t border-slate-100 py-4 sm:py-6">
-      <div class="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4">
-        <button type="button"
-          @click="openMultitripInfo"
-          class="inline-flex items-center justify-center gap-2.5 py-3 px-6 text-sm font-semibold text-[#00184C] bg-white border-2 border-[#00184C] hover:bg-[#00184C] hover:text-white active:scale-[0.98] rounded-full transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-[#43D3FF]"
+          @click="haptic.tap(); scrollToSlide(i)"
+          class="shrink-0 w-11 h-11 flex items-center justify-center rounded-full transition-all duration-200 active:scale-90 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#00184C] focus-visible:ring-offset-2"
         >
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6" />
-          </svg>
-          Viajes anuales / multiviaje
-        </button>
-
-        <button type="button"
-          @click="handleSaveQuote"
-          class="inline-flex items-center justify-center gap-2.5 py-3 px-6 text-sm font-semibold text-slate-600 bg-slate-50 border border-slate-200 hover:bg-slate-100 hover:text-slate-900 active:scale-[0.98] rounded-full transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-[#43D3FF]"
-        >
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-          </svg>
-          Enviar cotización por correo
+          <span
+            class="block rounded-full transition-all duration-300 ease-out"
+            :class="currentSlideIndex === i
+              ? 'w-7 h-2.5 bg-[#00184C]'
+              : 'w-2.5 h-2.5 bg-slate-300 hover:bg-slate-400'"
+          ></span>
         </button>
       </div>
+
+    <!-- ── ZONA DE ACCIONES INFERIORES UNIFICADA ── -->
+    <div class="flex flex-col sm:flex-row items-center justify-between gap-4 mt-8 pt-6 border-t border-slate-100">
+      <!-- Botón secundario: Enviar cotización por correo -->
+      <button
+        type="button"
+        @click="handleSaveQuote"
+        class="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3 rounded-full border border-slate-200 text-slate-700 hover:bg-slate-50 font-semibold text-sm transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-[#43D3FF]"
+      >
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+        </svg>
+        Enviar cotización por correo
+      </button>
+
+      <!-- ÚNICO BOTÓN DE COMPARAR PLANES (Azul corporativo #00184C) -->
+      <button
+        type="button"
+        @click="haptic.tap(); openCompareTable()"
+        class="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-8 py-3.5 rounded-full text-white font-bold text-sm shadow-md hover:opacity-95 active:scale-95 transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-[#43D3FF] focus-visible:ring-offset-2"
+        style="background-color: #00184C;"
+      >
+        <svg class="w-4 h-4 text-[#43D3FF]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+        </svg>
+        Comparar planes
+      </button>
     </div>
     </div>
     <!-- /space-y-6 -->
 
-    <!-- ── Sticky bottom compare bar ── -->
-    <div
-      class="sticky bottom-0 left-0 right-0 z-40 bg-white border-t border-slate-200 -mx-4 sm:-mx-6 px-4 sm:px-6 py-3"
-      role="region"
-      aria-label="Barra de comparación de planes"
-    >
-      <div class="max-w-6xl mx-auto flex items-center justify-between gap-4">
-        <div class="min-w-0">
-          <p class="text-sm font-semibold text-slate-900 leading-tight">
-            Compara hasta 3 planes lado a lado
-          </p>
-          <p class="text-xs text-slate-500 mt-0.5 leading-tight">
-            Selecciona los planes que te interesan dentro del comparador
-          </p>
-        </div>
-        <div class="shrink-0">
-          <button
-            type="button"
-            @click.stop="openCompareModal"
-            @mousedown.stop
-            @touchstart.stop
-            class="pointer-events-auto inline-flex items-center gap-2 px-6 py-2.5 text-sm font-semibold rounded-full transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-[#43D3FF] focus-visible:ring-offset-2 bg-[#00184C] text-white border border-[#00184C] hover:bg-[#002a6e] active:scale-[0.98]"
-          >
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-            </svg>
-            <span>Comparar planes</span>
-          </button>
-        </div>
-      </div>
-    </div>
-
     <!-- Modals -->
-    <PlanCompareModal
-      v-model="isCompareModalOpen"
-      :plans="allPlans"
-      :selectedPlanId="selectedPlan"
-      :recommendedPlanId="recommendedPlanId"
-      selector-mode
-      :selectedPlanIds="compareSlotIds"
-      :currentCategory="null"
-      @select-plan="handleSelectFromCompare"
-      @update:column="handleColumnChange"
-    />
-
-    <MultitripInfoModal v-model="isMultitripModalOpen" />
-
     <QuoteEmailModal
       v-model="isQuoteEmailModalOpen"
       :destinationName="destinationLabel"
       @submit="handleQuoteSubmit"
       @download-pdf="handleQuoteDownload"
+    />
+
+    <CompareTableModal
+      v-model="isCompareTableOpen"
+      :plans="allPlans"
+      :selectedPlanId="selectedPlan"
+      :recommendedPlanId="recommendedPlanId"
+      @select-plan="handleSelectFromTable"
     />
   </div>
 </template>
@@ -556,6 +498,17 @@ article.plan-card-delight {
     animation: none !important;
     opacity: 1 !important;
     transform: none !important;
+  }
+}
+
+/* Mobile: animaciones más cortas para evitar jank en dispositivos de gama media */
+@media (max-width: 767px) {
+  .plan-card-enter {
+    animation: plan-card-slide-up 380ms cubic-bezier(0.4, 0, 0.2, 1) both;
+    animation-delay: var(--plan-delay, 0ms);
+  }
+  .plan-card-delight {
+    animation: plan-card-delight-glow 700ms ease-out 500ms 1 both;
   }
 }
 </style>

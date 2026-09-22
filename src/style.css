@@ -8,6 +8,16 @@
    * Lienzo limpio, columna central, tipografía editorial.
    * ============================================================ */
 
+  /* Prevenir rubber banding y scroll chaining en iOS/Android */
+  html {
+    overscroll-behavior: none;
+  }
+  body {
+    overscroll-behavior: none;
+    /* Asegurar que el body cubra toda la pantalla sin scroll extraño */
+    overflow-x: hidden;
+  }
+
   :root {
     /* ============================================================
      * PALETA DE COLORES — Sistema de Diseño Unificado
@@ -217,4 +227,37 @@
   font-weight: 700;
   font-style: normal;
   font-display: swap;
+}
+
+/* ============================================================
+ * prefers-reduced-motion: respetar siempre
+ * Reduce todas las animaciones a 0.01ms cuando el usuario
+ * tiene activado "Reduce Motion" en iOS Settings → Accessibility.
+ * ============================================================ */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* ============================================================
+ * Safe-area-inset para iPhone con notch (iOS 18+)
+ * Variables CSS para usar en cualquier layout.
+ * ============================================================ */
+@supports (padding: max(0px)) {
+  .safe-area-top {
+    padding-top: max(env(safe-area-inset-top), 0px);
+  }
+  .safe-area-bottom {
+    padding-bottom: max(env(safe-area-inset-bottom), 0px);
+  }
+  .safe-area-x {
+    padding-left: max(env(safe-area-inset-left), 0px);
+    padding-right: max(env(safe-area-inset-right), 0px);
+  }
 }
