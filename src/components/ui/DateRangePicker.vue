@@ -13,6 +13,11 @@ const props = defineProps({
   placeholder: {
     type: String,
     default: ''
+  },
+  // Cuando alwaysOpen es true, el calendario siempre está visible y no se cierra
+  alwaysOpen: {
+    type: Boolean,
+    default: false
   }
 })
 
@@ -32,7 +37,7 @@ const STATE = Object.freeze({
   RESETTING: 'resetting'
 })
 
-const isOpen = ref(false)
+const isOpen = ref(props.alwaysOpen)
 const containerRef = ref(null)
 const startDate = ref(null)
 const endDate = ref(null)
@@ -412,6 +417,7 @@ function dayKey(month, idx, day) {
 }
 
 function onContainerClick(e) {
+  if (props.alwaysOpen) return
   if (!containerRef.value?.contains(e.target)) {
     isOpen.value = false
   }
@@ -486,17 +492,17 @@ watch(() => props.modelValue, (newVal) => {
     <!-- Backdrop: own transition so it can fade independently of the panel -->
     <Transition name="backdrop-fade">
       <div
-        v-if="isOpen"
+        v-if="isOpen && !alwaysOpen"
         class="fixed inset-0 z-20 bg-black/5 backdrop-blur-[1px]"
         @click="close"
         aria-hidden="true"
       ></div>
     </Transition>
 
-    <!-- Salida / Regreso inputs -->
-    <div class="grid grid-cols-2 gap-3 w-full">
+    <!-- Salida / Regreso inputs (solo cuando NO es alwaysOpen) -->
+    <div v-if="!alwaysOpen" class="grid grid-cols-2 gap-3 w-full">
       <div
-        class="flex flex-col items-start px-4 py-3 bg-white border-2 rounded-xl transition-all duration-200 ease-out cursor-text"
+        class="flex flex-col items-start px-4 py-3 bg-white border-2 rounded-xl transition-all duration-200 ease-out"
         :class="[
           startDate
             ? 'border-[#43D3FF] bg-[#43D3FF]/5'
@@ -504,7 +510,6 @@ watch(() => props.modelValue, (newVal) => {
               ? 'border-[#00184C] ring-2 ring-[#00184C]/10 bg-white'
               : 'border-slate-200 hover:border-slate-300 bg-white'
         ]"
-        @click="isOpen = !isOpen"
       >
         <label
           class="text-[10px] font-bold uppercase tracking-wider mb-1 transition-colors duration-200"
@@ -518,7 +523,6 @@ watch(() => props.modelValue, (newVal) => {
           data-testid="date-from-trigger"
           :value="startDate ? formatDisplay(startDate) : ''"
           :placeholder="'—'"
-          @focus="isOpen = true"
           @keydown.backspace.prevent="clearSelection($event)"
           class="w-full bg-transparent text-base font-semibold outline-none border-none p-0 m-0 cursor-pointer transition-colors duration-200"
           :class="startDate ? 'text-slate-900' : 'text-slate-400'"
@@ -526,7 +530,7 @@ watch(() => props.modelValue, (newVal) => {
       </div>
 
       <div
-        class="flex flex-col items-start px-4 py-3 bg-white border-2 rounded-xl transition-all duration-200 ease-out cursor-text"
+        class="flex flex-col items-start px-4 py-3 bg-white border-2 rounded-xl transition-all duration-200 ease-out"
         :class="[
           endDate
             ? 'border-[#43D3FF] bg-[#43D3FF]/5'
@@ -536,7 +540,6 @@ watch(() => props.modelValue, (newVal) => {
                 ? 'border-slate-300 bg-white'
                 : 'border-slate-200 bg-slate-50/50'
         ]"
-        @click="startDate ? (isOpen = !isOpen) : null"
       >
         <label
           class="text-[10px] font-bold uppercase tracking-wider mb-1 transition-colors duration-200"
@@ -551,7 +554,6 @@ watch(() => props.modelValue, (newVal) => {
           :value="endDate ? formatDisplay(endDate) : (startDate && isOpen && hoveredDate ? formatDisplay(hoveredDate) : '')"
           :placeholder="'—'"
           :disabled="!startDate"
-          @focus="startDate ? (isOpen = true) : null"
           @keydown.backspace.prevent="clearSelection($event)"
           class="w-full bg-transparent text-base font-semibold outline-none border-none p-0 m-0 cursor-pointer transition-colors duration-200"
           :class="endDate ? 'text-slate-900' : 'text-slate-400'"
@@ -559,10 +561,120 @@ watch(() => props.modelValue, (newVal) => {
       </div>
     </div>
 
-    <!-- Calendar panel: different transition per platform -->
+    <!-- Calendar panel: always open (inline) vs popup mode -->
+    <!-- Inline calendar (alwaysOpen mode - shown directly below) -->
+    <div
+      v-if="alwaysOpen"
+      class="relative bg-white border border-slate-200 rounded-2xl shadow-sm overflow-visible"
+    >
+      <!-- Header with month nav -->
+      <div class="flex items-center justify-between px-3 py-2 border-b border-slate-100">
+        <button
+          type="button"
+          @click="prevMonths"
+          class="w-7 h-7 rounded-full flex items-center justify-center text-slate-400 hover:bg-slate-100 hover:text-[#00184C] active:scale-95 transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-[#00184C]/20"
+          aria-label="Meses anteriores"
+        >
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+          </svg>
+        </button>
+
+        <div class="flex items-center gap-2">
+          <span class="text-xs font-semibold text-slate-700 tabular-nums">{{ firstMonthLabel }}</span>
+          <span class="text-xs text-slate-400">—</span>
+          <span class="text-xs font-semibold text-slate-700 tabular-nums">{{ secondMonthLabel }}</span>
+        </div>
+
+        <button
+          type="button"
+          @click="nextMonths"
+          class="w-7 h-7 rounded-full flex items-center justify-center text-slate-400 hover:bg-slate-100 hover:text-[#00184C] active:scale-95 transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-[#00184C]/20"
+          aria-label="Meses siguientes"
+        >
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+          </svg>
+        </button>
+      </div>
+
+      <!-- Preview indicator (muestra días al hacer hover) -->
+      <Transition name="fade-quick">
+        <div
+          v-if="startDate && hoveredDate"
+          class="absolute left-1/2 -translate-x-1/2 -top-10 z-20 bg-slate-900 text-white text-[11px] font-semibold px-2.5 py-1 rounded-lg shadow-lg whitespace-nowrap pointer-events-none flex items-center gap-1"
+        >
+          <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          {{ previewDays }} días
+        </div>
+      </Transition>
+
+      <!-- Months grid inline -->
+      <div class="grid grid-cols-2 gap-2 p-2.5">
+        <!-- First month -->
+        <div class="space-y-1">
+          <div class="grid grid-cols-7 gap-0.5">
+            <span
+              v-for="(day, idx) in WEEKDAYS"
+              :key="'w1-' + idx"
+              class="text-[9px] font-bold text-slate-400 uppercase tracking-wider text-center py-1"
+            >
+              {{ day }}
+            </span>
+          </div>
+          <div class="grid grid-cols-7 gap-0.5">
+            <button
+              v-for="(day, idx) in firstMonthDays"
+              :key="dayKey('m1', idx, day)"
+              type="button"
+              @click="onDayClick(day.date)"
+              @mouseenter="onDayHover(day.date)"
+              @mouseleave="onDayLeave"
+              :disabled="isDisabled(day.date) || !day.isCurrentMonth"
+              class="relative h-7 w-full flex items-center justify-center text-xs font-medium transition-all duration-150 ease-out focus:outline-none focus-visible:ring-2 focus-visible:ring-[#00184C]/30 disabled:cursor-not-allowed rounded-full"
+              :class="dayClass(day)"
+            >
+              <span class="relative z-10">{{ day.date.getDate() }}</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Second month -->
+        <div class="space-y-1">
+          <div class="grid grid-cols-7 gap-0.5">
+            <span
+              v-for="(day, idx) in WEEKDAYS"
+              :key="'w2-' + idx"
+              class="text-[9px] font-bold text-slate-400 uppercase tracking-wider text-center py-1"
+            >
+              {{ day }}
+            </span>
+          </div>
+          <div class="grid grid-cols-7 gap-0.5">
+            <button
+              v-for="(day, idx) in secondMonthDays"
+              :key="dayKey('m2', idx, day)"
+              type="button"
+              @click="onDayClick(day.date)"
+              @mouseenter="onDayHover(day.date)"
+              @mouseleave="onDayLeave"
+              :disabled="isDisabled(day.date) || !day.isCurrentMonth"
+              class="relative h-7 w-full flex items-center justify-center text-xs font-medium transition-all duration-150 ease-out focus:outline-none focus-visible:ring-2 focus-visible:ring-[#00184C]/30 disabled:cursor-not-allowed rounded-full"
+              :class="dayClass(day)"
+            >
+              <span class="relative z-10">{{ day.date.getDate() }}</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Calendar panel: popup mode (not alwaysOpen) -->
     <Transition :name="isMobile ? 'sheet-slide' : 'calendar-fade'">
       <div
-        v-if="isOpen"
+        v-if="isOpen && !alwaysOpen"
         class="fixed inset-x-0 bottom-0 md:inset-auto md:left-1/2 md:top-1/2 md:-translate-x-1/2 md:-translate-y-1/2 z-30 w-full md:w-[680px] md:max-w-none md:max-h-none bg-white md:bg-white md:border md:border-slate-200 rounded-t-3xl md:rounded-2xl shadow-xl md:overflow-visible overflow-hidden calendar-panel"
       >
         <!-- Header with month nav -->
@@ -833,5 +945,16 @@ watch(() => props.modelValue, (newVal) => {
   clip: rect(0, 0, 0, 0);
   white-space: nowrap;
   border: 0;
+}
+
+/* Fade rápido para tooltip de preview */
+.fade-quick-enter-active,
+.fade-quick-leave-active {
+  transition: opacity 0.15s ease, transform 0.15s ease;
+}
+.fade-quick-enter-from,
+.fade-quick-leave-to {
+  opacity: 0;
+  transform: translateX(-50%) translateY(4px);
 }
 </style>

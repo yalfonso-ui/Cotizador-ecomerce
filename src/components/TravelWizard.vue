@@ -9,6 +9,7 @@ import { useWizardStore } from '@/stores/useWizardStore.js'
 import { useCheckoutStore } from '@/stores/useCheckoutStore.js'
 import LandingPage from './LandingPage.vue'
 import StepRoute from './steps/StepRoute.vue'
+import StepCategory from './steps/StepCategory.vue'
 import StepDates from './steps/StepDates.vue'
 import TravelersBirthdateStep from './steps/TravelersBirthdateStep.vue'
 import StepPlans from './steps/StepPlans.vue'
@@ -117,14 +118,17 @@ function beforeUnloadHandler(e) {
                     @next="nextStep"
                   />
                 </div>
+                <div v-else-if="currentStep === STEPS.CATEGORY">
+                  <StepCategory @next="nextStep" />
+                </div>
                 <div v-else-if="currentStep === STEPS.DATES">
-                  <StepDates @next="nextStep" />
+                  <StepDates @next="nextStep" @go-to-step="goToStep" />
                 </div>
                 <div v-else-if="currentStep === STEPS.TRAVELERS">
-                  <TravelersBirthdateStep v-model="formData" @next="nextStep" />
+                  <TravelersBirthdateStep v-model="formData" @next="nextStep" @go-to-step="goToStep" />
                 </div>
                 <div v-else-if="currentStep === STEPS.PLANS">
-                  <StepPlans v-model="formData.selectedPlan" :destination="formData.destination" @next="nextStep" />
+                  <StepPlans v-model="formData.selectedPlan" :destination="formData.destination" @next="nextStep" @go-to-step="goToStep" />
                 </div>
                 <div v-else-if="currentStep === STEPS.DATA">
                   <DataStep

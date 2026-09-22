@@ -9,7 +9,7 @@ import { PLANS as allPlans } from '@/data/plans.js'
 import { showToast } from '@/composables/useToast.js'
 import { useCurrencyStore, formatCurrency } from '@/stores/useCurrencyStore.js'
 
-const emit = defineEmits(['update:modelValue', 'next'])
+const emit = defineEmits(['update:modelValue', 'next', 'go-to-step'])
 const props = defineProps({
   modelValue: String,
   destination: { type: [Object, Array], default: null }
@@ -20,15 +20,17 @@ const isCompareModalOpen = ref(false)
 const isMultitripModalOpen = ref(false)
 const isQuoteEmailModalOpen = ref(false)
 
-const selectedForComparison = ref([])
-const MAX_COMPARE = 3
-const MIN_COMPARE = 2
+// FASE 6: Slots del modal comparador (3 columnas independientes)
+// Cada slot puede contener un plan ID distinto, permitiendo comparación
+// libre sin perder los otros al cambiar uno.
+// Precargamos el plan recomendado en slot 0 para que el modal nunca abra vacío.
+const compareSlotIds = ref([null, null, null])
+const slotsInitialized = ref(false)
 
 const fx = useCurrencyStore()
 
 // Precios en USD (base). El formateador convierte a la moneda activa del store.
 function fmt(usd) { return formatCurrency(usd, fx) }
-function toCOP(usd) { return fx.convert(usd) }
 
 const destinationLabel = computed(() => {
   const dests = Array.isArray(props.destination) ? props.destination : [props.destination]
@@ -55,53 +57,46 @@ const plans = computed(() => {
   }))
 })
 
-const comparePlans = computed(() =>
-  selectedForComparison.value
-    .map(id => allPlans.find(p => p.id === id))
-    .filter(Boolean)
-)
+// UX: Duración máxima de cobertura por plan (en días).
+const PLAN_MAX_DAYS = {
+  lite: 30,
+  essential: 60,
+  explorer: 90,
+  premium: 180,
+  elite: 365
+}
 
-const isCompareDisabled = computed(() => selectedForComparison.value.length < MIN_COMPARE)
-const isMaxCompareReached = computed(() => selectedForComparison.value.length >= MAX_COMPARE)
+function initCompareSlots() {
+  if (slotsInitialized.value) return
+  compareSlotIds.value = [recommendedPlanId.value, null, null]
+  slotsInitialized.value = true
+}
 
-// Estado de hover/focus sobre el botón "Comparar planes".
-// El tooltip solo aparece cuando el botón está deshabilitado Y el usuario
-// lo está señalando (hover) o lo tiene enfocado (accesibilidad teclado).
-const isHoveringCompare = ref(false)
-const showCompareHint = computed(() => isCompareDisabled.value && isHoveringCompare.value)
-
-function onComparePointerEnter() { isHoveringCompare.value = true }
-function onComparePointerLeave() { isHoveringCompare.value = false }
+function handleColumnChange(columnIndex, planId) {
+  if (columnIndex < 0 || columnIndex > 2) return
+  if (!planId) return
+  slotsInitialized.value = true
+  const next = [...compareSlotIds.value]
+  next[columnIndex] = planId
+  compareSlotIds.value = next
+}
 
 function selectPlan(planId) {
+  // QA-17 FIX: Si el plan ya está seleccionado, no navegar
+  if (selectedPlan.value === planId) return
   selectedPlan.value = planId
   emit('update:modelValue', planId)
   emit('next', { selectedPlan: planId })
 }
 
-function toggleSelectForComparison(planId) {
-  const idx = selectedForComparison.value.indexOf(planId)
-  if (idx > -1) {
-    selectedForComparison.value.splice(idx, 1)
-    return
-  }
-  if (selectedForComparison.value.length >= MAX_COMPARE) {
-    showToast(`Puedes comparar hasta ${MAX_COMPARE} planes. Desmarca uno para agregar otro.`, {
-      variant: 'warning',
-      duration: 4000
-    })
-    return
-  }
-  selectedForComparison.value.push(planId)
-}
-
 function openCompareModal() {
-  if (isCompareDisabled.value) return
+  // Inicializar slots con el recomendado al abrir por primera vez
+  initCompareSlots()
   isCompareModalOpen.value = true
 }
 
 // Cuando el usuario elige un plan desde el modal de comparación:
-// emitimos `next` para navegar de inmediato al siguiente paso (sin demoras).
+// emitimos `next` para navegar de inmediato al siguiente paso.
 function handleSelectFromCompare(planId) {
   selectedPlan.value = planId
   emit('update:modelValue', planId)
@@ -222,6 +217,9 @@ onUnmounted(() => {
       <div class="space-y-2 text-center">
         <span class="ds-eyebrow">Tu respaldo, a tu medida</span>
         <h1 class="ds-heading-1">Elige la cobertura<span style="color: #43D3FF;"> ideal para ti</span></h1>
+        <p class="text-sm sm:text-base text-slate-500 max-w-md mx-auto leading-snug">
+          Explora y compara hasta 3 planes lado a lado para encontrar el que mejor se adapte a tu viaje.
+        </p>
       </div>
 
       <!-- Selector de moneda (sincroniza con landing/checkout/summary) -->
@@ -281,59 +279,36 @@ onUnmounted(() => {
             :key="plan.id"
             class="shrink-0 w-[calc(100%-2rem)] sm:w-[calc(50%-1rem)] md:w-[calc(33.333%-1.5rem)] snap-center mx-2 sm:mx-4 relative rounded-2xl bg-white flex flex-col transition-all duration-200 overflow-hidden border"
             :class="[
-              selectedPlan === plan.id
-                ? 'border-[#00184C] shadow-xl ring-1 ring-[#00184C]/15'
-                : 'border-slate-200 shadow-md hover:shadow-lg hover:border-slate-300',
-              selectedForComparison.includes(plan.id) ? 'bg-slate-50/60' : 'bg-white',
+              plan.recommended
+                ? 'border-2 border-[#00184C] shadow-lg ring-1 ring-[#43D3FF]/30'
+                : (selectedPlan === plan.id
+                    ? 'border-[#00184C] shadow-xl ring-1 ring-[#00184C]/15'
+                    : 'border-slate-200 shadow-md hover:shadow-lg hover:border-slate-300'),
               plan.recommended ? 'plan-card-delight' : ''
             ]"
             :style="{ '--plan-delay': `${index * 100}ms` }"
           >
-            <!-- Ribbon "Recomendado" en la parte superior (jerarquía alta) -->
+            <!-- Ribbon "Recomendado" en la parte superior -->
             <div
               v-if="plan.recommended"
-              class="text-[10px] font-bold uppercase tracking-[0.15em] text-white text-center py-1.5"
+              class="absolute top-0 left-0 right-0 z-10 text-[10px] font-bold uppercase tracking-[0.15em] text-white text-center py-1.5 pointer-events-none"
               style="background-color: #00184C;"
             >
               ★ Recomendado
             </div>
 
-            <!-- Header area: clickable to toggle comparison -->
-            <button
-              type="button"
-              @click.stop="toggleSelectForComparison(plan.id)"
-              :aria-pressed="selectedForComparison.includes(plan.id)"
-              :aria-label="`${selectedForComparison.includes(plan.id) ? 'Quitar' : 'Añadir'} ${plan.name} a la comparación`"
-              class="relative px-6 pt-5 pb-4 text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-[#00184C] focus-visible:ring-inset transition-colors hover:bg-slate-50/40"
-              :class="plan.recommended ? '' : 'pt-6'"
+            <!-- Header area: solo título + descripción (sin checkbox) -->
+            <div
+              class="relative px-6 pt-9 pb-4 text-center"
+              :class="plan.recommended ? 'pt-9' : 'pt-6'"
             >
-              <!-- Visual checkbox indicator (top-left) -->
-              <span
-                class="absolute top-4 left-4 w-5 h-5 rounded border-2 flex items-center justify-center transition-all duration-150 z-10"
-                :class="selectedForComparison.includes(plan.id)
-                  ? 'bg-[#00184C] border-[#00184C]'
-                  : 'bg-white border-slate-300'"
-                aria-hidden="true"
-              >
-                <svg
-                  v-if="selectedForComparison.includes(plan.id)"
-                  class="w-3 h-3 text-white"
-                  fill="none" stroke="currentColor" viewBox="0 0 24 24"
-                >
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7" />
-                </svg>
-              </span>
-
-              <!-- Plan name (tipografía más grande, mejor alineación) -->
-              <div class="text-center" :class="plan.recommended ? 'mt-1' : 'mt-1'">
-                <h3 class="text-2xl font-extrabold text-slate-900 tracking-tight leading-none">
-                  {{ plan.name }}
-                </h3>
-                <p class="text-[13px] text-slate-500 mt-2 leading-snug px-2">
-                  {{ plan.description }}
-                </p>
-              </div>
-            </button>
+              <h3 class="text-2xl font-extrabold text-slate-900 tracking-tight leading-none">
+                {{ plan.name }}
+              </h3>
+              <p class="text-[13px] text-slate-500 mt-2 leading-snug px-2">
+                {{ plan.description }}
+              </p>
+            </div>
 
             <!-- Price section: clickable for plan selection -->
             <div @click="selectPlan(plan.id)" class="cursor-pointer px-6">
@@ -363,6 +338,18 @@ onUnmounted(() => {
                   ${{ plan.coverage }} USD
                 </span>
               </div>
+
+              <!-- UX: Duración máxima de cobertura por plan -->
+              <p
+                v-if="PLAN_MAX_DAYS[plan.id]"
+                class="mt-2 text-[11px] font-semibold flex items-center gap-1.5"
+                style="color: #00184C; opacity: 0.65;"
+              >
+                <svg class="w-3 h-3 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                Cobertura máxima: hasta {{ PLAN_MAX_DAYS[plan.id] }} días por viaje
+              </p>
 
               <!-- Features -->
               <ul class="mt-5 space-y-2.5">
@@ -402,9 +389,9 @@ onUnmounted(() => {
                 class="w-full inline-flex items-center justify-center gap-2 py-3 rounded-full text-sm font-bold transition-all hover:-translate-y-0.5 hover:shadow-lg active:translate-y-0 active:scale-[0.98] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#43D3FF] focus-visible:ring-offset-2"
                 style="background-color: #F9D35A; color: #00184C;"
               >
-                <span>Elegir este plan</span>
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-4 h-4 transform rotate-45" aria-hidden="true">
-                  <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 19.5l15-15m0 0H8.25m11.25 0v11.25" />
+                <span>Continuar con {{ plan.name }}</span>
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7" />
                 </svg>
               </button>
             </div>
@@ -468,65 +455,25 @@ onUnmounted(() => {
       <div class="max-w-6xl mx-auto flex items-center justify-between gap-4">
         <div class="min-w-0">
           <p class="text-sm font-semibold text-slate-900 leading-tight">
-            <span v-if="selectedForComparison.length === 0">Compara hasta 3 planes</span>
-            <span v-else>{{ selectedForComparison.length }} de {{ MAX_COMPARE }} planes seleccionados</span>
+            Compara hasta 3 planes lado a lado
           </p>
           <p class="text-xs text-slate-500 mt-0.5 leading-tight">
-            <span v-if="selectedForComparison.length === 0">Marca los planes que quieres comparar</span>
-            <span v-else-if="selectedForComparison.length < MIN_COMPARE">Selecciona al menos {{ MIN_COMPARE }} para comparar</span>
-            <span v-else>Listo para comparar</span>
+            Selecciona los planes que te interesan dentro del comparador
           </p>
         </div>
-        <div
-          class="relative shrink-0 group/compare"
-          @mouseenter="onComparePointerEnter"
-          @mouseleave="onComparePointerLeave"
-          @focusin="onComparePointerEnter"
-          @focusout="onComparePointerLeave"
-        >
+        <div class="shrink-0">
           <button
             type="button"
             @click.stop="openCompareModal"
             @mousedown.stop
             @touchstart.stop
-            :disabled="isCompareDisabled"
-            :aria-describedby="showCompareHint ? 'compare-hint' : undefined"
-            class="pointer-events-auto inline-flex items-center gap-2 px-6 py-2.5 text-sm font-semibold rounded-full transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-[#43D3FF] focus-visible:ring-offset-2"
-            :class="isCompareDisabled
-              ? 'bg-slate-100 text-slate-400 border border-slate-200 cursor-not-allowed'
-              : 'bg-[#00184C] text-white border border-[#00184C] hover:bg-[#002a6e] active:scale-[0.98]'"
+            class="pointer-events-auto inline-flex items-center gap-2 px-6 py-2.5 text-sm font-semibold rounded-full transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-[#43D3FF] focus-visible:ring-offset-2 bg-[#00184C] text-white border border-[#00184C] hover:bg-[#002a6e] active:scale-[0.98]"
           >
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
             </svg>
-            <span v-if="selectedForComparison.length < MIN_COMPARE">Comparar planes</span>
-            <span v-else-if="selectedForComparison.length === MAX_COMPARE">Comparar 3 planes</span>
-            <span v-else>Comparar {{ selectedForComparison.length }} planes</span>
+            <span>Comparar planes</span>
           </button>
-
-          <Transition
-            enter-active-class="transition-all duration-150 ease-out"
-            leave-active-class="transition-all duration-100 ease-in"
-            enter-from-class="opacity-0 translate-y-1"
-            leave-to-class="opacity-0 translate-y-1"
-          >
-            <span
-              v-if="showCompareHint"
-              id="compare-hint"
-              role="tooltip"
-              class="absolute bottom-full right-0 mb-2 max-w-[260px] px-3.5 py-2.5 text-xs font-medium text-white bg-slate-900 rounded-lg shadow-lg pointer-events-none text-left leading-snug"
-            >
-              <span v-if="selectedForComparison.length === 0" class="block">
-                <span class="block font-bold mb-1">Empieza a comparar</span>
-                <span class="block text-white/85 font-normal">Marca los planes que te interesan con el checkbox de cada tarjeta. Puedes elegir hasta {{ MAX_COMPARE }}.</span>
-              </span>
-              <span v-else class="block">
-                <span class="block font-bold mb-1">¡Casi listo!</span>
-                <span class="block text-white/85 font-normal">Selecciona al menos {{ MIN_COMPARE }} planes para comparar sus coberturas lado a lado.</span>
-              </span>
-              <span class="absolute top-full right-5 -mt-px w-2 h-2 bg-slate-900 rotate-45"></span>
-            </span>
-          </Transition>
         </div>
       </div>
     </div>
@@ -534,10 +481,14 @@ onUnmounted(() => {
     <!-- Modals -->
     <PlanCompareModal
       v-model="isCompareModalOpen"
-      :plans="comparePlans"
+      :plans="allPlans"
       :selectedPlanId="selectedPlan"
       :recommendedPlanId="recommendedPlanId"
+      selector-mode
+      :selectedPlanIds="compareSlotIds"
+      :currentCategory="null"
       @select-plan="handleSelectFromCompare"
+      @update:column="handleColumnChange"
     />
 
     <MultitripInfoModal v-model="isMultitripModalOpen" />
@@ -554,8 +505,6 @@ onUnmounted(() => {
 <style scoped>
 /*
  * Micro-interacción fintech: entrada en cascada + delight cyan en recomendada.
- * Se ejecuta al montar el step (o cuando el currentStep cambia a PLANS).
- * Respeta prefers-reduced-motion.
  */
 
 @keyframes plan-card-slide-up {
@@ -574,28 +523,31 @@ onUnmounted(() => {
   animation-delay: var(--plan-delay, 0ms);
 }
 
-/* Delight: scale + glow cyan + borde destellando en la recomendada */
+/* Delight: scale + glow cyan destellando */
 @keyframes plan-card-delight-glow {
   0% {
     transform: scale(1);
     box-shadow: 0 0 0 0 rgba(67, 211, 255, 0);
-    border-color: rgba(67, 211, 255, 0);
   }
   20% {
     transform: scale(1.02);
     box-shadow: 0 0 0 6px rgba(67, 211, 255, 0.4),
                 0 0 24px 4px rgba(67, 211, 255, 0.3);
-    border-color: #43D3FF;
   }
   100% {
     transform: scale(1);
     box-shadow: 0 0 0 0 rgba(67, 211, 255, 0);
-    border-color: rgba(67, 211, 255, 0);
   }
 }
 
 .plan-card-delight {
   animation: plan-card-delight-glow 1000ms ease-out 700ms 1 both;
+}
+
+/* Borde permanente para la card recomendada */
+article.plan-card-delight {
+  border-color: #00184C !important;
+  border-width: 2px !important;
 }
 
 @media (prefers-reduced-motion: reduce) {

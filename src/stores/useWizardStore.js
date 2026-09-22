@@ -12,6 +12,7 @@ function createEmptyFormData() {
   return {
     origin: { ...DEFAULT_ORIGIN },
     destination: [],
+    travelCategory: null,
     dates: { start: null, end: null },
     tripDuration: null,
     travelersCount: 1,
@@ -42,10 +43,10 @@ export const useWizardStore = defineStore('wizard', {
 
   getters: {
     progress: (state) => {
-      const total = 8
+      const total = 9
       return (state.currentStep / (total - 1)) * 100
     },
-    canGoBack: (state) => state.currentStep > 0 && state.currentStep < 7,
+    canGoBack: (state) => state.currentStep > 0 && state.currentStep < 8,
     hasRoute: (state) => {
       const hasOrigin = state.formData?.origin != null
       const hasDestination = Array.isArray(state.formData?.destination) && state.formData.destination.length > 0
@@ -96,7 +97,7 @@ export const useWizardStore = defineStore('wizard', {
     },
 
     goToStep(step) {
-      if (step >= 0 && step < 8) {
+      if (step >= 0 && step < 9) {
         this.direction = step < this.currentStep ? 'right' : 'left'
         this.currentStep = step
       }
@@ -104,7 +105,7 @@ export const useWizardStore = defineStore('wizard', {
 
     completePayment() {
       this.isPaymentCompleted = true
-      this.currentStep = 7
+      this.currentStep = 8
       this.$reset()
       this.currentStep = 7
       this.isPaymentCompleted = true

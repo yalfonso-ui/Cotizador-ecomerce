@@ -1,20 +1,54 @@
 <script setup>
-import { computed, onMounted, onUnmounted } from 'vue'
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import { useModalFocus } from '@/composables/useModalFocus.js'
 
 const props = defineProps({
   modelValue: { type: Boolean, default: false },
   plans: { type: Array, required: true },
   selectedPlanId: { type: String, default: null },
-  recommendedPlanId: { type: String, default: null }
+  recommendedPlanId: { type: String, default: null },
+  // Modo selector: muestra 3 slots donde el usuario elige qué planes comparar
+  selectorMode: { type: Boolean, default: false },
+  // Array de 3 elementos con los plan IDs seleccionados para cada columna
+  selectedPlanIds: { type: Array, default: () => [null, null, null] },
+  currentCategory: { type: String, default: null }
 })
 
-const emit = defineEmits(['update:modelValue', 'close', 'select-plan'])
+const emit = defineEmits(['update:modelValue', 'close', 'select-plan', 'update:column'])
 
 const isOpen = computed({
   get: () => props.modelValue,
   set: (v) => emit('update:modelValue', v)
 })
+
+// Los planes que se muestran en cada columna del comparador
+// Si selectorMode, usamos selectedPlanIds; si no, usamos los planes recibidos
+const comparePlans = computed(() => {
+  if (props.selectorMode) {
+    return props.selectedPlanIds
+      .map(id => id ? props.plans.find(p => p.id === id) : null)
+      .filter(Boolean)
+  }
+  return props.plans
+})
+
+// Los 3 slots para el modo selector
+const slots = computed(() => {
+  return [0, 1, 2].map(i => ({
+    index: i,
+    planId: props.selectedPlanIds[i] || null,
+    plan: props.selectedPlanIds[i] ? props.plans.find(p => p.id === props.selectedPlanIds[i]) : null,
+    isRecommended: props.selectedPlanIds[i] === props.recommendedPlanId
+  }))
+})
+
+// Plan actualmente seleccionado en el wizard (para mostrar "Ya lo elegiste")
+const isCurrentlySelected = (planId) => planId === props.selectedPlanId
+
+// Cambiar el plan de un slot
+function changeSlotPlan(slotIndex, planId) {
+  emit('update:column', slotIndex, planId)
+}
 
 const COMPARISON = [
   {
@@ -45,9 +79,35 @@ const COMPARISON = [
   }
 ]
 
-const gridStyle = computed(() => ({
-  gridTemplateColumns: `minmax(0, 1.3fr) repeat(${props.plans.length}, minmax(0, 1fr))`
+const gridStyle = computed(() => {
+  const cols = comparePlans.value.length
+  return {
+    gridTemplateColumns: `minmax(0, 1.3fr) repeat(${cols}, minmax(0, 1fr))`
+  }
+})
+
+// Grid para el selector: siempre 3 slots (más ghost column)
+// Esto asegura que los dropdowns se alineen con las columnas de la tabla de abajo
+const selectorGridStyle = computed(() => ({
+  gridTemplateColumns: `minmax(0, 1.3fr) repeat(3, minmax(0, 1fr))`
 }))
+
+// Mobile accordion state
+const openPlanId = ref(null)
+
+watch(() => props.plans, (next) => {
+  if (next?.length) openPlanId.value = next[0].id
+}, { immediate: true })
+
+function toggleAccordion(planId) {
+  openPlanId.value = openPlanId.value === planId ? null : planId
+}
+
+function formatValue(v, planId) {
+  if (v === 'check') return { type: 'check' }
+  if (v === 'dash') return { type: 'dash' }
+  return { type: 'text', value: v }
+}
 
 function close() {
   isOpen.value = false
@@ -67,12 +127,61 @@ function handleSelect(planId) {
 
 const { handleKeydown } = useModalFocus(isOpen, close)
 
+// Focus restoration
+let openerElement = null
+
+watch(isOpen, (val) => {
+  if (typeof document === 'undefined') return
+  if (val) {
+    openerElement = document.activeElement
+  } else if (openerElement && typeof openerElement.focus === 'function') {
+    setTimeout(() => {
+      try { openerElement.focus() } catch (_) {}
+      openerElement = null
+    }, 80)
+  }
+})
+
+// Back del navegador cierra el modal
+let pushedHistoryState = false
+
+function handleBackClose() {
+  pushedHistoryState = false
+  isOpen.value = false
+  emit('close')
+  window.removeEventListener('popstate', handleBackClose)
+}
+
+function setupBackHandler() {
+  if (pushedHistoryState) return
+  try {
+    history.pushState({ modal: 'plan-compare' }, '', location.href)
+    pushedHistoryState = true
+    window.addEventListener('popstate', handleBackClose)
+  } catch (e) {}
+}
+
+function cleanupBackHandler() {
+  if (!pushedHistoryState) return
+  pushedHistoryState = false
+  window.removeEventListener('popstate', handleBackClose)
+  if (typeof history !== 'undefined' && history.state?.modal === 'plan-compare') {
+    history.back()
+  }
+}
+
+watch(isOpen, (val) => {
+  if (val) setupBackHandler()
+  else cleanupBackHandler()
+})
+
 onMounted(() => {
   document.addEventListener('keydown', handleKeydown)
 })
 
 onUnmounted(() => {
   document.removeEventListener('keydown', handleKeydown)
+  cleanupBackHandler()
 })
 </script>
 
@@ -113,65 +222,229 @@ onUnmounted(() => {
 
           <!-- Body -->
           <div class="flex-1 overflow-y-auto">
-            <!-- Sticky plan headers (se quedan fijos al scrollear las filas) -->
-            <div class="sticky top-0 z-20 bg-white/95 backdrop-blur-sm border-b border-slate-200 shadow-sm">
-              <div class="min-w-[720px] px-6 md:px-10 py-2">
-                <div class="grid gap-3" :style="gridStyle">
-                  <!-- Columna fantasma para alinear con las features -->
+
+            <!-- ════════════════════════════════════════════════════════
+                 MOBILE: Pills sticky + lista de acordeones por plan
+                 ════════════════════════════════════════════════════════ -->
+
+            <!-- Sticky plan-pills (mobile only) -->
+            <div class="md:hidden sticky top-0 z-20 bg-white/95 backdrop-blur-sm border-b border-slate-200 shadow-sm">
+              <div class="px-4 py-3 overflow-x-auto hide-scroll-bar">
+                <div class="flex gap-2 min-w-min">
+                  <button
+                    v-for="plan in comparePlans"
+                    :key="'pill-' + plan.id"
+                    type="button"
+                    @click="toggleAccordion(plan.id)"
+                    :aria-pressed="openPlanId === plan.id"
+                    class="shrink-0 px-3 py-1.5 rounded-full text-xs font-bold transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-[#00184C] focus-visible:ring-offset-2"
+                    :class="openPlanId === plan.id
+                      ? 'bg-[#00184C] text-white shadow-sm'
+                      : 'bg-slate-100 text-slate-700 hover:bg-slate-200'"
+                  >
+                    {{ plan.name }}
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Mobile acordeon list -->
+            <div class="md:hidden px-4 py-4 space-y-3 pb-6">
+              <div
+                v-for="plan in comparePlans"
+                :key="'acc-' + plan.id"
+                class="rounded-2xl border bg-white overflow-hidden transition-all"
+                :class="[
+                  plan.id === selectedPlanId
+                    ? 'border-[#00184C] ring-2 ring-[#00184C]/15'
+                    : 'border-slate-200',
+                  plan.id === recommendedPlanId ? 'shadow-md' : 'shadow-sm'
+                ]"
+              >
+                <!-- Accordion trigger -->
+                <button
+                  type="button"
+                  @click="toggleAccordion(plan.id)"
+                  :aria-expanded="openPlanId === plan.id"
+                  :aria-controls="`acc-panel-${plan.id}`"
+                  :id="`acc-trigger-${plan.id}`"
+                  class="w-full px-4 py-3.5 flex items-center justify-between gap-3 text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-[#00184C] focus-visible:ring-inset"
+                  :class="plan.id === openPlanId ? 'bg-slate-50/60' : 'bg-white hover:bg-slate-50/40'"
+                >
+                  <div class="min-w-0 flex-1">
+                    <p class="text-base font-extrabold text-slate-900 tracking-tight leading-tight truncate">
+                      {{ plan.name }}
+                      <span v-if="plan.id === recommendedPlanId" class="ml-1 inline-block align-middle px-1.5 py-0.5 text-[9px] font-bold rounded uppercase tracking-wider" style="background-color: #00184C; color: #43D3FF;">Recomendado</span>
+                    </p>
+                    <p class="text-[12px] text-slate-500 mt-0.5 tabular-nums">
+                      Cobertura: <span class="font-semibold text-slate-900">${{ plan.coverage }} USD</span> · ${{ plan.price }} USD
+                    </p>
+                  </div>
+                  <span
+                    class="shrink-0 inline-flex items-center justify-center w-7 h-7 rounded-full transition-transform"
+                    :class="openPlanId === plan.id ? 'rotate-180 text-[#00184C]' : 'text-slate-400'"
+                  >
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </span>
+                </button>
+
+                <!-- Accordion panel -->
+                <div
+                  v-if="openPlanId === plan.id"
+                  :id="`acc-panel-${plan.id}`"
+                  role="region"
+                  :aria-labelledby="`acc-trigger-${plan.id}`"
+                  class="px-4 pb-4 border-t border-slate-100"
+                >
+                  <template v-for="group in COMPARISON" :key="group.category">
+                    <h4 class="text-[10px] font-bold uppercase tracking-[0.15em] text-slate-500 mt-4 mb-2 flex items-center gap-2">
+                      <span class="w-1 h-1 rounded-full" style="background-color: #43D3FF;"></span>
+                      {{ group.category }}
+                    </h4>
+                    <ul class="space-y-1.5">
+                      <li
+                        v-for="benefit in group.benefits"
+                        :key="benefit.name"
+                        class="flex items-center justify-between gap-3 py-1.5 border-b border-slate-50 last:border-0"
+                      >
+                        <span class="text-[13px] text-slate-700 leading-snug flex-1 min-w-0">
+                          {{ benefit.name }}
+                        </span>
+                        <span class="shrink-0 text-right">
+                          <template v-if="formatValue(benefit.values[plan.id], plan.id).type === 'check'">
+                            <span class="inline-flex items-center justify-center w-6 h-6 rounded-full" style="background-color: rgba(16, 185, 129, 0.18);">
+                              <svg class="w-3 h-3" style="color: #047857;" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-label="Incluido">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7" />
+                              </svg>
+                            </span>
+                          </template>
+                          <template v-else-if="formatValue(benefit.values[plan.id], plan.id).type === 'dash'">
+                            <span class="inline-block w-3 h-[2px] bg-slate-300 rounded-full" aria-label="No incluido"></span>
+                          </template>
+                          <template v-else>
+                            <span class="text-[13px] font-bold text-slate-900 tabular-nums">
+                              {{ formatValue(benefit.values[plan.id], plan.id).value }}
+                            </span>
+                          </template>
+                        </span>
+                      </li>
+                    </ul>
+                  </template>
+
+                  <!-- CTA dentro del acordeon -->
+                  <button
+                    v-if="isCurrentlySelected(plan.id)"
+                    type="button"
+                    disabled
+                    class="mt-4 w-full inline-flex items-center justify-center gap-2 py-3 rounded-full text-sm font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 cursor-default"
+                  >
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7" />
+                    </svg>
+                    Ya lo elegiste
+                  </button>
+                  <button
+                    v-else
+                    type="button"
+                    @click="handleSelect(plan.id)"
+                    class="mt-4 w-full inline-flex items-center justify-center gap-2 py-3 rounded-full text-sm font-bold transition-all hover:-translate-y-0.5 hover:shadow-md active:translate-y-0 active:scale-[0.98] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#43D3FF] focus-visible:ring-offset-2"
+                    style="background-color: #F9D35A; color: #00184C;"
+                  >
+                    Continuar con {{ plan.name }}
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7" />
+                    </svg>
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- ════════════════════════════════════════════════════════
+                 DESKTOP: Tabla con slots selector (modo selector)
+                 o tabla normal (modo legacy)
+                 ════════════════════════════════════════════════════════ -->
+
+            <!-- Fila superior de selectores sincronizada con el Grid (desktop) -->
+            <div class="hidden md:block sticky top-0 z-20 bg-white/95 backdrop-blur-sm border-b border-slate-200 shadow-sm">
+              <div class="min-w-[720px] px-6 md:px-10 pt-3 pb-2">
+                <!-- Selector row: grid unificado con ghost column + 3 slots fijos -->
+                <div class="grid gap-3 items-center mb-3" :style="selectorGridStyle">
+                  <!-- Columna fantasma (alineada con títulos de beneficios de la tabla) -->
                   <div></div>
 
-                  <!-- Headers por plan -->
-                  <div
-                    v-for="plan in plans"
-                    :key="plan.id"
-                    class="rounded-xl p-3 -m-1 transition-colors duration-200"
-                    :class="plan.id === selectedPlanId
-                      ? 'bg-[#EDF4F9] ring-1 ring-[#00184C]/10'
-                      : 'hover:bg-slate-50'"
-                  >
-                    <!-- Nombre del plan -->
-                    <p class="text-base font-extrabold text-slate-900 tracking-tight text-center leading-tight">
-                      {{ plan.name }}
-                    </p>
-
-                    <!-- Cobertura destacada -->
-                    <p class="mt-1 text-base font-extrabold tabular-nums text-center leading-none" style="color: #00184C;">
-                      ${{ plan.coverage }}
-                    </p>
-
-                    <!-- Precio discreto -->
-                    <p class="mt-1 text-[13px] font-medium text-slate-500 tabular-nums text-center">
-                      ${{ plan.price }} <span class="text-[10px] font-normal text-slate-400">USD</span>
-                    </p>
-
-                    <!-- Botón Elegir plan -->
-                    <button
-                      v-if="plan.id === selectedPlanId"
-                      type="button"
-                      disabled
-                      class="mt-2.5 w-full inline-flex items-center justify-center gap-1 px-3 py-2 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 cursor-default"
+                  <!-- Selectores de planes (siempre 3 slots) -->
+                  <div v-for="(slot, idx) in slots" :key="'selector-' + idx">
+                    <select
+                      :value="slot.planId"
+                      @change="changeSlotPlan(idx, $event.target.value)"
+                      class="w-full bg-white border border-slate-300 rounded-xl px-3 py-2.5 text-sm font-medium text-slate-700 shadow-sm focus:outline-none focus:ring-2 focus:ring-slate-900 hover:border-slate-400 transition-colors"
                     >
-                      <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7" />
-                      </svg>
-                      Seleccionado
-                    </button>
-                    <button
-                      v-else
-                      type="button"
-                      @click="handleSelect(plan.id)"
-                      class="mt-2.5 w-full px-3 py-2 rounded-full text-xs font-bold transition-all active:scale-95 shadow-sm hover:shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-[#00184C] focus-visible:ring-offset-2 hover:brightness-95"
-                      style="background-color: #F9D35A; color: #00184C;"
-                    >
-                      Elegir plan
-                    </button>
+                      <option value="" disabled>Seleccionar...</option>
+                      <option
+                        v-for="plan in plans"
+                        :key="plan.id"
+                        :value="plan.id"
+                      >
+                        {{ plan.name }}
+                        {{ plan.id === recommendedPlanId ? '★' : '' }}
+                      </option>
+                    </select>
+                  </div>
+                </div>
+
+                <!-- Preview row: muestra los planes seleccionados con info + botón -->
+                <div class="grid gap-3 items-start" :style="selectorGridStyle">
+                  <!-- Columna fantasma -->
+                  <div></div>
+
+                  <!-- Preview por slot -->
+                  <div v-for="(slot, idx) in slots" :key="'preview-' + idx" class="text-center">
+                    <template v-if="slot.plan">
+                      <p class="text-base font-extrabold text-slate-900 tracking-tight leading-tight">
+                        {{ slot.plan.name }}
+                        <span v-if="slot.isRecommended" class="ml-1 text-[10px] font-bold px-1.5 py-0.5 rounded" style="background-color: #43D3FF; color: #00184C;">★</span>
+                      </p>
+                      <p class="mt-1 text-base font-extrabold tabular-nums leading-none" style="color: #00184C;">
+                        ${{ slot.plan.coverage }}
+                      </p>
+                      <p class="mt-1 text-[13px] font-medium text-slate-500 tabular-nums">
+                        ${{ slot.plan.price }} <span class="text-[10px] font-normal text-slate-400">USD</span>
+                      </p>
+                      <button
+                        v-if="isCurrentlySelected(slot.planId)"
+                        type="button"
+                        disabled
+                        class="mt-2 w-full inline-flex items-center justify-center gap-1 px-3 py-2 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 cursor-default"
+                      >
+                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7" />
+                        </svg>
+                        Seleccionado
+                      </button>
+                      <button
+                        v-else-if="slot.planId"
+                        type="button"
+                        @click="handleSelect(slot.planId)"
+                        class="mt-2 w-full px-3 py-2 rounded-full text-xs font-bold transition-all active:scale-95 shadow-sm hover:shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-[#00184C] focus-visible:ring-offset-2 hover:brightness-95"
+                        style="background-color: #F9D35A; color: #00184C;"
+                      >
+                        Elegir plan
+                      </button>
+                    </template>
+                    <template v-else>
+                      <div class="h-[80px] flex items-center justify-center text-slate-400 text-xs">
+                        —
+                      </div>
+                    </template>
                   </div>
                 </div>
               </div>
             </div>
 
-            <!-- Filas de comparación -->
-            <div class="min-w-[720px] px-6 md:px-10 pb-2">
+            <!-- Filas de comparación (desktop) -->
+            <div class="hidden md:block min-w-[720px] px-6 md:px-10 pb-2">
               <template v-for="group in COMPARISON" :key="group.category">
                 <div class="pt-2.5 pb-1 flex items-center gap-2.5">
                   <span class="w-1.5 h-1.5 rounded-full" style="background-color: #43D3FF;"></span>
@@ -190,7 +463,7 @@ onUnmounted(() => {
                     {{ benefit.name }}
                   </div>
                   <div
-                    v-for="plan in plans"
+                    v-for="plan in comparePlans"
                     :key="plan.id"
                     class="text-center self-center"
                   >
@@ -222,9 +495,8 @@ onUnmounted(() => {
                 </div>
               </template>
             </div>
-          </div>
 
-          <!-- Footer eliminado para dar más espacio al contenido -->
+          </div>
         </div>
       </div>
     </Transition>
