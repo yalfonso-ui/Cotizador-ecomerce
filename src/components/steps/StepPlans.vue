@@ -186,12 +186,16 @@ onUnmounted(() => {
 <template>
   <div class="w-full max-w-6xl mx-auto px-4 sm:px-6 pt-6 md:pt-10 pb-28">
     <div class="space-y-6">
-      <!-- Header -->
+      <!-- Header (mobile-optimized: texto corto, 1 línea c/u) -->
       <div class="space-y-2 text-center">
         <span class="ds-eyebrow">Tu respaldo, a tu medida</span>
-        <h1 class="ds-heading-1">Elige la cobertura<span style="color: #43D3FF;"> ideal para ti</span></h1>
+        <h1 class="ds-heading-1">
+          <span class="sm:hidden">Tu cobertura<span style="color: #43D3FF;"> ideal</span></span>
+          <span class="hidden sm:inline">Elige la cobertura<span style="color: #43D3FF;"> ideal para ti</span></span>
+        </h1>
         <p class="text-sm sm:text-base text-slate-500 max-w-md mx-auto leading-snug">
-          Explora y compara hasta 3 planes lado a lado para encontrar el que mejor se adapte a tu viaje.
+          <span class="sm:hidden">Compara hasta 3 planes en segundos.</span>
+          <span class="hidden sm:inline">Explora y compara hasta 3 planes lado a lado para encontrar el que mejor se adapte a tu viaje.</span>
         </p>
       </div>
 
@@ -232,14 +236,18 @@ onUnmounted(() => {
           </svg>
         </button>
 
-        <!-- Carrusel con gradiente de máscara en los bordes -->
+        <!-- Carrusel con gradiente de máscara en los bordes (peek lateral) -->
         <div
-          class="relative md:[mask-image:linear-gradient(to_right,transparent_0%,black_5%,black_95%,transparent_100%)] md:[-webkit-mask-image:linear-gradient(to_right,transparent_0%,black_5%,black_95%,transparent_100%)]"
+          class="relative px-4
+            [mask-image:linear-gradient(to_right,transparent_0%,black_8%,black_92%,transparent_100%)]
+            [-webkit-mask-image:linear-gradient(to_right,transparent_0%,black_8%,black_92%,transparent_100%)]
+            md:[mask-image:linear-gradient(to_right,transparent_0%,black_5%,black_95%,transparent_100%)]
+            md:[-webkit-mask-image:linear-gradient(to_right,transparent_0%,black_5%,black_95%,transparent_100%)]"
         >
           <div
             ref="carouselRef"
             @scroll="updateScrollState"
-            class="flex flex-nowrap gap-3 md:gap-4 overflow-x-auto snap-x snap-mandatory w-full pb-4 md:pb-8 min-h-[420px] md:min-h-[480px] hide-scroll-bar touch-pan-x"
+            class="flex flex-nowrap gap-3 md:gap-4 overflow-x-auto snap-x snap-mandatory w-full pb-4 md:pb-8 min-h-[400px] md:min-h-[480px] hide-scroll-bar touch-pan-x"
           >
           <TransitionGroup
             appear
@@ -250,7 +258,8 @@ onUnmounted(() => {
           <article
             v-for="(plan, index) in plans"
             :key="plan.id"
-            class="shrink-0 w-[calc(85vw)] xs:w-[calc(80vw)] sm:w-[calc(50%-1rem)] md:w-[calc(33.333%-1.5rem)] snap-center mx-auto relative rounded-2xl bg-white flex flex-col transition-all duration-200 overflow-hidden border"
+            @click="selectPlan(plan.id)"
+            class="shrink-0 w-[75vw] xs:w-[75vw] sm:w-[calc(50%-1rem)] md:w-[calc(33.333%-1.5rem)] snap-center relative rounded-2xl bg-white flex flex-col transition-all duration-200 overflow-hidden border cursor-pointer"
             :class="[
               plan.recommended
                 ? 'border-2 border-[#00184C] shadow-lg ring-1 ring-[#43D3FF]/30'
@@ -283,8 +292,8 @@ onUnmounted(() => {
               </p>
             </div>
 
-            <!-- Price section: clickable for plan selection -->
-            <div @click="selectPlan(plan.id)" class="cursor-pointer px-6">
+            <!-- Price section: toda la tarjeta es táctil (article @click) -->
+            <div class="px-6">
 
               <!-- Precio hero (sincronizado con CurrencySwitcher global) -->
               <div class="text-center border-t border-slate-100 pt-5">
@@ -376,7 +385,7 @@ onUnmounted(() => {
       <!-- /carousel + /mask-wrapper + /relative wrapper -->
 
       <!-- Dot pagination (solo mobile) -->
-      <div class="flex md:hidden items-center justify-center gap-2 -mt-2 pb-24" role="tablist" aria-label="Navegación de planes">
+      <div class="flex md:hidden items-center justify-center gap-2 mt-1 pb-6" role="tablist" aria-label="Navegación de planes">
         <button
           v-for="(plan, i) in plans"
           :key="'dot-' + plan.id"
@@ -397,7 +406,7 @@ onUnmounted(() => {
       </div>
 
     <!-- ── ZONA DE ACCIONES INFERIORES UNIFICADA ── -->
-    <div class="flex flex-col sm:flex-row items-center justify-between gap-4 mt-8 pt-6 border-t border-slate-100">
+    <div class="flex flex-col sm:flex-row items-center justify-between gap-3 mt-4 pt-5 border-t border-slate-100">
       <!-- Botón secundario: Enviar cotización por correo -->
       <button
         type="button"

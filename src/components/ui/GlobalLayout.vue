@@ -189,7 +189,7 @@ onUnmounted(() => {
           </template>
 
           <SummaryHeader v-if="shouldShowNavbarSummary" />
-          <div v-if="shouldShowEdit" class="relative">
+          <div v-if="shouldShowEdit" class="hidden sm:block relative">
           <button
             ref="buttonRef"
             type="button"

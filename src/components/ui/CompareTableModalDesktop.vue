@@ -21,6 +21,8 @@ const MAX_COMPARE = 3
 const LEFT_COL_WIDTH = 240
 // Columna de cada plan (220px, esbeltas y simétricas)
 const PLAN_COL_WIDTH = 220
+// Zebra striping vertical: idx 0=sky-100, idx 1=white, idx 2=sky-100
+const PLAN_COL_ZEBRA_CLASS = ['bg-sky-100', 'bg-white', 'bg-sky-100']
 
 const initialSelection = computed(() => {
   const recommended = props.recommendedPlanId || props.plans[0]?.id
@@ -230,13 +232,16 @@ function formatPrice(n) {
           <!-- 3 columnas de plan (220px cada una, esbeltas y simétricas) -->
           <div class="flex divide-x divide-slate-100">
 
-            <!-- ── PLAN COLUMN ── -->
+            <!-- ── PLAN COLUMN (idx 0=sky-50, idx 1=white, idx 2=sky-50) ── -->
             <div
               v-for="(plan, idx) in selectedPlans"
               :key="'header-' + plan.id + '-' + idx"
               class="shrink-0 px-3 pt-3 pb-4 flex flex-col items-center gap-2"
               :style="{ width: `${PLAN_COL_WIDTH}px`, minWidth: `${PLAN_COL_WIDTH}px` }"
-              :class="plan.id === recommendedPlanId ? 'bg-[#43D3FF]/10' : ''"
+              :class="[
+                PLAN_COL_ZEBRA_CLASS[idx],
+                plan.id === recommendedPlanId ? 'bg-[#43D3FF]/10' : ''
+              ]"
             >
               <!-- Label "Plan 1 / 2 / 3" -->
               <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider self-start">
@@ -373,14 +378,17 @@ function formatPrice(n) {
                   {{ benefit.name }}
                 </div>
 
-                <!-- 3 plan value columns (220px cada una) -->
+                <!-- 3 plan value columns (220px cada una, zebra striping idx 0/2=sky-50, idx 1=white) -->
                 <div class="flex divide-x divide-slate-100">
                   <div
-                    v-for="plan in selectedPlans"
+                    v-for="(plan, idx) in selectedPlans"
                     :key="plan.id + '-' + benefit.name"
                     class="shrink-0 px-2 py-3 text-center text-[13px] flex items-center justify-center transition-colors duration-200"
                     :style="{ width: `${PLAN_COL_WIDTH}px`, minWidth: `${PLAN_COL_WIDTH}px`, minHeight: '52px' }"
-                    :class="plan.id === recommendedPlanId ? 'bg-[#43D3FF]/10' : ''"
+                    :class="[
+                      PLAN_COL_ZEBRA_CLASS[idx],
+                      plan.id === recommendedPlanId ? 'bg-[#43D3FF]/10' : ''
+                    ]"
                   >
                     <template v-if="getValue(plan.id, benefit) === 'yes'">
                       <span class="inline-flex items-center justify-center w-7 h-7 rounded-full bg-emerald-100">

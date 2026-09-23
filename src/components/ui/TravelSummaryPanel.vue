@@ -11,6 +11,7 @@
 import { ref, computed, watch, onBeforeUnmount } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useWizardStore } from '@/stores/useWizardStore.js'
+import { useCheckoutStore } from '@/stores/useCheckoutStore.js'
 import { useCurrencyStore, formatCurrency } from '@/stores/useCurrencyStore.js'
 import { getPlanName as planName, getPlanCoverage as planCoverage, getPlanPrice as planPrice } from '@/data/plans.js'
 import { getUpgradesTotal } from '@/data/upgrades.js'
@@ -21,7 +22,9 @@ import { STEPS } from '@/composables/useWizardSteps.js'
 const emit = defineEmits(['go-to-step'])
 
 const wizardStore = useWizardStore()
+const checkoutStore = useCheckoutStore()
 const { formData } = storeToRefs(wizardStore)
+const { appliedDiscount } = storeToRefs(checkoutStore)
 const fx = useCurrencyStore()
 function fmt(usd) { return formatCurrency(usd, fx) }
 
@@ -82,8 +85,14 @@ const selectedPlanCoverage = computed(() => planCoverage(formData.value.selected
 const planPriceVal = computed(() => planPrice(formData.value.selectedPlan))
 const upgradesTotal = computed(() => getUpgradesTotal(formData.value.upgrades))
 
+// Descuento aplicado (viene del useCheckoutStore, idéntico a StepCheckout)
+const discountAmount = computed(() => {
+  if (!appliedDiscount.value) return 0
+  return (planPriceVal.value * appliedDiscount.value.discountPercent) / 100
+})
+
 const finalPrice = computed(() => {
-  return Math.max(0, planPriceVal.value + upgradesTotal.value)
+  return Math.max(0, (planPriceVal.value - discountAmount.value) + upgradesTotal.value)
 })
 
 // ── Availability for edit buttons ──

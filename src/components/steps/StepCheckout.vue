@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, watch, onMounted, onBeforeUnmount, nextTick } from 'vue'
+import { computed, onMounted, onBeforeUnmount, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
 import { storeToRefs } from 'pinia'
 import DiscountCodeField from '@/components/ui/DiscountCodeField.vue'
@@ -17,6 +17,7 @@ import { showToast } from '@/composables/useToast.js'
 import { useHaptic } from '@/composables/useHaptic.js'
 import { STEPS } from '@/composables/useWizardSteps.js'
 import { processPayment } from '@/services/paymentService.js'
+import TravelSummaryPanel from '@/components/ui/TravelSummaryPanel.vue'
 
 const emit = defineEmits(['go-to-step'])
 
@@ -51,8 +52,7 @@ const {
   isProcessing,
   processingStep,
   paymentError,
-  appliedDiscount,
-  isMobileSummaryExpanded
+  appliedDiscount
 } = storeToRefs(checkoutStore)
 
 const {
@@ -110,57 +110,6 @@ function formatDestination(dest) {
   return dest || 'No especificado'
 }
 
-let dragStartY = 0
-let dragCurrentY = 0
-let isDragging = false
-const dragOffset = ref(0)
-
-const dragStyle = computed(() => {
-  if (dragOffset.value === 0) return {}
-  return { transform: `translateY(${dragOffset.value}px)`, transition: 'none' }
-})
-
-const sheetRef = ref(null)
-
-function onTouchStart(e) {
-  if (e.touches.length !== 1) return
-  // Solo permitir drag si el sheet esta scrolleado al tope
-  if (sheetRef.value && sheetRef.value.scrollTop > 4) {
-    isDragging = false
-    return
-  }
-  dragStartY = e.touches[0].clientY
-  isDragging = true
-}
-
-function onTouchMove(e) {
-  if (!isDragging) return
-  const delta = e.touches[0].clientY - dragStartY
-  // Solo permitir swipe hacia abajo (cerrar)
-  if (delta < 0) {
-    dragOffset.value = 0
-    isDragging = false
-    return
-  }
-  dragCurrentY = Math.max(0, delta)
-  dragOffset.value = dragCurrentY
-}
-
-function onTouchEnd() {
-  if (!isDragging) return
-  isDragging = false
-  if (dragCurrentY > 80) {
-    checkoutStore.setMobileSummaryExpanded(false)
-  }
-  dragOffset.value = 0
-  dragCurrentY = 0
-}
-
-watch(isMobileSummaryExpanded, (open) => {
-  if (typeof document === 'undefined') return
-  document.body.style.overflow = open ? 'hidden' : ''
-})
-
 onBeforeUnmount(() => {
   if (typeof document !== 'undefined') {
     document.body.style.overflow = ''
@@ -186,32 +135,6 @@ const discountAmount = computed(() => {
   if (!appliedDiscount.value) return 0
   return (getPlanPrice() * appliedDiscount.value.discountPercent) / 100
 })
-
-const tripDays = computed(() => {
-  if (!props.data?.dates?.start || !props.data?.dates?.end) return 0
-  const start = new Date(props.data.dates.start)
-  const end = new Date(props.data.dates.end)
-  start.setHours(0, 0, 0, 0)
-  end.setHours(0, 0, 0, 0)
-  const diffTime = Math.abs(end.getTime() - start.getTime())
-  return Math.ceil(diffTime / (1000 * 60 * 60 * 24))
-})
-
-// ── Disponibilidad de edición desde el bottom sheet ──
-// Cada sección solo es editable si los datos previos ya están completos.
-// Esto evita que el usuario navegue a un step vacío que rompa el flujo.
-const canEditRoute = computed(() => wizardStore.hasRoute)
-const canEditDates = computed(() => !!(props.data?.dates?.start && props.data?.dates?.end))
-const canEditTravelers = computed(() => !!props.data?.travelersCount)
-const canEditPlan = computed(() => !!props.data?.selectedPlan)
-
-function handleEditSection(targetStep) {
-  // Cierra el sheet y navega al step solicitado. El router preserva el
-  // history, así el botón "Atrás" del navegador (o nuestro nuevo botón
-  // Volver del StepHeader) devuelve al checkout sin perder el formulario.
-  isMobileSummaryExpanded.value = false
-  emit('go-to-step', targetStep)
-}
 
 const totalViajeros = computed(() => {
   const arr = props.data?.travelersInfo
@@ -398,199 +321,8 @@ async function processPaymentFlow() {
 <template>
   <div class="max-w-5xl mx-auto space-y-5 px-4 sm:px-6 pt-6 md:pt-10">
 
-    <div class="lg:hidden sticky z-20 -mx-4 px-4 py-3 bg-white/85 backdrop-blur-md border-b border-slate-100/80"
-      style="top: calc(4rem + env(safe-area-inset-top));">
-      <button
-        type="button"
-        @click="isMobileSummaryExpanded = true"
-        class="w-full flex items-center justify-between gap-3 text-left group"
-        :aria-expanded="isMobileSummaryExpanded"
-        aria-haspopup="dialog"
-      >
-        <span class="text-sm font-medium tracking-tight" style="color: #00184C;">
-          Ver resumen de viaje
-        </span>
-        <span class="flex items-center gap-1.5">
-          <span class="text-sm font-bold tabular-nums tracking-tight" style="color: #00184C;">
-            ${{ finalPrice.toFixed(2) }} USD
-          </span>
-          <svg
-            class="w-3.5 h-3.5 shrink-0 transition-transform group-hover:translate-y-0.5"
-            style="color: #00184C;"
-            fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"
-          >
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-          </svg>
-        </span>
-      </button>
-    </div>
-
-    <Teleport to="body">
-      <Transition name="sheet-fade">
-        <div
-          v-if="isMobileSummaryExpanded"
-          class="lg:hidden fixed inset-0 z-50 bg-[#00184C]/20 backdrop-blur-md"
-          @click.self="isMobileSummaryExpanded = false"
-          aria-hidden="true"
-        ></div>
-      </Transition>
-
-      <Transition name="sheet">
-        <div
-          v-if="isMobileSummaryExpanded"
-          ref="sheetRef"
-          class="lg:hidden fixed inset-x-0 bottom-0 z-50 max-h-[85vh] overflow-y-auto rounded-t-3xl bg-white p-6 shadow-2xl"
-          role="dialog"
-          aria-modal="true"
-          aria-label="Resumen de viaje"
-          @touchstart="onTouchStart"
-          @touchmove="onTouchMove"
-          @touchend="onTouchEnd"
-          :style="dragStyle"
-        >
-          <div class="w-12 h-1 bg-slate-300 rounded-full mx-auto mb-4" aria-hidden="true"></div>
-
-          <div class="flex items-center justify-between mb-5">
-            <h2 class="text-base font-semibold tracking-tight" style="color: #00184C;">
-              Tu reserva
-            </h2>
-            <button
-              type="button"
-              @click="isMobileSummaryExpanded = false"
-              class="w-8 h-8 -mr-2 rounded-full flex items-center justify-center text-slate-400 hover:bg-slate-100 hover:text-slate-700 transition-colors"
-              aria-label="Cerrar resumen"
-            >
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </button>
-          </div>
-
-          <dl class="divide-y divide-slate-100">
-            <div class="flex items-start gap-3 py-3">
-              <svg class="w-4 h-4 mt-0.5 shrink-0 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-              <div class="flex-1 min-w-0">
-                <dt class="text-[10px] font-medium text-slate-400 uppercase tracking-wider mb-0.5">Tu ruta</dt>
-                <dd class="font-semibold text-slate-800 text-sm">
-                  {{ data?.origin?.name || data?.origin || '—' }}
-                  <span class="text-slate-300 mx-1">→</span>
-                  {{ formatDestination(data?.destination) }}
-                </dd>
-              </div>
-            </div>
-
-            <div class="flex items-start gap-3 py-3">
-              <svg class="w-4 h-4 mt-0.5 shrink-0 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-              </svg>
-              <div class="flex-1 min-w-0">
-                <dt class="text-[10px] font-medium text-slate-400 uppercase tracking-wider mb-0.5">Fechas del viaje</dt>
-                <dd class="font-semibold text-slate-800 text-sm">
-                  <template v-if="data?.dates?.start && data?.dates?.end">
-                    {{ formatDate(data?.dates?.start) }}
-                    <span class="text-slate-300 mx-1">→</span>
-                    {{ formatDate(data?.dates?.end) }}
-                  </template>
-                  <template v-else>—</template>
-                </dd>
-                <dd v-if="data?.dates?.start && data?.dates?.end" class="text-xs text-slate-400 mt-0.5">
-                  {{ tripDays }} {{ tripDays === 1 ? 'día' : 'días' }}
-                </dd>
-              </div>
-            </div>
-
-            <div class="flex items-start gap-3 py-3">
-              <svg class="w-4 h-4 mt-0.5 shrink-0 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-              </svg>
-              <div class="flex-1 min-w-0">
-                <dt class="text-[10px] font-medium text-slate-400 uppercase tracking-wider mb-0.5">Viajeros</dt>
-                <dd class="font-semibold text-slate-800 text-sm">{{ travelersLabel }}</dd>
-              </div>
-            </div>
-
-            <div class="flex items-start gap-3 py-3">
-              <svg class="w-4 h-4 mt-0.5 shrink-0 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-              </svg>
-              <div class="flex-1 min-w-0">
-                <dt class="text-[10px] font-medium text-slate-400 uppercase tracking-wider mb-0.5">Tu plan</dt>
-                <dd class="font-semibold text-slate-800 text-sm">{{ getPlanName() }}</dd>
-                <dd class="text-xs text-slate-400">Cobertura hasta {{ getPlanCoverage() }} USD</dd>
-              </div>
-            </div>
-          </dl>
-
-          <div class="mt-5 pt-4 border-t border-slate-100 flex items-center justify-between">
-            <span class="text-xs text-slate-500 font-medium uppercase tracking-wider">Total</span>
-            <span class="text-lg font-bold tabular-nums" style="color: #00184C;">
-{{ fmt(finalPrice) }}
-            </span>
-          </div>
-
-          <div class="mt-5 pt-5 border-t border-slate-100">
-            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-3">
-              ¿Necesitas ajustar algo?
-            </p>
-            <div class="grid grid-cols-2 gap-2">
-              <button
-                type="button"
-                @click="handleEditSection(STEPS.ROUTE)"
-                class="inline-flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-700 text-xs font-semibold transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#43D3FF]"
-                :disabled="!canEditRoute"
-                :class="!canEditRoute ? 'opacity-50 cursor-not-allowed' : ''"
-              >
-                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-                Ruta
-              </button>
-              <button
-                type="button"
-                @click="handleEditSection(STEPS.DATES)"
-                class="inline-flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-700 text-xs font-semibold transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#43D3FF]"
-                :disabled="!canEditDates"
-                :class="!canEditDates ? 'opacity-50 cursor-not-allowed' : ''"
-              >
-                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                </svg>
-                Fechas
-              </button>
-              <button
-                type="button"
-                @click="handleEditSection(STEPS.TRAVELERS)"
-                class="inline-flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-700 text-xs font-semibold transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#43D3FF]"
-                :disabled="!canEditTravelers"
-                :class="!canEditTravelers ? 'opacity-50 cursor-not-allowed' : ''"
-              >
-                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-                </svg>
-                Viajeros
-              </button>
-              <button
-                type="button"
-                @click="handleEditSection(STEPS.PLANS)"
-                class="inline-flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-700 text-xs font-semibold transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#43D3FF]"
-                :disabled="!canEditPlan"
-                :class="!canEditPlan ? 'opacity-50 cursor-not-allowed' : ''"
-              >
-                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-                </svg>
-                Plan
-              </button>
-            </div>
-            <p class="text-[10px] text-slate-400 mt-2.5 leading-relaxed">
-              Al editar, tu pago aún no se procesa — los datos del formulario se conservan.
-            </p>
-          </div>
-        </div>
-      </Transition>
-    </Teleport>
+    <!-- ── Resumen de viaje mobile (unificado via TravelSummaryPanel) ── -->
+    <TravelSummaryPanel @go-to-step="emit('go-to-step', $event)" />
 
     <div class="grid grid-cols-1 lg:grid-cols-12 gap-4 lg:gap-6">
 

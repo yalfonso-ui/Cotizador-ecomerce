@@ -1,5 +1,6 @@
 <script setup>
 import { ref, computed, watch, nextTick } from 'vue'
+import CurrencySwitcher from '@/components/ui/CurrencySwitcher.vue'
 
 const props = defineProps({
   modelValue: { type: Boolean, default: false },
@@ -20,15 +21,17 @@ const open = computed({
 
 const MAX_COMPARE = 3
 const COL_WIDTH = 160     // ancho fijo de cada columna de plan
-const STICKY_WIDTH = 140  // ancho fijo de la columna izquierda
+const STICKY_WIDTH = 152  // columna izquierda (incluye pl-4 de respiro interno)
+
+// Zebra striping por columna (índice 0, 1, 2 → plan 1, 2, 3)
+// El override recommended (bg-[#43D3FF]/10) siempre gana sobre esto
+const PLAN_COL_ZEBRA_CLASS = ['bg-sky-100', 'bg-white', 'bg-sky-100']
 
 const initialSelection = computed(() => {
+  // Experiencia progresiva: solo el plan recomendado seleccionado al inicio.
+  // El usuario descubre la comparación añadiendo chips manualmente.
   const recommended = props.recommendedPlanId || props.plans[0]?.id
-  const others = props.plans
-    .map(p => p.id)
-    .filter(id => id !== recommended)
-    .slice(0, MAX_COMPARE - 1)
-  return [recommended, ...others].slice(0, MAX_COMPARE)
+  return [recommended]
 })
 
 const selectedIds = ref([...initialSelection.value])
@@ -37,11 +40,16 @@ const selectedIds = ref([...initialSelection.value])
 watch(open, (v) => {
   if (v) {
     selectedIds.value = [...initialSelection.value]
+    isScrolled.value = false
+    // Mostrar guía de onboarding al abrir (autohide en 5s)
+    showHelper('Tocá los chips para agregar o quitar planes de la comparación')
     nextTick(() => {
       // Scroll al plan recomendado
       const el = wrapperRef.value?.querySelector(`[data-plan-id="${recommendedId.value}"]`)
       if (el) el.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' })
     })
+  } else {
+    dismissHelper()
   }
 })
 
@@ -56,28 +64,51 @@ const recommendedId = computed(() => {
     || props.recommendedPlanId
 })
 
-// Ancho total de la tabla (calculado una vez por render)
+// Ancho total de la tabla (incluye +24px de pr-6 en el último plan)
 const tableTotalWidth = computed(() =>
-  STICKY_WIDTH + (selectedPlans.length * COL_WIDTH)
+  STICKY_WIDTH + (selectedPlans.length * COL_WIDTH) + 24
 )
 
 // ─────────────────────────────────────────────────────────────
 // Phase 1: Chips toggle (max 3)
 // ─────────────────────────────────────────────────────────────
 const isPlanSelected = (id) => selectedIds.value.includes(id)
+
+// true cuando ya hay 3 planes seleccionados Y el chip no está entre ellos
+const isChipDisabled = (planId) =>
+  selectedIds.value.length >= MAX_COMPARE && !selectedIds.value.includes(planId)
+
+// true cuando solo queda 1 plan seleccionado → no se puede cerrar ese único plan
+const canRemovePlan = computed(() => selectedIds.value.length > 1)
+
 const limitMessage = ref(null)
 const shakeChipId = ref(null)
 let limitTimer = null
 let shakeTimer = null
 
+// Helper de onboarding (autohide tras 5s o al primer toggle)
+const helperMessage = ref(null)
+let helperTimer = null
+
+function showHelper(msg) {
+  clearTimeout(helperTimer)
+  helperMessage.value = msg
+  helperTimer = setTimeout(() => { helperMessage.value = null }, 5000)
+}
+
+function dismissHelper() {
+  clearTimeout(helperTimer)
+  helperMessage.value = null
+}
+
 function togglePlan(planId) {
+  // Descartar helper de onboarding en la primera interacción del usuario
+  dismissHelper()
+
+  // Si ya hay 3 planes y este no es uno de ellos, no hacer nada (visualmente ya está disabled)
+  if (isChipDisabled(planId)) return
+
   if (isPlanSelected(planId)) {
-    if (selectedIds.value.length <= 1) {
-      showLimit('Al menos 1 plan debe estar seleccionado')
-      triggerShake(planId)
-      hapticTap('error')
-      return
-    }
     // Issue 2: preservar scroll antes de mutar
     preserveScroll()
     selectedIds.value = selectedIds.value.filter(id => id !== planId)
@@ -86,10 +117,7 @@ function togglePlan(planId) {
     nextTick(() => restoreScroll())
   } else {
     if (selectedIds.value.length >= MAX_COMPARE) {
-      // Issue 3 fix: feedback más explícito
-      showLimit(`Ya elegiste 3 planes. Desmarca uno para agregar otro.`)
-      triggerShake(planId)
-      hapticTap('error')
+      // No debería alcanzarse si isChipDisabled funciona, pero por seguridad silenciamos
       return
     }
     // Issue 2: preservar scroll antes de mutar
@@ -130,11 +158,6 @@ function hapticTap(kind = 'light') {
 // Phase 3: remover plan desde cabecera
 // ─────────────────────────────────────────────────────────────
 function removePlan(planId) {
-  if (selectedIds.value.length <= 1) {
-    showLimit('Al menos 1 plan debe quedar en la comparación')
-    hapticTap('error')
-    return
-  }
   // Issue 2: preservar scroll antes de remover
   preserveScroll()
   selectedIds.value = selectedIds.value.filter(id => id !== planId)
@@ -167,7 +190,14 @@ function onBackdrop(e) {
 // Phase 2: scroll, snap, alineación estricta
 // ─────────────────────────────────────────────────────────────
 const wrapperRef = ref(null)
+const outerRef = ref(null)       // wrapper exterior con overflow-y-auto
 const activeScrollIndex = ref(0)
+const isScrolled = ref(false)     // activa shadow en sticky header cuando hay scroll vertical
+
+function onOuterScroll() {
+  if (!outerRef.value) return
+  isScrolled.value = outerRef.value.scrollTop > 4
+}
 
 function scrollToPlan(planId) {
   if (!wrapperRef.value) return
@@ -308,14 +338,17 @@ function getValue(planId, benefit) {
       >
         <!-- ── HEADER ── -->
         <div class="flex items-center justify-between px-4 pt-4 pb-3 border-b border-slate-100">
-          <div>
-            <h2 class="text-base font-bold text-slate-900">Comparar planes</h2>
-            <p class="text-[11px] text-slate-500 mt-0.5">Toca los planes que querés comparar (máx. 3)</p>
+          <div class="flex items-center gap-3">
+            <div>
+              <h2 class="text-base font-bold text-slate-900">Comparar planes</h2>
+              <p class="text-[11px] text-slate-500 mt-0.5">Seleccioná hasta 3 planes para comparar</p>
+            </div>
+            <CurrencySwitcher variant="light" />
           </div>
           <button
             type="button"
             @click="closeModal"
-            class="w-10 h-10 rounded-full flex items-center justify-center text-slate-400 hover:bg-slate-100 hover:text-slate-900 active:scale-95 transition-all"
+            class="w-10 h-10 rounded-full flex items-center justify-center text-slate-400 hover:bg-slate-100 hover:text-slate-900 active:scale-95 transition-all shrink-0"
             aria-label="Cerrar"
           >
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -324,27 +357,31 @@ function getValue(planId, benefit) {
           </button>
         </div>
 
-        <!-- ── PHASE 1: Selector de chips ── -->
-        <div class="px-4 py-3 bg-slate-50/50 border-b border-slate-100">
-          <div class="flex gap-2 overflow-x-auto hide-scroll-bar -mx-1 px-1">
+        <!-- ── PHASE 1: Selector de chips (área táctil máxima) ── -->
+        <div class="px-4 py-4 bg-slate-50/50 border-b border-slate-100">
+          <div class="flex gap-4 overflow-x-auto hide-scroll-bar -mx-1 px-1">
             <button
               v-for="plan in plans"
               :key="'chip-' + plan.id"
               type="button"
               @click="togglePlan(plan.id)"
               :aria-pressed="isPlanSelected(plan.id)"
+              :disabled="isChipDisabled(plan.id)"
               :class="[
-                'shrink-0 inline-flex items-center gap-1.5 px-3 py-2 rounded-full text-xs font-bold transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-[#43D3FF]',
+                'shrink-0 inline-flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-bold transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-[#43D3FF]',
                 isPlanSelected(plan.id)
                   ? (plan.id === recommendedPlanId
                       ? 'bg-[#00184C] text-white shadow-md ring-1 ring-[#43D3FF]/40'
                       : 'bg-[#00184C] text-white shadow-md')
-                  : 'bg-white border border-slate-200 text-slate-700 hover:border-slate-400 hover:bg-slate-50',
+                  : isChipDisabled(plan.id)
+                    ? 'bg-slate-100 border border-slate-200 text-slate-400 cursor-not-allowed opacity-60'
+                    : 'bg-white border-2 border-dashed border-[#43D3FF] text-slate-700 hover:border-solid hover:border-[#43D3FF] hover:bg-sky-50',
                 shakeChipId === plan.id ? 'ds-chip-shake' : '',
-                shakeChipId === plan.id ? 'ring-2 ring-red-400' : ''
+                shakeChipId === plan.id ? 'ring-2 ring-red-400' : '',
+                !isPlanSelected(plan.id) && !isChipDisabled(plan.id) ? 'ds-chip-pulse' : ''
               ]"
             >
-              <!-- Check o dot -->
+              <!-- Check (seleccionado) o + (para agregar) -->
               <svg
                 v-if="isPlanSelected(plan.id)"
                 class="w-3.5 h-3.5"
@@ -352,11 +389,13 @@ function getValue(planId, benefit) {
               >
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7" />
               </svg>
-              <span
+              <svg
                 v-else
-                class="w-3.5 h-3.5 rounded-full border-2"
-                :class="plan.id === recommendedPlanId ? 'border-[#43D3FF]' : 'border-slate-300'"
-              />
+                class="w-3.5 h-3.5"
+                fill="none" stroke="currentColor" viewBox="0 0 24 24"
+              >
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4" />
+              </svg>
               <span>{{ plan.name }}</span>
               <span
                 v-if="plan.id === recommendedPlanId"
@@ -366,7 +405,21 @@ function getValue(planId, benefit) {
             </button>
           </div>
 
-          <!-- Issue 3 fix: mensaje de límite más prominente (toast-like) -->
+          <!-- Helper de onboarding (navy, contraste AAA) -->
+          <Transition name="limit-toast">
+            <div
+              v-if="helperMessage"
+              role="status"
+              class="mt-2 flex items-center gap-2 px-4 py-3 rounded-xl bg-[#00184C] text-white text-[12px] font-medium shadow-md"
+            >
+              <svg class="w-4 h-4 shrink-0 text-[#43D3FF]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <span class="leading-snug">{{ helperMessage }}</span>
+            </div>
+          </Transition>
+
+          <!-- Mensaje de límite (ámbar, solo cuando se intenta agregar más de 3) -->
           <Transition name="limit-toast">
             <div
               v-if="limitMessage"
@@ -382,24 +435,33 @@ function getValue(planId, benefit) {
         </div>
 
         <!-- ── PHASE 2: Tabla compacta con snap horizontal ── -->
+        <!-- Outer: scroll vertical. Inner: scroll horizontal + sticky header context. -->
         <div
-          ref="wrapperRef"
-          @scroll="updateActiveIndex"
-          class="flex-1 overflow-x-auto overflow-y-auto"
+          ref="outerRef"
+          @scroll="onOuterScroll"
+          class="relative flex-1 overflow-y-auto overflow-x-hidden px-4"
+          :class="isScrolled ? 'pb-2' : ''"
         >
+          <!-- Contenedor interior: scroll horizontal, sticky header vive aquí -->
+          <div
+            ref="wrapperRef"
+            @scroll="updateActiveIndex"
+            class="relative overflow-x-auto min-w-0"
+          >
           <div
             class="relative"
             :style="{ width: `${tableTotalWidth}px`, minWidth: `${tableTotalWidth}px` }"
           >
-            <!-- HEADER (sticky top dentro del scroll vertical) -->
+            <!-- HEADER (sticky top, shadow crece al hacer scroll vertical) -->
             <div
-              class="sticky top-0 z-30 bg-white shadow-sm flex"
+              class="sticky top-0 z-30 bg-white flex transition-shadow duration-200"
+              :class="isScrolled ? 'shadow-[0_4px_16px_rgba(0,24,76,0.14)]' : 'shadow-sm'"
               :style="{ width: `${tableTotalWidth}px` }"
             >
-              <!-- Columna fija: "Plan" -->
+              <!-- Columna fija: "Plan" (pl-4 da respiro lateral izquierdo) -->
               <div
                 data-sticky-col
-                class="shrink-0 bg-white border-r border-slate-100 flex items-end px-3 pb-3"
+                class="shrink-0 bg-white border-r border-slate-100 flex items-end px-3 pb-3 pl-4"
                 :style="{ width: `${STICKY_WIDTH}px`, minWidth: `${STICKY_WIDTH}px`, height: '112px' }"
               >
                 <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Plan</span>
@@ -422,17 +484,24 @@ function getValue(planId, benefit) {
                   :data-plan-col="idx"
                   class="shrink-0 relative px-3 py-3 text-center transition-colors duration-200"
                   :class="[
+                    PLAN_COL_ZEBRA_CLASS[idx],
                     plan.id === recommendedPlanId ? 'bg-[#43D3FF]/10' : '',
-                    activeScrollIndex === idx ? 'bg-[#43D3FF]/15' : ''
+                    activeScrollIndex === idx && plan.id !== recommendedPlanId ? 'bg-[#43D3FF]/15' : '',
+                    idx === selectedPlans.length - 1 ? 'pr-6' : ''
                   ]"
                   :style="{ width: `${COL_WIDTH}px`, minWidth: `${COL_WIDTH}px`, height: '112px' }"
                 >
-                  <!-- Phase 3: Botón X -->
+                  <!-- Phase 3: Botón X (deshabilitado si es el último plan) -->
                   <button
                     type="button"
-                    @click.stop="removePlan(plan.id)"
-                    class="absolute top-1.5 right-1.5 w-6 h-6 rounded-full bg-white/95 hover:bg-red-50 border border-slate-300 hover:border-red-400 text-slate-500 hover:text-red-600 flex items-center justify-center transition-all active:scale-90 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-400 z-10"
-                    :aria-label="`Quitar ${plan.name} de la comparación`"
+                    @click.stop="canRemovePlan && removePlan(plan.id)"
+                    class="absolute top-1.5 right-1.5 w-6 h-6 rounded-full flex items-center justify-center transition-all z-10 focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-400"
+                    :class="canRemovePlan
+                      ? 'bg-white/95 hover:bg-red-50 border border-slate-300 hover:border-red-400 text-slate-500 hover:text-red-600 active:scale-90'
+                      : 'bg-slate-100/80 border border-slate-200 text-slate-300 cursor-not-allowed'"
+                    :aria-label="canRemovePlan ? `Quitar ${plan.name} de la comparación` : `No se puede quitar ${plan.name}, debe haber al menos 1 plan`"
+                    :aria-disabled="!canRemovePlan"
+                    :tabindex="canRemovePlan ? 0 : -1"
                   >
                     <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12" />
@@ -457,14 +526,14 @@ function getValue(planId, benefit) {
                       v-if="!isSelected(plan.id)"
                       type="button"
                       @click.stop="choosePlan(plan.id)"
-                      class="mt-1.5 px-3 py-1 rounded-full text-[11px] font-bold transition-all hover:brightness-95 active:scale-95 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#43D3FF]"
+                      class="mt-1.5 px-4 py-2 rounded-full text-xs font-bold transition-all hover:brightness-95 active:scale-95 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#43D3FF]"
                       style="background-color: #F9D35A; color: #00184C;"
                     >
                       Elegir
                     </button>
                     <p
                       v-else
-                      class="mt-1.5 inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200"
+                      class="mt-1.5 inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200"
                     >
                       <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" />
@@ -512,10 +581,13 @@ function getValue(planId, benefit) {
                     move-class="ds-col-move"
                   >
                     <div
-                      v-for="plan in selectedPlans"
+                      v-for="(plan, idx) in selectedPlans"
                       :key="plan.id + '-' + benefit.name"
                       class="shrink-0 px-2 py-3 text-center text-[12px] flex items-center justify-center transition-colors duration-200"
-                      :class="plan.id === recommendedPlanId ? 'bg-[#43D3FF]/8' : ''"
+                      :class="[
+                        PLAN_COL_ZEBRA_CLASS[idx],
+                        plan.id === recommendedPlanId ? 'bg-[#43D3FF]/8' : ''
+                      ]"
                       :style="{ width: `${COL_WIDTH}px`, minWidth: `${COL_WIDTH}px`, minHeight: '52px' }"
                     >
                       <template v-if="getValue(plan.id, benefit) === 'yes'">
@@ -540,6 +612,7 @@ function getValue(planId, benefit) {
               </template>
             </div>
           </div>
+        </div>
         </div>
 
         <!-- ── Snap dots (mobile) ── -->
@@ -604,31 +677,46 @@ function getValue(planId, benefit) {
   animation: ds-chip-shake 0.5s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
 }
 
-/* Phase 2: transición de columnas (Issue 2) */
+/* Phase 2: transición de columnas — slide suave sin collapse de layout */
 .ds-col-enter-active {
-  transition: opacity 0.3s ease, transform 0.3s ease;
+  transition: opacity 0.25s ease-out, transform 0.3s cubic-bezier(0.22, 1, 0.36, 1);
 }
 .ds-col-leave-active {
-  transition: opacity 0.25s ease, transform 0.25s ease;
+  transition: opacity 0.2s ease-in, transform 0.25s cubic-bezier(0.55, 0, 1, 0.45);
   position: absolute;
+  z-index: 5;
 }
 .ds-col-enter-from {
   opacity: 0;
-  transform: scaleX(0.85) translateX(-12px);
-  transform-origin: left center;
+  transform: translateX(20px);
 }
 .ds-col-leave-to {
   opacity: 0;
-  transform: scaleX(0.85) translateX(12px);
-  transform-origin: right center;
+  transform: translateX(-20px) scale(0.92);
 }
 .ds-col-move {
-  transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: transform 0.38s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Pulso sutil en chips no seleccionados para invitar a tocar */
+@keyframes ds-chip-pulse {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(67, 211, 255, 0.4);
+    border-color: #43D3FF;
+  }
+  50% {
+    box-shadow: 0 0 0 5px rgba(67, 211, 255, 0);
+    border-color: rgba(67, 211, 255, 0.6);
+  }
+}
+.ds-chip-pulse {
+  animation: ds-chip-pulse 2.2s ease-in-out infinite;
 }
 
 /* Reduced motion */
 @media (prefers-reduced-motion: reduce) {
   .ds-chip-shake,
+  .ds-chip-pulse,
   .ds-col-enter-active,
   .ds-col-leave-active,
   .ds-col-move {

@@ -168,59 +168,39 @@ function handleContinue() {
       <h1 class="ds-heading-1">Fechas de tu<span style="color: #43D3FF;"> viaje</span></h1>
     </div>
 
-    <!-- Barra de categoría compacta: una sola línea en mobile -->
+    <!-- Barra/píldora interactiva de categoría: única vía para cambiar la categoría -->
     <div v-if="categoryData" class="flex justify-center mb-4">
-      <div
-        class="inline-flex items-center gap-2 max-w-sm w-full bg-white border border-slate-200 rounded-full px-3 py-2 cursor-pointer hover:bg-slate-50 active:bg-slate-100 transition-colors group"
+      <button
+        type="button"
         @click="goToCategory"
-        role="button"
+        class="group inline-flex items-center gap-2 max-w-sm w-full bg-white border border-slate-200 rounded-full px-3 py-2 cursor-pointer hover:border-[#43D3FF] hover:bg-[#43D3FF]/5 hover:shadow-sm active:bg-[#43D3FF]/10 transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-[#43D3FF] focus-visible:ring-offset-2"
         :aria-label="`Categoría: ${categoryData.name}. Toca para cambiar.`"
       >
-        <!-- Icono pequeño -->
+        <!-- Icono categoría (shield) -->
         <span class="shrink-0 w-6 h-6 rounded-full flex items-center justify-center" style="background-color: #00184C;">
           <svg class="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
           </svg>
         </span>
 
-        <!-- Texto compacto: categoría + cobertura en una línea cuando cabe -->
-        <span class="flex-1 min-w-0 text-center">
-          <span class="text-xs font-bold uppercase tracking-wide" style="color: #00184C;">{{ categoryData.name }}</span>
+        <!-- Texto compacto: categoría + cobertura -->
+        <span class="flex-1 min-w-0 text-center truncate">
+          <span class="text-xs sm:text-sm font-bold uppercase tracking-wide" style="color: #00184C;">{{ categoryData.name }}</span>
           <span class="text-xs text-slate-400 mx-1.5">·</span>
-          <span class="text-xs text-slate-500">{{ categoryData.coverage }}</span>
+          <span class="text-xs sm:text-sm text-slate-500">{{ categoryData.coverage }}</span>
         </span>
 
-        <!-- Editar icono -->
-        <span class="shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-slate-400 group-hover:text-[#00184C] group-hover:bg-[#00184C]/8 transition-all">
-          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <!-- Icono de edición (lápiz) — siempre visible, refuerza interactividad -->
+        <span
+          class="shrink-0 inline-flex items-center gap-1 pl-1 pr-2 py-1 rounded-full text-[#00184C] bg-[#00184C]/8 group-hover:bg-[#00184C] group-hover:text-white transition-all"
+        >
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
           </svg>
+          <span class="hidden sm:inline text-[11px] font-semibold uppercase tracking-wide">Editar</span>
         </span>
-      </div>
+      </button>
     </div>
-
-    <!-- Botón prominente: Cambiar categoría (visible cuando hay error de bounds) -->
-    <Transition name="bounds-error-enter">
-      <div
-        v-if="boundsError"
-        class="flex justify-center mb-4"
-      >
-        <button
-          type="button"
-          @click="goToCategory"
-          class="group inline-flex items-center gap-2 px-5 py-2.5 text-sm font-semibold text-[#00184C] bg-[#F9D35A] hover:bg-[#f0c847] rounded-full shadow-md hover:shadow-lg transition-all duration-200 active:scale-[0.97] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#43D3FF] focus-visible:ring-offset-2"
-          aria-label="Cambiar categoría de viaje"
-        >
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 19l-7-7 7-7m8 14l-7-7 7-7" />
-          </svg>
-          <span>Cambiar categoría</span>
-          <svg class="w-4 h-4 opacity-70 group-hover:opacity-100 transition-opacity" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
-          </svg>
-        </button>
-      </div>
-    </Transition>
 
     <!-- Calendario -->
     <div ref="calendarRef" class="mb-4 flex justify-center">
@@ -360,7 +340,7 @@ function handleContinue() {
         type="button"
         @click="handleContinue"
         :disabled="!isValid || !isWithinBounds || isConfirming"
-        class="mt-2 w-full max-w-3xl mx-auto flex items-center justify-center gap-2 px-6 py-3 text-sm font-bold rounded-full transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-[#43D3FF] focus-visible:ring-offset-2"
+        class="mt-2 w-full sm:w-auto sm:min-w-[280px] sm:max-w-xs mx-auto flex items-center justify-center gap-2 px-6 py-3 text-sm font-bold rounded-full transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-[#43D3FF] focus-visible:ring-offset-2"
         :class="isValid && isWithinBounds && !isConfirming
           ? 'hover:-translate-y-0.5 hover:shadow-xl active:translate-y-0 active:scale-[0.98]'
           : 'opacity-50 md:opacity-40 cursor-not-allowed'"
@@ -389,14 +369,5 @@ function handleContinue() {
 .state-fade-enter-from,
 .state-fade-leave-to {
   opacity: 0;
-}
-
-/* Animación de entrada para el botón de cambiar categoría */
-.bounds-error-enter-active {
-  transition: opacity 0.25s ease-out, transform 0.25s ease-out;
-}
-.bounds-error-enter-from {
-  opacity: 0;
-  transform: translateY(-8px);
 }
 </style>

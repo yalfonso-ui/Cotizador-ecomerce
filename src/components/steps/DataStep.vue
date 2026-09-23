@@ -2,11 +2,12 @@
 import { ref, computed, watch, onMounted, reactive, shallowRef, triggerRef } from 'vue'
 import PrivacyPolicyModal from '@/components/ui/PrivacyPolicyModal.vue'
 import SubStepIndicator from '@/components/ui/SubStepIndicator.vue'
+import TravelSummaryPanel from '@/components/ui/TravelSummaryPanel.vue'
 
 import { getTravelerCount as resolveCount, calculateAge } from '@/composables/useTravelerInfo.js'
 import { getPlanPrice as planPrice } from '@/data/plans.js'
 import { getUpgradesTotal } from '@/data/upgrades.js'
-import { formatBirthdate as fmtBirthdate, formatDate } from '@/composables/useDateFormatter.js'
+import { formatBirthdate as fmtBirthdate } from '@/composables/useDateFormatter.js'
 import { showToast } from '@/composables/useToast.js'
 import { usePhoneFormatter, isValidPhone, getCountryName } from '@/composables/usePhoneFormatter.js'
 import { useBirthdateMask } from '@/composables/useBirthdateMask.js'
@@ -95,7 +96,6 @@ const unlockedBirthdates = ref(new Set())
 
 const touched = ref({})
 const isPrivacyModalOpen = ref(false)
-const isMobileSummaryExpanded = ref(false)
 
 const travelersLabels = { solo: '1 viajero', pareja: '2 viajeros', familia: '4 viajeros', grupo: '6+ viajeros' }
 
@@ -106,12 +106,6 @@ const totalViajeros = computed(() => {
     return props.personalData.length
   }
   return getTravelerCount()
-})
-
-const travelersLabel = computed(() => {
-  const n = totalViajeros.value
-  if (!n || n < 1) return '—'
-  return `${n} ${n === 1 ? 'viajero' : 'viajeros'}`
 })
 
 const upgradesTotalPrice = computed(() => getUpgradesTotal(props.upgrades))
@@ -429,29 +423,6 @@ function getAge(traveler) {
   return calculateAge(traveler.day, traveler.month, traveler.year)
 }
 
-function formatOrigin(origin) {
-  if (!origin) return 'Origen'
-  if (typeof origin === 'object' && origin.name) return origin.name
-  return String(origin)
-}
-
-function formatDestination(dest) {
-  if (!dest) return 'Destino'
-  if (Array.isArray(dest)) return dest[0]?.name || dest[0] || 'Destino'
-  if (typeof dest === 'object' && dest.name) return dest.name
-  return String(dest)
-}
-
-const tripDays = computed(() => {
-  if (!props.dates?.start || !props.dates?.end) return 0
-  const start = new Date(props.dates.start)
-  const end = new Date(props.dates.end)
-  start.setHours(0, 0, 0, 0)
-  end.setHours(0, 0, 0, 0)
-  const diffTime = Math.abs(end.getTime() - start.getTime())
-  return Math.ceil(diffTime / (1000 * 60 * 60 * 24))
-})
-
 function triggerShake(target) {
   // Dispara una animación de shake rápida sobre el elemento target
   // y la limpia después de 500ms (duración total del keyframe).
@@ -519,74 +490,8 @@ watch(travelers_data, () => {
 <template>
   <div class="w-full max-w-3xl mx-auto px-4 md:px-8 pt-6 md:pt-10">
 
-    <div class="lg:hidden sticky z-20 -mx-4 px-4 py-2 bg-white/90 backdrop-blur-md border-b border-slate-100 mb-3"
-      style="top: calc(4rem + env(safe-area-inset-top));">
-      <button
-        type="button"
-        @click="isMobileSummaryExpanded = !isMobileSummaryExpanded"
-        class="w-full flex items-center gap-2 text-left"
-        :aria-expanded="isMobileSummaryExpanded"
-      >
-        <div class="flex items-center gap-2 flex-1 min-w-0 overflow-hidden">
-          <svg class="w-4 h-4 shrink-0 text-[#00184C]" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-          </svg>
-          <span class="text-xs font-semibold text-slate-900 truncate">
-            {{ formatOrigin(props.origin) }} → {{ formatDestination(props.destination) }}
-          </span>
-          <span v-if="props.dates?.start && props.dates?.end" class="text-[10px] text-slate-400 shrink-0 hidden sm:inline">
-            · {{ formatDate(props.dates.start) }} → {{ formatDate(props.dates.end) }}
-          </span>
-          <span v-if="props.selectedPlan" class="text-[10px] font-medium text-slate-500 capitalize shrink-0 hidden sm:inline">
-            · {{ props.selectedPlan }}
-          </span>
-        </div>
-        <svg
-          class="w-4 h-4 shrink-0 text-slate-400 transition-transform"
-          :class="isMobileSummaryExpanded ? 'rotate-180' : ''"
-          fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"
-        >
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-        </svg>
-      </button>
-
-      <transition name="fade">
-        <div v-if="isMobileSummaryExpanded" class="pt-3 mt-3 border-t border-slate-100 space-y-2">
-          <div class="flex items-start gap-2.5">
-            <span class="text-[10px] font-medium text-slate-400 uppercase tracking-wider w-20 shrink-0 pt-0.5">Resumen</span>
-            <span class="text-xs text-slate-800 font-medium">{{ formatOrigin(props.origin) }} → {{ formatDestination(props.destination) }}</span>
-          </div>
-          <div class="flex items-start gap-2.5">
-            <span class="text-[10px] font-medium text-slate-400 uppercase tracking-wider w-20 shrink-0 pt-0.5">Fechas</span>
-            <span class="text-xs text-slate-800 font-medium">
-              <template v-if="props.dates?.start && props.dates?.end">
-                {{ formatDate(props.dates.start) }} → {{ formatDate(props.dates.end) }}
-                <span class="text-slate-400 ml-1">({{ tripDays }} {{ tripDays === 1 ? 'día' : 'días' }})</span>
-              </template>
-              <template v-else>—</template>
-            </span>
-          </div>
-          <div class="flex items-start gap-2.5">
-            <span class="text-[10px] font-medium text-slate-400 uppercase tracking-wider w-20 shrink-0 pt-0.5">Viajeros</span>
-            <span class="text-xs text-slate-800 font-medium">{{ travelersLabel }}</span>
-          </div>
-          <div v-if="props.selectedPlan" class="flex items-start gap-2.5">
-            <span class="text-[10px] font-medium text-slate-400 uppercase tracking-wider w-20 shrink-0 pt-0.5">Plan</span>
-            <span class="text-xs text-slate-800 font-medium capitalize">{{ props.selectedPlan }}</span>
-          </div>
-          <button
-            type="button"
-            @click="$emit('go-to-step', 1)"
-            class="w-full mt-2 inline-flex items-center justify-center gap-1.5 text-xs font-semibold text-[#00184C] py-2 rounded-lg bg-slate-50 hover:bg-slate-100 transition-colors"
-          >
-            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
-            </svg>
-            Editar todo
-          </button>
-        </div>
-      </transition>
-    </div>
+    <!-- ── Resumen de viaje mobile (unificado via TravelSummaryPanel) ── -->
+    <TravelSummaryPanel @go-to-step="emit('go-to-step', $event)" />
 
       <section class="w-full space-y-4">
         <header class="space-y-2 text-center mb-2">
